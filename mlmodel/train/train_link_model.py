@@ -6,13 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 import joblib
 import os
-import re
 
-def preprocess_url(url):
-    url = str(url).lower()
-    url = re.sub(r"https?://", "", url)
-    url = re.sub(r"[^a-zA-Z0-9./]", "", url)
-    return url
+from app.utils.preprocess import preprocess_url
 
 # Load and clean dataset
 df = pd.read_csv("datasets/links.csv")

@@ -3,7 +3,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import joblib
 import os
-import re
+
+from app.utils.preprocess import preprocess_url
 
 router = APIRouter()
 
@@ -13,13 +14,6 @@ vectorizer_path = os.path.join("app", "models", "link_vectorizer.pkl")
 
 model = joblib.load(model_path)
 vectorizer = joblib.load(vectorizer_path)
-
-# Preprocess URL
-def preprocess_url(url: str):
-    url = url.lower()
-    url = re.sub(r"https?://", "", url)
-    url = re.sub(r"[^a-zA-Z0-9./]", "", url)
-    return url
 
 # Request model
 class LinkRequest(BaseModel):

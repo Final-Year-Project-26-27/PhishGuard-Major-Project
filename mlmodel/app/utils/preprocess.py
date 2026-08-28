@@ -8,3 +8,10 @@ def preprocess_text(text: str) -> str:
     text = re.sub(r"[^a-zA-Z0-9\s₹$@.]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+def preprocess_url(url: str) -> str:
+    """Preprocess a URL for model prediction - matches training preprocessing"""
+    url = str(url).lower()
+    url = re.sub(r"https?://", "", url)
+    url = re.sub(r"[^a-zA-Z0-9./]", "", url)
+    return url

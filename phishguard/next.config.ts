@@ -10,9 +10,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Optional: Ignores lint errors during build
   },
-  experimental: {
-    appDir: true, // 👈 Required for App Router (Next.js 13+)
-  },
 };
 
 export default withPWA({

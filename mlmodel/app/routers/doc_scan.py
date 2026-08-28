@@ -17,28 +17,11 @@ router = APIRouter()
 model = joblib.load("app/models/doc_model.pkl")
 vectorizer = joblib.load("app/models/doc_vectorizer.pkl")
 
-# Load metadata with phishing indicators
-try:
-    with open("app/models/doc_metadata.json", 'r') as f:
-        metadata = json.load(f)
-    PHISHING_INDICATORS = metadata.get('phishing_indicators', {})
-    FEATURE_NAMES = metadata.get('feature_names', [])
-except:
-    PHISHING_INDICATORS = {
-        'urgency_words': ['urgent', 'immediately', 'act now', 'limited time', 'expires', 'deadline',
-                          'final notice', 'last chance', 'hurry', 'quick', 'asap', 'right away'],
-        'money_words': ['pay', 'payment', 'fee', 'charge', 'prize', 'won', 'lottery', 'winner', 
-                        'cash', 'money', 'free', 'loan', 'refund', 'reward'],
-        'credential_words': ['password', 'login', 'verify', 'confirm', 'account', 'credential',
-                             'aadhaar', 'pan card', 'bank account', 'credit card', 'otp', 'pin'],
-        'threat_words': ['suspended', 'blocked', 'terminated', 'closed', 'locked', 'disabled',
-                         'legal action', 'arrest', 'penalty', 'fine', 'court', 'compromised'],
-        'suspicious_domains': ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.biz', 
-                               'fakeinternship', 'scamjobs', 'fraudsite'],
-        'action_words': ['click here', 'click below', 'download', 'fill form', 'submit', 
-                         'send', 'share', 'provide', 'enter details']
-    }
-    FEATURE_NAMES = []
+# Load metadata with phishing indicators (written by train/train_doc_model.py)
+with open("app/models/doc_metadata.json", 'r') as f:
+    metadata = json.load(f)
+PHISHING_INDICATORS = metadata.get('phishing_indicators', {})
+FEATURE_NAMES = metadata.get('feature_names', [])
 
 
 def extract_phishing_features(text):

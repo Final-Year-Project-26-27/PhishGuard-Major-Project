@@ -8,26 +8,16 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 import os
-import re
 
-# Cleaners
-def clean_text(text):
-    text = str(text).lower()
-    text = re.sub(r"http\S+", "", text)
-    text = re.sub(r"[^a-zA-Z\s]", "", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-def clean_domain(domain):
-    return str(domain).lower().replace("www.", "").strip()
+from app.utils.preprocess import preprocess_text
 
 # Load dataset
 df = pd.read_csv("datasets/emails.csv")
 
 df.dropna(inplace=True)
 
-df["cleaned_text"] = df["text_content"].apply(clean_text)
-df["cleaned_domain"] = df["sender_domain"].apply(clean_domain)
+df["cleaned_text"] = df["text_content"].apply(preprocess_text)
+df["cleaned_domain"] = df["sender_domain"].str.lower().str.replace("www.", "", regex=False).str.strip()
 
 X = df[["cleaned_text", "cleaned_domain"]]
 y = df["label"]
