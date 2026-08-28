@@ -3,3 +3,4 @@ graphify-out
 tmpclaude-*-cwd
 __pycache__/
 *.pyc
+mlmodel/venv
