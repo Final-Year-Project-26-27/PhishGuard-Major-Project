@@ -98,3 +98,19 @@ def test_admin_approve_uses_the_stored_report(monkeypatch):
     assert client.post("/api/admin/pending/1/approve", headers={"X-Dashboard-Token": "dash"}).status_code == 200
     assert ("insert", "scam_urls", {"url": "https://evil.example"}) in calls
     assert ("delete", "pending_reports") in calls
+
+
+def test_auth_results_ignores_sender_controlled_text():
+    from pipeline.l1_authentication import _parse_auth_results
+
+    # Sender address and Gmail's comment both contain "dkim=pass"; only clause-leading results count
+    header = (
+        "mx.google.com;\r\n"
+        "       spf=fail (google.com: domain of dkim=pass@evil.example does not designate 1.2.3.4) "
+        "smtp.mailfrom=dkim=pass@evil.example;\r\n"
+        "       dmarc=fail (p=NONE) header.from=evil.example"
+    )
+    assert _parse_auth_results({"authentication-results": header}) == {"spf": "fail", "dkim": "none", "dmarc": "fail"}
+
+    real_gmail = "mx.google.com; dkim=pass header.i=@tcs.com; spf=pass (google.com: domain of hr@tcs.com designates 1.2.3.4 as permitted sender) smtp.mailfrom=hr@tcs.com; dmarc=pass (p=REJECT) header.from=tcs.com"
+    assert _parse_auth_results({"authentication-results": real_gmail}) == {"spf": "pass", "dkim": "pass", "dmarc": "pass"}

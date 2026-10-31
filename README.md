@@ -1,329 +1,420 @@
-<div align="center">
+# PhishGuard
 
-# 🛡️ PhishGuard
-### Advanced AI-Powered Phishing Protection Suite
+> Multi-surface scam detection and security intelligence platform for educational and student environments.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-9.0-orange?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
-[![Python](https://img.shields.io/badge/Python-3.9+-green?style=for-the-badge&logo=python)](https://python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100-teal?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+PhishGuard is an end-to-end security system engineered to detect, intercept, and analyze targeted cyber threats—specifically phishing campaigns, fraudulent internship offers, credential harvesting, and malicious links across email, browser, and messaging surfaces.
 
-*Protecting students and professionals from cyber threats with cutting-edge AI technology*
-
-[🚀 Live Demo](https://phishguard-demo.vercel.app) • [📖 Documentation](docs/) • [🐛 Report Bug](issues/) • [💡 Feature Request](issues/)
-
-</div>
+Unlike generic corporate email gateways, PhishGuard is optimized for the threat models targeting students and academic institutions, including unverified recruiter outreach, student portal impersonation, fee-demanding internship scams, and cross-platform attacks originating on WhatsApp, LinkedIn, or personal Gmail.
 
 ---
 
-## 🌟 **What is PhishGuard?**
+## Architecture Overview
 
-PhishGuard is a comprehensive cybersecurity platform designed specifically for **students and educational institutions**. Using advanced AI and machine learning, we provide real-time protection against phishing emails, malicious links, and sophisticated scams targeting the academic community.
+PhishGuard operates across four layers: a client-side scanning web application, an ML inference backend, an active browser security extension, and asynchronous background ingestion pipelines for institutional Gmail and WhatsApp channels.
 
-### ✨ **Key Features**
+```mermaid
+flowchart TD
+    subgraph Clients["Ingress & Client Surfaces"]
+        WEB["Next.js Web Portal\n(:3000)"]
+        EXT["Manifest V3 Extension\n(Gmail · WhatsApp · LinkedIn · Link Guard)"]
+        WA["WhatsApp Bot\n(Twilio Webhook :5000)"]
+        GMAIL["Inbound Gmail\n(Pub/Sub Push Webhook :8080)"]
+    end
 
-🔗 **Smart Link Scanner** - AI-powered URL analysis with real-time threat detection  
-📧 **Email Security** - Advanced phishing email detection and filtering  
-📄 **Document Analysis** - Scan PDFs and documents for malicious content  
-🎓 **Educational Hub** - Interactive cybersecurity courses and awareness training  
-💬 **Expert Chat Support** - Real-time Q&A with cybersecurity professionals  
-📊 **University Dashboard** - Institution-wide security analytics and reporting  
-🏆 **Gamified Learning** - Points, badges, and achievements for security education  
+    subgraph Core["Inference & Analysis Tier (:8000)"]
+        API["FastAPI Routing Engine"]
+        MOD_LINK["Link Classifier\n(TF-IDF + Gradient Boosting)"]
+        MOD_OFFER["Internship & Offer Model\n(18 Engineered Features + TF-IDF)"]
+        MOD_DOC["Document Analyzer\n(PyMuPDF + Structural Indicators)"]
+        MOD_UNIFIED["Unified Ensemble\n(DNS Pinning · SSRF Protection · Compose Guard)"]
+    end
+
+    subgraph Data["Persistence & Storage Tier"]
+        FIRESTORE[("Firebase Firestore\n(Blocklists · Scan History · User Records)")]
+        SUPABASE[("Supabase / PostgreSQL\n(Institutional Pending Reports)")]
+        LOCAL_STORE[("Extension Storage\n(Cached Signatures & Overrides)")]
+    end
+
+    subgraph Pipelines["Automated Pipeline Services"]
+        L1["L1: Sender Authentication\n(RFC 8601 mx.google.com Parser)"]
+        L2["L2: Heuristics & NLP Model\n(9 Regex Rules + TF-IDF Classifier)"]
+        L3["L3: Threat Intel\n(VirusTotal via MCP stdio/TCP)"]
+        DRAFT["Warning Draft Injection\n(HTML Escaped Incident Remediation)"]
+    end
+
+    WEB -->|REST / JSON| API
+    EXT -->|REST / Unified API| API
+    EXT -->|Read Blocklists| FIRESTORE
+    EXT -->|Local State| LOCAL_STORE
+    WA -->|HMAC-Verified Webhook| API
+
+    GMAIL --> L1
+    L1 --> L2
+    L2 --> L3
+    L3 --> DRAFT
+    L3 --> SUPABASE
+
+    API --> MOD_LINK
+    API --> MOD_OFFER
+    API --> MOD_DOC
+    API --> MOD_UNIFIED
+```
 
 ---
 
-## 🎯 **Problem We Solve**
+## Repository Structure
 
-| Challenge | PhishGuard Solution |
-|-----------|-------------------|
-| 📈 **Rising Cyber Threats** | AI-powered real-time detection |
-| 🎓 **Vulnerable Student Population** | Targeted educational content |
-| 🏫 **Inadequate Campus Security** | Comprehensive institutional dashboards |
-| 💰 **Financial Scams** | Specialized internship/job scam detection |
-| 📱 **Mobile Vulnerabilities** | Cross-platform protection |
+```text
+PhishGuard-Major-Project/
+├── phishguard/                  # Next.js 15 static-export web application
+│   ├── app/                     # App router pages (email, link, doc, dashboard, etc.)
+│   ├── components/              # Reusable UI component library (Tailwind CSS)
+│   ├── lib/                     # Firebase initialization and shared client utilities
+│   └── extension-build/         # Unpacked Manifest V3 Chrome Extension
+│       ├── content-gmail.js     # Gmail threat banner & scan integration
+│       ├── content-whatsapp.js  # WhatsApp Web recruiter offer analyzer
+│       ├── content-linkedin.js  # LinkedIn inmail scam scanner
+│       ├── content-link-guard.js# Network interstitial and navigation defense
+│       └── background.js        # Service worker, DNR rules & Gemini fallback
+│
+├── mlmodel/                     # Python FastAPI inference service
+│   ├── app/
+│   │   ├── main.py              # Application entrypoint and router registration
+│   │   ├── routers/             # Endpoint implementations (/scan/*)
+│   │   ├── utils/               # PDF/DOCX extractors, text & domain preprocessors
+│   │   └── models/              # Serialized scikit-learn models, vectorizers & metadata
+│   ├── train/                   # Isolated model training pipelines
+│   ├── datasets/                # Labeled training sets (emails, URLs, offer messages)
+│   └── tests/                   # Automated regression and contract test suites
+│
+├── email/                       # Autonomous Gmail security and remediation pipeline
+│   ├── main.py                  # Pub/Sub push listener, admin endpoints, SSE feed
+│   ├── pipeline/                # L1 auth, L2 heuristics & NLP, L3 threat intel
+│   ├── models/                  # Dedicated L2 TF-IDF + LogisticRegression NLP model
+│   ├── frontend/                # React + Vite security operations dashboard
+│   └── tests/                   # Security test suite (parser isolation, tokens, XSS checks)
+│
+├── whatsapp-bot/                # Node.js / Express Twilio integration
+│   └── server.js                # Webhook listener with signature validation
+│
+└── test_documents/              # Corpus of validated phishing & legitimate sample files
+```
 
 ---
 
-## 🚀 **Quick Start**
+## Core Subsystems
+
+### 1. Web Portal (`phishguard/`)
+
+Built with **Next.js 15 (App Router)** and **TypeScript**, configured for static export deployment on Firebase Hosting.
+
+- Interactive scanners for suspicious URLs, raw email headers/text, and multi-format document uploads.
+- Secure Firebase Authentication (Email/Password, Google OAuth).
+- User scan history tracking and community incident reporting persisted to Cloud Firestore.
+- Strict client-side validation with zero mock fallbacks on backend connectivity failures.
+
+### 2. Machine Learning Service (`mlmodel/`)
+
+High-throughput **FastAPI** backend serving five targeted classification engines:
+
+| Endpoint | Target Surface | Model Architecture | Key Signals |
+| --- | --- | --- | --- |
+| `POST /scan/link/` | Suspicious URLs | `GradientBoostingClassifier` + TF-IDF | Tokenized URL components, entropy, path structure, risky TLDs |
+| `POST /scan/doc/` | PDF, DOCX, TXT files | `RandomForestClassifier` + TF-IDF | 22 hand-engineered features (money demands, urgency, credential solicitations, suspicious domains) + whole-word lexical indicators |
+| `POST /scan/offer/` | Internship & Job Offers | `LogisticRegression` + TF-IDF | 18 specialized signals: registration fee demands, urgency flags, WhatsApp-only redirection, unrealistic stipend promises |
+| `POST /scan/email/` | Inbound emails | Offer Classification Ensemble | Optimized for academic threats; returns confidence on a normalized `0.0 - 1.0` scale |
+| `POST /scan/unified/` | Extension client engine | Multi-model aggregator | Combines link, email, trusted-domain checks, and live scrape analysis with server-side DNS pinning |
+
+### 3. Multi-Platform Browser Extension (`phishguard/extension-build/`)
+
+A **Manifest V3** security extension providing in-situ inspection across high-risk communication channels:
+
+- **Gmail Shield**: Injects warning banners and threat indicators into the Gmail DOM, flagging impersonation attempts and spoofed college domains.
+- **WhatsApp Web & LinkedIn Scanners**: Real-time evaluation of incoming recruiter pitches, highlighting fee-demand patterns and fake job listings.
+- **Link Guard**: Intercepts link navigation across arbitrary tabs against dynamic Declarative Net Request (DNR) rule sets, routing suspicious destinations to an isolated warning interstitial (`blocked.html`).
+- **Cryptographic Security**: Eliminates static bypass URL parameters in favor of ephemeral single-use session tokens managed via `chrome.storage.local`.
+
+### 4. Inbound Gmail Pipeline (`email/`)
+
+An autonomous mail flow processor monitoring institutional Google Workspace mailboxes via **Google Cloud Pub/Sub** push notifications:
+
+- **L1 Cryptographic Authentication**: Validates SPF, DKIM, and DMARC using an RFC 8601-compliant parser that strictly inspects trusted `mx.google.com` receiving headers.
+- **L2 Heuristic & NLP Analysis**: Evaluates body content against 9 structural heuristic rules coupled with a dedicated TF-IDF semantic classifier.
+- **L3 Model Context Protocol (MCP) Intelligence**: Queries VirusTotal via an external MCP bridge running under strict token-bucket rate limits.
+- **Automated Thread Remediation**: Creates secure, HTML-escaped warning drafts inside affected conversation threads with a safe, tokenized admin reporting action.
+- **SecOps Dashboard**: Real-time SSE streaming monitoring interface with server-side token authorization for review queues.
+
+### 5. WhatsApp Threat Assistant (`whatsapp-bot/`)
+
+A **Node.js / Express** microservice integrating with the Twilio Messaging API.
+
+- Implements strict cryptographic HMAC-SHA1 validation on inbound webhooks.
+- Routes suspicious student messages to `/scan/offer/` to generate immediate, plain-language risk breakdowns and defensive advice.
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- Python 3.9+
-- Firebase Account
+
+- Node.js 18 LTS or higher
+- Python 3.11+
 - Git
 
-### 1️⃣ **Clone Repository**
-```bash
-git clone https://github.com/Hari-hara7/PhishGuard.git
-cd PhishGuard
-```
+### 1. Web Portal Setup
 
-### 2️⃣ **Frontend Setup (Next.js)**
 ```bash
-# Install dependencies
+cd phishguard
 npm install
 
-# Configure environment variables
-cp .env.example .env.local
-# Add your Firebase config to .env.local
+# Build static bundle
+npm run build
 
-# Start development server
+# Start local development server
 npm run dev
+# Portal accessible at http://localhost:3000
 ```
 
-### 3️⃣ **Backend Setup (Python/FastAPI)**
+### 2. Machine Learning API Setup
+
 ```bash
-# Create virtual environment
+cd mlmodel
+
+# Initialize virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install dependencies (scikit-learn is pinned to 1.8.0)
 pip install -r requirements.txt
 
-# Train AI models
-python -m train.train_email_model
-python -m train.train_link_model
-python -m train.train_doc_model
-python -m train.train_offer_model
+# Run test suite
+python -m pytest tests
 
 # Start API server
-python -m uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# OpenAPI documentation available at http://127.0.0.1:8000/docs
 ```
 
-### 4️⃣ **Access Application**
-- **Frontend**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs
-- **Document Scanner**: http://localhost:8000/scan/doc
+### 3. Chrome Extension Installation
 
-### 5️⃣ **Optional services**
-- **Chrome extension**: load `phishguard/extension-build/` as an unpacked extension (Gmail, WhatsApp Web, LinkedIn and a link guard). For Gemini features, create `extension-build/gemini-config.local.js` with `GEMINI_CONFIG.apiKey = "your-key";` (gitignored).
-- **Gmail pipeline** (`email/`): `pip install -r requirements.txt`, then `uvicorn main:app --port 8080`. Needs Google OAuth credentials, a Pub/Sub topic, VirusTotal and Supabase keys. See `email/README.md`.
-- **WhatsApp bot** (`whatsapp-bot/`): `npm install`, then `node server.js`. Needs Twilio credentials and `PUBLIC_WEBHOOK_URL`.
+1. Open Google Chrome and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** in the top-right corner.
+3. Click **Load unpacked** and select the directory:
+   `c:\Work\PhishGuard-Major-Project\phishguard\extension-build`
+4. (Optional) For Gemini capabilities, create a local file `extension-build/gemini-config.local.js`:
 
----
+   ```javascript
+   GEMINI_CONFIG.apiKey = "YOUR_GEMINI_API_KEY";
+   ```
 
-## 🏗️ **Architecture**
+### 4. Gmail Pipeline Setup (Optional)
 
-```mermaid
+```bash
+cd email
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-%%{init: {"theme":"dark"}}%%
-graph TB
-    style A fill:#222,color:#fff
-    style B fill:#222,color:#fff
-    style C fill:#222,color:#fff
-    style D fill:#222,color:#fff
-    style E fill:#222,color:#fff
-    style F fill:#222,color:#fff
-    style G fill:#222,color:#fff
-    style H fill:#222,color:#fff
-    style I fill:#222,color:#fff
-    style J fill:#222,color:#fff
-    style K fill:#222,color:#fff
-    style L fill:#222,color:#fff
+# Run security test suite
+python -m pytest tests
 
-    A[🌐 Next.js Frontend] --> B[🔥 Firebase Auth]
-    A --> C[🗄️ Firestore Database]
-    A --> D[🤖 FastAPI Backend]
-    A --> L[🧩 Chrome Extension]
-
-    L --> B
-    L --> C
-
-    D --> E[📧 Email Scanner]
-    D --> F[🔗 Link Analyzer] 
-    D --> G[📄 Document Scanner]
-
-    E --> H[🧠 AI/ML Models]
-    F --> H
-    G --> H
-
-    I[👨‍🎓 Students] --> A
-    J[👨‍🏫 Educators] --> A
-    K[🏛️ Universities] --> A
-    I --> L
-    J --> L
-    K --> L
+# Start service
+uvicorn main:app --reload --port 8080
 ```
 
-### **Tech Stack**
+### 5. WhatsApp Bot Setup (Optional)
 
-#### **Frontend**
-- **Framework**: Next.js 15 with TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: Custom design system
-- **Authentication**: Firebase Auth
-- **Database**: Firestore
-- **Deployment**: Vercel
+```bash
+cd whatsapp-bot
+npm install
 
-#### **Backend**
-- **API**: FastAPI (Python)
-- **ML/AI**: scikit-learn
-- **Models**: Email classification, URL analysis, Document scanning
-- **Security**: JWT tokens, rate limiting
+# Start webhook server
+node server.js
+```
 
 ---
 
-## 💰 **Revenue Model**
+## API Reference
 
-### 📊 **Pricing Tiers**
+### Link Scanner
 
-| Plan | Price | Target | Features |
-|------|-------|--------|----------|
-| 🆓 **Free** | ₹0/forever | Students | Link scanning, Email protection, Browser extension |
-| 🚀 **Pro** | ₹299/month | Individuals | Everything in Free + AI document scanning, Custom alerts |
-| 🏢 **Enterprise** | ₹2,999/year | Universities | Institution dashboards, Analytics, API access |
-
-### 💡 **Revenue Streams**
-
-1. **🔹 Freemium Model** - Free core features → Premium upgrades
-2. **🔹 University Subscriptions** - Institutional dashboards and analytics  
-3. **🔹 API Integration** - Career platform integrations (Internshala, LinkedIn)
-4. **🔹 Partnerships** - Cybersecurity company collaborations
-
----
-
-## 📚 **Features Deep Dive**
-
-### 🛡️ **AI-Powered Protection**
-- **Real-time Scanning**: Instant analysis of URLs, emails, and documents
-- **Machine Learning**: Continuously improving threat detection
-- **Pattern Recognition**: Identifies sophisticated phishing attempts
-- **Behavioral Analysis**: Detects anomalous patterns and social engineering
-
-### 🎓 **Educational Platform**
-- **Interactive Courses**: 12+ cybersecurity modules with quizzes
-- **Gamification**: Points, badges, and leaderboards
-- **Expert Support**: Live chat with security professionals
-- **Knowledge Base**: Comprehensive security articles and guides
-
-### 🏛️ **University Dashboard**
-- **Campus-wide Analytics**: Real-time threat monitoring
-- **Student Protection**: Bulk deployment and management
-- **Incident Response**: Automated alerts and reporting
-- **Policy Management**: Custom security rules and guidelines
-
----
-
-## 🎯 **Use Cases**
-
-### 👨‍🎓 **For Students**
-- Protect against internship/job scams
-- Learn cybersecurity fundamentals
-- Get expert guidance on suspicious emails
-- Secure browsing on campus networks
-
-### 👨‍🏫 **For Educators**
-- Integrate security awareness into curriculum
-- Monitor student digital safety
-- Access teaching resources and materials
-- Track learning progress and engagement
-
-### 🏛️ **For Universities**
-- Deploy campus-wide protection
-- Monitor institution-wide threats
-- Generate compliance reports
-- Educate entire student body
-
----
-
-## 🔧 **API Endpoints**
-
-### **Link Scanner**
 ```http
-POST /scan/link
+POST /scan/link/
 Content-Type: application/json
 
 {
-  "url": "https://suspicious-link.com",
-  "user_id": "student123"
+  "url": "http://secure-login-verify.tk/account"
 }
 ```
 
-### **Email Analysis**
-```http
-POST /scan/email
-Content-Type: application/json
+**Response (200 OK):**
 
+```json
 {
-  "text_content": "Email content here...",
-  "sender_domain": "company.com"
+  "prediction": "Phishing",
+  "confidence": 0.965
 }
 ```
 
-### **Document Scanner**
+### Document Scanner
+
 ```http
-POST /scan/doc
+POST /scan/doc/
 Content-Type: multipart/form-data
 
-file: document.pdf
-user_id: student123
+file=@offer_letter.pdf
 ```
 
-### **Job / Internship Offer Scanner**
+**Response (200 OK):**
+
+```json
+{
+  "prediction": "Phishing/Fake",
+  "confidence": 0.792,
+  "risk_score": 100,
+  "risk_level": "HIGH",
+  "verdict": "This document appears to be a phishing attempt or fraudulent document.",
+  "warnings": [
+    "Contains suspicious URLs: http://internship-confirm.tk/verify",
+    "Requests sensitive information: aadhaar, bank account",
+    "Money-related language: fee, pay"
+  ],
+  "indicators": {
+    "urgency": ["within 24 hours"],
+    "money": ["fee", "pay", "rs"],
+    "credentials": ["aadhaar", "bank account"],
+    "threats": [],
+    "suspicious_urls": ["http://internship-confirm.tk/verify"],
+    "actions": ["click here", "pay now"]
+  }
+}
+```
+
+### Job / Internship Offer Scanner
+
 ```http
 POST /scan/offer/
 Content-Type: application/json
 
-{ "message": "Pay Rs 2999 registration fee to confirm your internship..." }
+{
+  "message": "Congratulations! Selected for Web Intern. Deposit Rs 1999 registration fee via UPI within 2 hours."
+}
 ```
 
-### **Unified Risk Scan** (used by the extension)
+**Response (200 OK):**
+
+```json
+{
+  "is_offer": true,
+  "prediction": "Fake",
+  "confidence": 99.0,
+  "red_flags": [
+    "Payment or fee demanded from candidate",
+    "Urgency/pressure language used"
+  ]
+}
+```
+
+### Unified Risk Scan
+
 ```http
 POST /scan/unified/
 Content-Type: application/json
 
-{ "email_text": "...", "sender_domain": "example.com", "url": "https://example.com", "trusted_domains": [] }
+{
+  "email_text": "Verify your institutional credentials immediately.",
+  "sender_domain": "college-admin.com",
+  "url": "https://portal-verify.tk",
+  "trusted_domains": ["nmamit.in", "nitte.edu.in"]
+}
 ```
-Also: `POST /scan/unified/url-intel`, `/scan/unified/compose-guard`, `/scan/unified/feedback`.
+
+**Response (200 OK):**
+
+```json
+{
+  "event_id": "9bee53ad-dd03-4a23-84ad-3df39fa6aa2b",
+  "risk_score": 100,
+  "risk_level": "HIGH",
+  "recommendation": "block_or_step_up",
+  "explanations": [
+    "urgency: immediately",
+    "credential request: verify your account",
+    "url uses social-engineering style domain tokens"
+  ],
+  "signals": {
+    "email": {
+      "prediction": "Fake",
+      "confidence": 0.955,
+      "risk_score": 96
+    },
+    "link": {
+      "prediction": "Phishing",
+      "confidence": 1.0,
+      "risk_score": 100
+    }
+  }
+}
+```
 
 ---
 
-## 🤝 **Contributing**
+## Configuration & Environment Variables
 
-We welcome contributions from the community! 
+| Variable | Module | Required | Description |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | `phishguard` | No | Base URL for FastAPI backend (default: `http://localhost:8000`) |
+| `FEEDBACK_LOG` | `mlmodel` | No | Path to write runtime unified feedback JSONL log |
+| `PUBSUB_VERIFICATION_TOKEN` | `email` | Yes* | Shared secret required in `/webhook/gmail?token=...` parameter |
+| `DASHBOARD_TOKEN` | `email` | Yes* | Authorization token for SecOps admin endpoints and `/api/stream` |
+| `PUBLIC_BASE_URL` | `email` | Yes* | Publicly accessible domain for email report button links |
+| `VIRUSTOTAL_API_KEY` | `email` | Yes* | VirusTotal API key for L3 threat intelligence lookup |
+| `TWILIO_ACCOUNT_SID` | `whatsapp-bot` | Yes* | Twilio service account SID |
+| `TWILIO_AUTH_TOKEN` | `whatsapp-bot` | Yes* | Twilio API authentication token |
+| `PUBLIC_WEBHOOK_URL` | `whatsapp-bot` | Yes* | Full public URL of `/webhook` used to verify Twilio request signatures |
 
-### **Development Setup**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### **Contribution Guidelines**
-- Follow TypeScript/Python best practices
-- Add tests for new features
-- Update documentation
-- Ensure accessibility compliance
-
----
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+*\*Required only when running the respective background services.*
 
 ---
 
-## 🙏 **Acknowledgments**
+## Security Engineering
 
-- **Firebase** for authentication and database services
-- **Vercel** for hosting and deployment
-- **FastAPI** for the robust backend framework
-- **Tailwind CSS** for the beautiful UI components
-- **Open Source Community** for inspiration and resources
-  
-  ## 🙏 **Excel sheet**
+PhishGuard incorporates defense-in-depth principles across its code and architecture:
+
+1. **SSRF Mitigation with DNS Pinning**: The URL intelligence engine (`/scan/unified/url-intel`) performs resolution validation before connecting. If a hostname resolves to any private, loopback, or non-global IP, the request is aborted. Connections are made directly to the validated IP while retaining TLS host validation to neutralize DNS-rebinding attacks.
+2. **RFC 8601 Header Hardening**: The Gmail pipeline strictly reads the topmost `Authentication-Results` header bearing the `mx.google.com` authserv identifier. Injected or forged downstream headers embedded within email bodies are rejected.
+3. **Owner-Only Credential Isolation**: Google OAuth tokens on disk are written with restrictive `0600` POSIX file permissions.
+4. **Context-Aware HTML Escaping**: Warning draft composers and extension DOM injectors sanitize all raw message bodies and URL parameters prior to innerHTML injection to eliminate XSS vectors.
+5. **Session-Level Interstitial Bypasses**: The extension link guard replaces static bypass query parameters with short-lived (60s) single-use tokens stored in isolated extension memory.
+
 ---
-https://excalidraw.com/#room=126d80d0306f25a0d279,AN6iAVsNa5ft1YKGiZR_CA
-<div align="center">
 
-### 🌟 **Star us on GitHub if this project helped you!**
+## Verification & Testing
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/PhishGuard?style=social)](https://github.com/yourusername/PhishGuard/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/PhishGuard?style=social)](https://github.com/yourusername/PhishGuard/network)
+Every component includes regression and contract tests:
 
-**Made with ❤️ for student cybersecurity**
+```bash
+# 1. Machine Learning Backend Tests (14 passed)
+cd mlmodel
+python -m pytest tests
 
-[Website](https://phishguard.com) • [Twitter](https://twitter.com/phishguard) • [LinkedIn](https://linkedin.com/company/phishguard)
+# 2. Gmail Security & Parser Tests (10 passed)
+cd ../email
+python -m pytest tests
 
-</div>
+# 3. SecOps Dashboard Verification
+cd ../email/frontend
+npm run lint
+npm run build
+
+# 4. Web Portal Static Build & Linting
+cd ../../phishguard
+npm run lint
+npm run build
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

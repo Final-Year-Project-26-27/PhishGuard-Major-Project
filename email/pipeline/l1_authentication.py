@@ -37,7 +37,10 @@ _FREE_DOMAINS = frozenset({
 })
 
 # ── Auth-Results parser ───────────────────────────────────────────────────────
-_AUTH_RE = re.compile(r'(spf|dkim|dmarc)=(\S+)', re.IGNORECASE)
+# A result is the method=value at the START of a ';'-separated clause (RFC 8601). Matching it
+# anywhere would also hit sender-controlled text such as smtp.mailfrom=... or comments.
+_AUTH_RE = re.compile(r'^\s*(spf|dkim|dmarc)\s*=\s*([a-z]+)', re.IGNORECASE)
+_COMMENT_RE = re.compile(r'\([^()]*\)')
 # The receiving server that writes the Authentication-Results we trust
 _TRUSTED_AUTHSERV_ID = "mx.google.com"
 
@@ -50,16 +53,17 @@ def _parse_auth_results(headers: dict) -> dict[str, str]:
         dict like {"spf": "pass", "dkim": "fail", "dmarc": "none"}
         Missing checks default to "none".
     """
-    auth_header = headers.get("authentication-results", "")
-    results = {"spf": "none", "dkim": "none", "dmarc": "none"}
-    if auth_header.split(";", 1)[0].strip().lower() != _TRUSTED_AUTHSERV_ID:
+    auth_header = _COMMENT_RE.sub("", headers.get("authentication-results", ""))
+    results = {"spf": "none", "dkim": "none", "dmarc": "none"}  # a missing method stays "none"
+    clauses = auth_header.split(";")
+    if clauses[0].strip().lower() != _TRUSTED_AUTHSERV_ID:
         return results
     seen: set[str] = set()
-    for key, val in _AUTH_RE.findall(auth_header):
-        key = key.lower()
-        if key not in seen:  # first result per method; later ones may be injected text
-            seen.add(key)
-            results[key] = val.lower().rstrip(";")
+    for clause in clauses[1:]:
+        match = _AUTH_RE.match(clause)
+        if match and match.group(1).lower() not in seen:  # first result per method
+            seen.add(match.group(1).lower())
+            results[match.group(1).lower()] = match.group(2).lower()
     return results
 
 
