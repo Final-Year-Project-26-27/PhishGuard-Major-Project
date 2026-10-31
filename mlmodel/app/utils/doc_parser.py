@@ -1,5 +1,5 @@
 # app/utils/doc_parser.py
-import fitz  # PyMuPDF
+import pymupdf as fitz
 import docx
 
 def extract_text_from_pdf(file_path: str) -> str:

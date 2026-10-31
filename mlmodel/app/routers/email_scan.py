@@ -2,7 +2,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import joblib
-import os
 import pandas as pd
 from app.utils.preprocess import preprocess_text
 

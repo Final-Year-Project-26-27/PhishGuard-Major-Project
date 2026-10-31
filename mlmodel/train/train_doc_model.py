@@ -11,6 +11,10 @@ import os
 import re
 import json
 
+# Run from mlmodel/ as a module (python -m train.train_doc_model) so `app` is importable
+from app.utils.doc_features import extract_phishing_features
+from app.utils.preprocess import preprocess_text as clean_text
+
 # Phishing indicators for feature extraction
 PHISHING_INDICATORS = {
     'urgency_words': [
@@ -44,43 +48,6 @@ PHISHING_INDICATORS = {
         'enter details', 'update information', 'confirm identity'
     ]
 }
-
-def clean_text(text):
-    """Basic text cleaning while preserving some structure"""
-    text = str(text).lower()
-    text = re.sub(r"http\S+", " URL_FOUND ", text)  # Mark URLs instead of removing
-    text = re.sub(r"[^a-zA-Z0-9\s₹$@.]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-def extract_phishing_features(text):
-    """Extract additional phishing-related features from text"""
-    text_lower = text.lower()
-    features = {}
-    
-    # Count indicators in each category
-    for category, words in PHISHING_INDICATORS.items():
-        count = sum(1 for word in words if word.lower() in text_lower)
-        features[f'{category}_count'] = count
-    
-    # Additional features
-    features['url_count'] = len(re.findall(r'http[s]?://\S+', text))
-    features['email_count'] = len(re.findall(r'[\w\.-]+@[\w\.-]+', text))
-    features['phone_count'] = len(re.findall(r'\b\d{10}\b|\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', text))
-    features['exclamation_count'] = text.count('!')
-    features['caps_ratio'] = sum(1 for c in text if c.isupper()) / max(len(text), 1)
-    features['word_count'] = len(text.split())
-    features['avg_word_length'] = np.mean([len(w) for w in text.split()]) if text.split() else 0
-    
-    # Suspicious patterns
-    features['has_money_request'] = int(bool(re.search(r'(pay|send|transfer).{0,30}(rs|₹|\$|rupee|dollar)', text_lower)))
-    features['has_credential_request'] = int(bool(re.search(r'(send|share|provide|enter).{0,30}(aadhaar|password|otp|pin|card)', text_lower)))
-    features['has_urgency'] = int(bool(re.search(r'(urgent|immediate|asap|within.{0,10}(hour|day)|act now)', text_lower)))
-    features['has_threat'] = int(bool(re.search(r'(suspend|block|terminate|arrest|legal action|penalty)', text_lower)))
-    features['has_suspicious_domain'] = int(any(domain in text_lower for domain in PHISHING_INDICATORS['suspicious_domains']))
-    
-    return features
-
 
 # Read the file and handle mixed CSV/TSV format
 data_rows = []
@@ -125,7 +92,7 @@ df["cleaned"] = df["text_content"].apply(clean_text)
 
 # Extract additional features
 print("Extracting phishing features...")
-feature_dicts = df["text_content"].apply(extract_phishing_features)
+feature_dicts = df["text_content"].apply(lambda t: extract_phishing_features(t, PHISHING_INDICATORS))
 feature_df = pd.DataFrame(feature_dicts.tolist())
 
 X_text = df["cleaned"]

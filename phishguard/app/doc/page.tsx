@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { API_URL } from '../../lib/utils'
 import {
   Shield,
   FileText,
@@ -122,7 +123,7 @@ export default function DocScanPage() {
       const formData = new FormData()
       formData.append('file', file)
       
-      const response = await fetch('http://127.0.0.1:8000/scan/doc/', {
+      const response = await fetch(`${API_URL}/scan/doc/`, {
         method: 'POST',
         body: formData,
       })

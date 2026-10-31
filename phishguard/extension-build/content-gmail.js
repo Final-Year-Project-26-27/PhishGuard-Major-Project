@@ -1,3 +1,6 @@
+// PhishGuard web app URL. Change it here when the site is deployed.
+const SITE_URL = 'http://localhost:3000';
+
 // PhishGuard Gmail Content Script v3.0
 // Detects phishing emails directly in Gmail — only when an email is open
 // Specialized for Indian university internship scams
@@ -85,6 +88,9 @@ const LEGITIMATE_DOMAINS = [
   'nmamit.in', 'nitte.edu.in'
 ];
 
+// Matches the domain itself or a real subdomain. 'fakenmamit.in' is not 'nmamit.in'.
+const isDomainOrSubdomain = (domain, d) => domain === d || domain.endsWith('.' + d);
+
 // Patterns that indicate scam even with personal Gmail accounts
 const SCAM_PATTERNS = [
   /job\s*bridge\s*program/i,
@@ -114,6 +120,11 @@ let lastAnalyzedEmail = null;
 let warningBanner = null;
 
 // Returns true only when the user is viewing an actual email (not inbox/home)
+// The sender, reasons and keywords come from the email itself, so escape them before they go into innerHTML
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function isInsideEmailView() {
   const hash = location.hash;
   // Gmail email URLs contain: #inbox/messageId, #sent/messageId, etc.
@@ -221,8 +232,8 @@ function analyzeEmailContent() {
   const ALWAYS_SAFE_DOMAINS = ['nmamit.in', 'nitte.edu.in'];
   const ALWAYS_SAFE_EMAILS = ['placement@nmamit.in']; // Explicitly safe sender
 
-  const isFromCollegeDomain = senderDomain && ALWAYS_SAFE_DOMAINS.some(d => senderDomain.toLowerCase().endsWith(d.toLowerCase()));
-  const isSafeEmail = senderEmail && ALWAYS_SAFE_EMAILS.some(e => senderEmail.toLowerCase().includes(e.toLowerCase()));
+  const isFromCollegeDomain = senderDomain && ALWAYS_SAFE_DOMAINS.some(d => isDomainOrSubdomain(senderDomain.toLowerCase(), d));
+  const isSafeEmail = senderEmail && ALWAYS_SAFE_EMAILS.includes(senderEmail.toLowerCase());
 
   if (isFromCollegeDomain || isSafeEmail) {
     console.log('🛡️ PhishGuard: Email from legitimate college source - SUPPRESSING BANNER:', senderEmail || senderDomain);
@@ -280,7 +291,7 @@ function analyzeEmailContent() {
       analysis.reasons.push('ShikshaVertex/SkillVertex scam domain detected');
     }
 
-    if (LEGITIMATE_DOMAINS.some(d => senderDomain.endsWith(d))) {
+    if (LEGITIMATE_DOMAINS.some(d => isDomainOrSubdomain(senderDomain.toLowerCase(), d))) {
       analysis.isLegitimate = true;
       analysis.riskScore = Math.max(0, analysis.riskScore - 30);
     }
@@ -551,7 +562,7 @@ function showPhishingWarning(analysis, senderEmail) {
       <div class="pg-icon">🛡️</div>
       <div class="pg-title-group">
         <div class="pg-badge">${severityLabel}</div>
-        <div class="pg-title">PhishGuard · ${scamType}</div>
+        <div class="pg-title">PhishGuard · ${escapeHtml(scamType)}</div>
       </div>
       <button id="phishguard-dismiss-btn" class="pg-dismiss">✕ Dismiss</button>
     </div>
@@ -564,15 +575,15 @@ function showPhishingWarning(analysis, senderEmail) {
       </div>
 
       <div class="pg-reasons">
-        ${topReasons.map(r => `<div class="pg-reason"><div class="pg-reason-dot"></div><span>${r}</span></div>`).join('')}
+        ${topReasons.map(r => `<div class="pg-reason"><div class="pg-reason-dot"></div><span>${escapeHtml(r)}</span></div>`).join('')}
       </div>
 
-      ${senderEmail ? `<div class="pg-sender">📧 <span>${senderEmail}</span></div>` : ''}
+      ${senderEmail ? `<div class="pg-sender">📧 <span>${escapeHtml(senderEmail)}</span></div>` : ''}
 
       ${topKeywords.length > 0 ? `
       <div class="pg-keywords">
         <div class="pg-kw-label">Suspicious keywords detected</div>
-        ${topKeywords.map(k => `<span class="pg-kw">${k}</span>`).join('')}
+        ${topKeywords.map(k => `<span class="pg-kw">${escapeHtml(k)}</span>`).join('')}
       </div>` : ''}
 
       <div class="pg-footer">
@@ -753,7 +764,7 @@ function scanWithPhishGuard() {
   });
 
   // Open PhishGuard Email Scanner with data
-  const scannerUrl = `http://localhost:3000/email?${params.toString()}`;
+  const scannerUrl = `${SITE_URL}/email?${params.toString()}`;
   window.open(scannerUrl, '_blank');
 
   console.log('🛡️ PhishGuard: Opening scanner with email data');

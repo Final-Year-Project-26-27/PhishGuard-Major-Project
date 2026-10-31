@@ -11,8 +11,9 @@ import { usePathname } from 'next/navigation';
 const GA_TRACKING_ID = 'G-DCRZEV2SJE';
 
 const trackPageview = (url: string) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('config', GA_TRACKING_ID, {
+  const gtag = typeof window !== 'undefined' ? (window as Window & { gtag?: (...args: unknown[]) => void }).gtag : undefined;
+  if (gtag) {
+    gtag('config', GA_TRACKING_ID, {
       page_path: url,
     });
   }

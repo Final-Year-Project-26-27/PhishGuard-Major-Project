@@ -778,7 +778,7 @@ export default function ScannerPage() {
             <ul className="space-y-2 text-zinc-300 text-xs sm:text-sm">
               <li className="flex items-start gap-2">
                 <span className="text-red-400 mt-1 flex-shrink-0">•</span>
-                <span>Urgent or threatening language ("Act now or lose access!")</span>
+                <span>Urgent or threatening language (&ldquo;Act now or lose access!&rdquo;)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-red-400 mt-1 flex-shrink-0">•</span>

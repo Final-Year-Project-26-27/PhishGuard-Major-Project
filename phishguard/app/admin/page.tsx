@@ -9,9 +9,14 @@ export default function AdminPage() {
 
   const handleUpload = async () => {
     if (!url.trim()) return;
-    await addDoc(collection(db, 'phishing_links'), { url });
-    alert('Link added to DB!');
-    setUrl('');
+    try {
+      // Firestore rules only allow the admin account to write here
+      await addDoc(collection(db, 'phishing_links'), { url });
+      alert('Link added to DB!');
+      setUrl('');
+    } catch {
+      alert('Failed to add link. Only the admin account can write to the blocklist.');
+    }
   };
 
   return (

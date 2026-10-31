@@ -1,3 +1,6 @@
+// PhishGuard web app URL. Change it here when the site is deployed.
+const SITE_URL = 'http://localhost:3000';
+
 // PhishGuard Popup Script
 document.addEventListener('DOMContentLoaded', function() {
   // Get DOM elements
@@ -22,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Open dashboard button
   if (openDashboard) {
     openDashboard.addEventListener('click', function() {
-      chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+      chrome.tabs.create({ url: SITE_URL + '/dashboard' });
     });
   }
 
@@ -33,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabs[0]) {
           const url = tabs[0].url;
           chrome.tabs.create({ 
-            url: 'http://localhost:3000/link?url=' + encodeURIComponent(url) 
+            url: SITE_URL + '/link?url=' + encodeURIComponent(url) 
           });
         }
       });
@@ -47,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabs[0]) {
           const url = tabs[0].url;
           chrome.tabs.create({ 
-            url: 'http://localhost:3000/report?url=' + encodeURIComponent(url) 
+            url: SITE_URL + '/report?url=' + encodeURIComponent(url) 
           });
         }
       });

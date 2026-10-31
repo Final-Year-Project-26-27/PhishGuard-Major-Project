@@ -2,49 +2,61 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == "9z0COxpJEbXJsjElS3ZlUdGNcC22";
+    }
+
     // Existing rules for scans collection
     match /scans/{docId} {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
     }
-    
-    // Existing rules for reports collection
+
+    // Community reports: anyone signed in can read; only create as yourself; no edits or deletes
     match /reports/{docId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
     }
-    
+
     // Existing rules for admin collection
     match /admin/{docId} {
       allow read: if request.auth.token.admin == true;
     }
-    
+
+    // Blocklists read by the extension without auth; only the admin writes
+    match /{list}/{docId} {
+      allow read: if list in ['phishing_links', 'phishing_emails', 'suspicious_keywords', 'phishing_patterns'];
+      allow write: if list in ['phishing_links', 'phishing_emails', 'suspicious_keywords', 'phishing_patterns'] && isAdmin();
+    }
+
     // Rules for questions collection (chat system)
     match /questions/{questionId} {
       // Allow authenticated users to read all questions
       allow read: if request.auth != null;
-      
+
       // Allow authenticated users to create questions
       allow create: if request.auth != null;
-      
-      // Only allow the specific admin to update questions (for answering)
-      allow update: if request.auth != null 
-        && request.auth.uid == "9z0COxpJEbXJsjElS3ZlUdGNcC22";
-      
-      // Allow question creator or admin to delete
-      allow delete: if request.auth != null 
-        && (request.auth.uid == "9z0COxpJEbXJsjElS3ZlUdGNcC22");
+
+      // Only the admin can answer or delete questions
+      allow update, delete: if isAdmin();
     }
-    
+
     // New rules for user-specific data collections
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
+
       // Allow users to read and write their scan history
       match /scans/{scanId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // Allow users to read and write their email scan history
       match /email_scans/{emailScanId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Per-user settings (settings page)
+      match /settings/{settingId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }

@@ -22,8 +22,8 @@ import {
   AlertCircle,
   Brain
 } from 'lucide-react'
-import axios from 'axios'
 import { db, auth } from '../../lib/firebase'
+import { API_URL } from '../../lib/utils'
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch } from 'firebase/firestore'
 import { onAuthStateChanged, User as FirebaseUser, signInAnonymously } from 'firebase/auth'
 
@@ -188,45 +188,23 @@ export default function LinkScannerPage() {
     setError(null)
 
     try {
-      // Try to call real API first
-      try {
-        const response = await axios.post('http://localhost:8000/scan/link', {
-          url: link,
-        })
-        
-        // Process API response - simplified to only use confirmed fields
-        const apiResult: ScanResult = {
-          prediction: response.data.prediction === 'Safe' || response.data.prediction === 'Legit' ? 'Legit' : 'Fake',
-          confidence: response.data.confidence || Math.random() * 30 + 70,
-          threat_level: response.data.threat_level || (response.data.prediction === 'Safe' ? 'Low' : 'High'),
-        }
-        
-        setResult(apiResult)
+      const res = await fetch(`${API_URL}/scan/link/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: link }),
+      })
+      if (!res.ok) throw new Error(`Scan failed with status ${res.status}`)
 
-        // Save to Firebase if user is authenticated
-        await saveToFirebase(link, apiResult)
-      } catch (apiError) {
-        console.log('API not available, using local basic analysis:', apiError)
-        setError('The link analysis backend is currently unavailable. Using basic analysis instead.')
-        
-        // Very simple local analysis - just checking for obvious scam keywords
-        const isSuspicious = link.includes('.tk') || link.includes('.ml') || link.includes('.ga') || 
-                           link.toLowerCase().includes('scam') || link.toLowerCase().includes('phishing') || 
-                           link.toLowerCase().includes('urgent') || link.toLowerCase().includes('prize') ||
-                           link.toLowerCase().includes('verify') || link.toLowerCase().includes('suspend')
-        
-        // Simplified mock result without advanced analysis
-        const mockResult: ScanResult = {
-          prediction: isSuspicious ? 'Fake' : 'Legit',
-          confidence: isSuspicious ? Math.random() * 20 + 80 : Math.random() * 15 + 85,
-          threat_level: isSuspicious ? 'Medium' : 'Low',
-        }
-        
-        setResult(mockResult)
-
-        // Save to Firebase if user is authenticated
-        await saveToFirebase(link, mockResult)
+      // Backend returns { prediction: 'Legit' | 'Phishing', confidence: 0-1 }
+      const data = await res.json()
+      const isLegit = data.prediction === 'Legit'
+      const apiResult: ScanResult = {
+        prediction: isLegit ? 'Legit' : 'Fake',
+        confidence: data.confidence,
+        threat_level: isLegit ? 'Low' : 'High',
       }
+      setResult(apiResult)
+      await saveToFirebase(link, apiResult)
 
       // Add to local scan history for backward compatibility or non-authenticated users
       if (!user) {
@@ -236,19 +214,9 @@ export default function LinkScannerPage() {
       }
 
     } catch (err) {
+      // If the backend is down, show an error. Don't invent a result or save one to history.
       console.error('Error scanning link:', err)
       setError('Failed to analyze the link. Please try again later.')
-      
-      // Simple error result
-      const errorResult: ScanResult = {
-        prediction: 'Fake', // Default to Fake for safety when errors occur
-        confidence: 50,
-        threat_level: 'Unknown',
-      }
-      setResult(errorResult)
-      
-      // Save error result to Firebase as well
-      await saveToFirebase(link, errorResult)
     } finally {
       setIsScanning(false)
     }

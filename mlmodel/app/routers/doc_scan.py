@@ -7,9 +7,11 @@ import tempfile
 import json
 import re
 import numpy as np
+from urllib.parse import urlparse
 
 from app.utils.doc_parser import extract_text_from_pdf, extract_text_from_docx
 from app.utils.preprocess import preprocess_text
+from app.utils.doc_features import extract_phishing_features
 
 router = APIRouter()
 
@@ -24,81 +26,38 @@ PHISHING_INDICATORS = metadata.get('phishing_indicators', {})
 FEATURE_NAMES = metadata.get('feature_names', [])
 
 
-def extract_phishing_features(text):
-    """Extract phishing-related features from text"""
-    text_lower = text.lower()
-    features = {}
-    
-    for category, words in PHISHING_INDICATORS.items():
-        count = sum(1 for word in words if word.lower() in text_lower)
-        features[f'{category}_count'] = count
-    
-    features['url_count'] = len(re.findall(r'http[s]?://\S+', text))
-    features['email_count'] = len(re.findall(r'[\w\.-]+@[\w\.-]+', text))
-    features['phone_count'] = len(re.findall(r'\b\d{10}\b|\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', text))
-    features['exclamation_count'] = text.count('!')
-    features['caps_ratio'] = sum(1 for c in text if c.isupper()) / max(len(text), 1)
-    features['word_count'] = len(text.split())
-    features['avg_word_length'] = np.mean([len(w) for w in text.split()]) if text.split() else 0
-    
-    features['has_money_request'] = int(bool(re.search(r'(pay|send|transfer).{0,30}(rs|₹|\$|rupee|dollar)', text_lower)))
-    features['has_credential_request'] = int(bool(re.search(r'(send|share|provide|enter).{0,30}(aadhaar|password|otp|pin|card)', text_lower)))
-    features['has_urgency'] = int(bool(re.search(r'(urgent|immediate|asap|within.{0,10}(hour|day)|act now)', text_lower)))
-    features['has_threat'] = int(bool(re.search(r'(suspend|block|terminate|arrest|legal action|penalty)', text_lower)))
-    features['has_suspicious_domain'] = int(any(domain in text_lower for domain in PHISHING_INDICATORS.get('suspicious_domains', [])))
-    
-    return features
+def _has_term(term, text_lower):
+    """Whole-word match, so 'rs' does not match 'yours' (works for symbols like '₹' too)"""
+    return re.search(r'(?<!\w)' + re.escape(term.lower()) + r'(?!\w)', text_lower) is not None
+
+
+def _is_suspicious_url(url, suspicious_domains):
+    """Check the URL's hostname, so '.co' matches 'x.co' but not 'tcs.com'"""
+    host = (urlparse(url).hostname or '').lower()
+    return any(host.endswith(d) if d.startswith('.') else d in host for d in suspicious_domains)
 
 
 def find_suspicious_indicators(text):
     """Find specific suspicious indicators in the document"""
     text_lower = text.lower()
-    findings = {
-        'urgency_indicators': [],
-        'money_indicators': [],
-        'credential_requests': [],
-        'threats': [],
-        'suspicious_urls': [],
-        'action_requests': []
+    # Warnings shown to the user match whole words. The model's own features still use plain
+    # substring counts, because that's what it was trained on.
+    categories = {
+        'urgency_indicators': 'urgency_words',
+        'money_indicators': 'money_words',
+        'credential_requests': 'credential_words',
+        'threats': 'threat_words',
+        'action_requests': 'action_words',
     }
-    
-    # Find urgency words
-    for word in PHISHING_INDICATORS.get('urgency_words', []):
-        if word.lower() in text_lower:
-            findings['urgency_indicators'].append(word)
-    
-    # Find money-related words
-    for word in PHISHING_INDICATORS.get('money_words', []):
-        if word.lower() in text_lower:
-            findings['money_indicators'].append(word)
-    
-    # Find credential requests
-    for word in PHISHING_INDICATORS.get('credential_words', []):
-        if word.lower() in text_lower:
-            findings['credential_requests'].append(word)
-    
-    # Find threats
-    for word in PHISHING_INDICATORS.get('threat_words', []):
-        if word.lower() in text_lower:
-            findings['threats'].append(word)
-    
-    # Find suspicious URLs
+    findings = {
+        key: sorted({w for w in PHISHING_INDICATORS.get(source, []) if _has_term(w, text_lower)})
+        for key, source in categories.items()
+    }
+
     urls = re.findall(r'http[s]?://[^\s<>"{}|\\^`\[\]]+', text)
-    for url in urls:
-        for domain in PHISHING_INDICATORS.get('suspicious_domains', []):
-            if domain.lower() in url.lower():
-                findings['suspicious_urls'].append(url)
-                break
-    
-    # Find action requests
-    for phrase in PHISHING_INDICATORS.get('action_words', []):
-        if phrase.lower() in text_lower:
-            findings['action_requests'].append(phrase)
-    
-    # Remove duplicates
-    for key in findings:
-        findings[key] = list(set(findings[key]))
-    
+    domains = [d.lower() for d in PHISHING_INDICATORS.get('suspicious_domains', [])]
+    findings['suspicious_urls'] = sorted({u for u in urls if _is_suspicious_url(u, domains)})
+
     return findings
 
 
@@ -131,22 +90,32 @@ def calculate_risk_score(indicators, confidence, is_phishing):
 
 def get_risk_level(risk_score):
     """Get risk level based on score"""
-    if risk_score >= 70:
+    # 75 / 45 are the same cut-offs the v2 dashboard and unified scan use. Change them together.
+    if risk_score >= 75:
         return "HIGH"
-    elif risk_score >= 40:
+    elif risk_score >= 45:
         return "MEDIUM"
     else:
         return "LOW"
 
 
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+
+# Not async on purpose: FastAPI runs plain functions in a thread pool, so a slow PDF
+# won't hold up link and email scans.
 @router.post("/")
-async def predict_doc(file: UploadFile = File(...)):
+def predict_doc(file: UploadFile = File(...)):
     ext = file.filename.split('.')[-1].lower()
     if ext not in ["pdf", "docx", "txt"]:
         raise HTTPException(status_code=400, detail="Only PDF, DOCX, or TXT files are supported")
 
+    data = file.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
-        tmp.write(await file.read())
+        tmp.write(data)
         tmp_path = tmp.name
 
     try:
@@ -169,7 +138,7 @@ async def predict_doc(file: UploadFile = File(...)):
         vec = vectorizer.transform([cleaned])
         
         # Extract additional features
-        features = extract_phishing_features(extracted_text)
+        features = extract_phishing_features(extracted_text, PHISHING_INDICATORS)
         feature_values = np.array([[features.get(name, 0) for name in FEATURE_NAMES]]) if FEATURE_NAMES else np.array([[]])
         
         # Combine features (if we have additional features)
@@ -179,15 +148,9 @@ async def predict_doc(file: UploadFile = File(...)):
             combined = vec.toarray()
         
         # Get prediction
-        try:
-            prob = model.predict_proba(combined)[0]
-            label = model.predict(combined)[0]
-            confidence = float(max(prob))
-        except:
-            # Fallback if model expects different features
-            prob = model.predict_proba(vec)[0]
-            label = model.predict(vec)[0]
-            confidence = float(max(prob))
+        prob = model.predict_proba(combined)[0]
+        label = model.predict(combined)[0]
+        confidence = float(max(prob))
         
         is_phishing = label == 0
         

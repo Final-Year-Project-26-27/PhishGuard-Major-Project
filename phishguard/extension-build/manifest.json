@@ -4,34 +4,34 @@
   "version": "2.3",
   "description": "Comprehensive protection against phishing websites and scam emails with AI-powered detection",
   "action": {
-    "default_icon": "favicon.ico",
+    "default_icon": "icon.png",
     "default_popup": "popup.html"
   },
   "icons": {
-    "16": "favicon.ico",
-    "48": "favicon.ico",
-    "128": "favicon.ico"
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
   },
   "permissions": [
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback",
     "storage",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
-    "<all_urls>",
     "https://mail.google.com/*",
-    "https://firestore.googleapis.com/*",
-    "https://generativelanguage.googleapis.com/*"
+    "https://firestore.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://mail.google.com/*"],
-      "js": ["content-gmail.js"],
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "content-gmail.js"
+      ],
       "run_at": "document_end",
       "all_frames": true
     }

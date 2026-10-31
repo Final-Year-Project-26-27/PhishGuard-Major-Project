@@ -21,6 +21,7 @@ import {
   AtSign
 } from 'lucide-react'
 import { db, auth } from '../../lib/firebase'
+import { API_URL } from '../../lib/utils'
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch } from 'firebase/firestore'
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth'
 
@@ -45,6 +46,7 @@ export default function EmailScannerPage() {
   const [senderDomain, setSenderDomain] = useState('')
   const [result, setResult] = useState<EmailScanResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<FirebaseUser | null>(null)
   const [firebaseHistory, setFirebaseHistory] = useState<FirebaseEmailRecord[]>([])
   const [localHistory, setLocalHistory] = useState<FirebaseEmailRecord[]>([])
@@ -197,51 +199,7 @@ export default function EmailScannerPage() {
     if (autoScanPending && textContent && senderDomain && mounted && !loading) {
       setAutoScanPending(false)
       // Small delay to ensure UI is ready
-      const timer = setTimeout(async () => {
-        setLoading(true)
-        setResult(null)
-
-        try {
-          try {
-            const res = await fetch('http://localhost:8000/scan/email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text_content: textContent, sender_domain: senderDomain }),
-            })
-
-            const data = await res.json()
-            
-            const apiResult: EmailScanResult = {
-              prediction: data.prediction === 'Safe' || data.prediction === 'Legit' ? 'Legit' : 'Fake',
-              confidence: typeof data.confidence === 'number' && data.confidence >= 0 && data.confidence <= 1 
-                ? data.confidence : 0.85
-            }
-            
-            setResult(apiResult)
-            saveToFirebase(textContent, senderDomain, apiResult)
-          } catch {
-            const isSuspicious = textContent.toLowerCase().includes('click') ||
-                                 textContent.toLowerCase().includes('urgent') ||
-                                 textContent.toLowerCase().includes('password') ||
-                                 textContent.toLowerCase().includes('internship') ||
-                                 textContent.toLowerCase().includes('shortlisted') ||
-                                 textContent.toLowerCase().includes('training fee') ||
-                                 senderDomain.includes('shikshavertex')
-
-            const mockResult: EmailScanResult = {
-              prediction: isSuspicious ? 'Fake' : 'Legit',
-              confidence: isSuspicious ? 0.92 : 0.88,
-            }
-            
-            setResult(mockResult)
-            saveToFirebase(textContent, senderDomain, mockResult)
-          }
-        } catch (error) {
-          console.error('Error scanning email:', error)
-        } finally {
-          setLoading(false)
-        }
-      }, 500)
+      const timer = setTimeout(handleSubmit, 500)
       
       return () => clearTimeout(timer)
     }
@@ -253,49 +211,27 @@ export default function EmailScannerPage() {
     
     setLoading(true)
     setResult(null)
+    setError(null)
 
     try {
-      // Try to call real API first
-      try {
-        const res = await fetch('http://localhost:8000/scan/email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text_content: textContent,
-            sender_domain: senderDomain,
-          }),
-        })
+      const res = await fetch(`${API_URL}/scan/email/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text_content: textContent, sender_domain: senderDomain }),
+      })
+      if (!res.ok) throw new Error(`Scan failed with status ${res.status}`)
 
-        const data = await res.json()
-        
-        // Improved confidence score handling with validation
-        const apiResult: EmailScanResult = {
-          prediction: data.prediction === 'Safe' || data.prediction === 'Legit' ? 'Legit' : 'Fake',
-          confidence: typeof data.confidence === 'number' && data.confidence >= 0 && data.confidence <= 1 
-            ? data.confidence 
-            : (typeof data.confidence === 'number' && data.confidence > 1 ? data.confidence/100 : 0.5)
-        }
-        
-        setResult(apiResult)
-
-        // Save to Firebase if user is authenticated
-        await saveToFirebase(textContent, senderDomain, apiResult)
-      } catch (apiError) {
-        console.error('API not available:', apiError)
-        throw apiError
+      const data = await res.json()
+      const apiResult: EmailScanResult = {
+        prediction: data.prediction === 'Legit' ? 'Legit' : 'Fake',
+        confidence: data.confidence,
       }
+      setResult(apiResult)
+      await saveToFirebase(textContent, senderDomain, apiResult)
     } catch (err) {
+      // If the backend is down, show an error. Don't invent a result or save one to history.
       console.error('Error scanning email:', err)
-      const errorResult: EmailScanResult = {
-        prediction: 'Fake',
-        confidence: 0
-      }
-      setResult(errorResult)
-
-      // Save error result to Firebase as well
-      await saveToFirebase(textContent, senderDomain, errorResult)
+      setError('Could not reach the scanner. Please try again in a minute.')
     } finally {
       setLoading(false)
     }
@@ -482,6 +418,12 @@ export default function EmailScannerPage() {
                   </div>
                 </div>
               </div>
+
+              {error && (
+                <div role="alert" className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-2xl p-4">
+                  {error}
+                </div>
+              )}
 
               {/* Scan Results */}
               {result && (

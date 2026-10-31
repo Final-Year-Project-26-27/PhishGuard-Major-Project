@@ -82,9 +82,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Train AI models
-python train/train_email_model.py
-python train/train_link_model.py
-python train/train_doc_model.py
+python -m train.train_email_model
+python -m train.train_link_model
+python -m train.train_doc_model
 
 # Start API server
 python -m uvicorn app.main:app --reload
@@ -152,7 +152,7 @@ graph TB
 
 #### **Backend**
 - **API**: FastAPI (Python)
-- **ML/AI**: scikit-learn, TensorFlow
+- **ML/AI**: scikit-learn
 - **Models**: Email classification, URL analysis, Document scanning
 - **Security**: JWT tokens, rate limiting
 
@@ -240,9 +240,8 @@ POST /scan/email
 Content-Type: application/json
 
 {
-  "sender": "recruiter@company.com",
-  "subject": "Job Opportunity",
-  "content": "Email content here..."
+  "text_content": "Email content here...",
+  "sender_domain": "company.com"
 }
 ```
 
