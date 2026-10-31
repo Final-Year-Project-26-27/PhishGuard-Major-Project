@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { isHttpUrl as isValidUrl } from '../../lib/utils'
 
 export default function ReportPage() {
   const [url, setUrl] = useState('')
@@ -18,15 +19,6 @@ export default function ReportPage() {
   const [proofUrl, setProofUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  const isValidUrl = (string: string) => {
-    try {
-      new URL(string)
-      return true
-    } catch {
-      return false
-    }
-  }
 
   const isValidEmail = (val: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)

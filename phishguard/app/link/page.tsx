@@ -15,7 +15,7 @@ import {
   Terminal,
 } from 'lucide-react'
 import { db, auth } from '../../lib/firebase'
-import { API_URL } from '../../lib/utils'
+import { API_URL, openExternal } from '../../lib/utils'
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch } from 'firebase/firestore'
 import { onAuthStateChanged, User as FirebaseUser, signInAnonymously } from 'firebase/auth'
 import { toast } from 'sonner'
@@ -400,7 +400,7 @@ export default function LinkScannerPage() {
                   </button>
 
                   <button
-                    onClick={() => window.open(link, '_blank')}
+                    onClick={() => openExternal(/^[a-z][a-z0-9+.-]*:/i.test(link) ? link : `https://${link}`)}
                     className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <ExternalLink className="size-3" />

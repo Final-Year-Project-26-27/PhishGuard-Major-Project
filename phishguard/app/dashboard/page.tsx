@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { db } from '../../lib/firebase'
+import { openExternal } from '../../lib/utils'
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import {
   Search,
@@ -395,7 +396,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
                     <span>Reporter: {report.reporterEmail || 'Anonymous Student'}</span>
                     <button
-                      onClick={() => window.open(report.url, '_blank')}
+                      onClick={() => openExternal(report.url)}
                       className="hover:text-zinc-200 inline-flex items-center gap-1"
                     >
                       <span>Direct Target</span>

@@ -14,7 +14,9 @@ service cloud.firestore {
     // Community reports: anyone signed in can read; only create as yourself; no edits or deletes
     match /reports/{docId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      // url must be http(s): the dashboard opens it, so javascript: links can't be stored
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+        && request.resource.data.url is string && request.resource.data.url.matches('(?i)^https?://.+');
       allow update, delete: if false;
     }
 
