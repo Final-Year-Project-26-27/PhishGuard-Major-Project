@@ -47,21 +47,21 @@ export default function InboxBeforeAfter() {
             </div>
           </div>
 
-          <div data-ui="inbox-after" className="rounded-lg bg-teal-300 p-6 sm:p-8 text-zinc-950 flex flex-col">
+          <div data-ui="inbox-after" className="rounded-lg bg-teal-700 p-6 sm:p-8 text-white flex flex-col">
             <p className="text-lg font-semibold">With PhishGuard</p>
-            <p className="text-base text-zinc-800">The same six messages, checked before you opened them.</p>
+            <p className="text-base text-teal-50">The same six messages, checked before you opened them.</p>
             <div className="flex-1 grid place-items-center py-12">
               <div className="text-center space-y-4">
                 <CheckCircle2 className="size-14 mx-auto" strokeWidth={1.5} />
                 <p className="text-3xl sm:text-4xl font-bold tracking-tight">{PILE.length} scams flagged</p>
-                <p className="text-base text-zinc-800">
+                <p className="text-base text-teal-50">
                   {Object.entries(COUNTS)
                     .map(([app, n]) => `${app} ${n}`)
                     .join('  ·  ')}
                 </p>
               </div>
             </div>
-            <p className="text-sm text-zinc-800">Example messages. Names and numbers are made up.</p>
+            <p className="text-sm text-teal-50">Example messages. Names and numbers are made up.</p>
           </div>
         </div>
       </div>

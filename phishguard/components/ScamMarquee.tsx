@@ -13,21 +13,21 @@ const LINES = [
 export default function ScamMarquee() {
   return (
     <section aria-label="Examples of scam messages" className="py-10 bg-[#121316]">
-      <p className="max-w-[75rem] mx-auto px-4 sm:px-6 text-base text-zinc-400">
-        Lines like these reach students on WhatsApp, Gmail and LinkedIn:
-      </p>
-      <div className="marquee mt-5 overflow-hidden">
-        <ul className="marquee-track flex w-max gap-3">
-          {[...LINES, ...LINES].map((line, i) => (
-            <li
-              key={i}
-              aria-hidden={i >= LINES.length}
-              className="shrink-0 rounded bg-[#1b1d21] px-4 py-2.5 text-base text-zinc-200 whitespace-nowrap"
-            >
-              “{line}”
-            </li>
-          ))}
-        </ul>
+      <div className="max-w-[75rem] mx-auto px-4 sm:px-6">
+        <p className="text-base text-zinc-400">Lines like these reach students on WhatsApp, Gmail and LinkedIn:</p>
+        <div className="marquee marquee-fade mt-5 overflow-hidden">
+          <ul className="marquee-track flex w-max gap-3">
+            {[...LINES, ...LINES].map((line, i) => (
+              <li
+                key={i}
+                aria-hidden={i >= LINES.length}
+                className="shrink-0 rounded bg-[#1b1d21] px-4 py-2.5 text-base text-zinc-200 whitespace-nowrap"
+              >
+                “{line}”
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   )
