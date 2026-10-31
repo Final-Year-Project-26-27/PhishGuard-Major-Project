@@ -1,20 +1,18 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { db } from '../../lib/firebase'
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
-import { 
-  Globe2, 
-  User2, 
-  CalendarDays, 
-  AlertCircle, 
-  Shield, 
-  TrendingUp, 
-  Activity,
+import {
   Search,
-  Filter,
-  Download
+  Download,
+  Activity,
+  BarChart3,
+  PieChart,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -27,11 +25,11 @@ import {
 } from 'chart.js'
 
 ChartJS.register(
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  Tooltip, 
-  Legend, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
   ArcElement
 )
 
@@ -56,80 +54,63 @@ export default function DashboardPage() {
   // CSV Export Function
   const exportToCSV = () => {
     if (filteredReports.length === 0) {
-      alert('No data to export!')
+      toast.warning('No report data available to export.')
       return
     }
 
     try {
-      // Define CSV headers
       const headers = ['ID', 'URL', 'Reporter Email', 'Scam Type', 'Description', 'Image URL', 'Date Reported']
-      
-      // Convert reports to CSV format
       const csvData = filteredReports.map(report => [
         report.id,
-        `"${report.url}"`, // Wrap in quotes to handle commas in URLs
+        `"${report.url}"`,
         report.reporterEmail || 'Anonymous',
         report.scamType || 'Unknown',
-        `"${(report.description || '').replace(/"/g, '""')}"`, // Escape quotes in description
+        `"${(report.description || '').replace(/"/g, '""')}"`,
         report.imageUrl || '',
         report.createdAt?.toDate
-          ? new Date(report.createdAt.toDate()).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
+          ? new Date(report.createdAt.toDate()).toISOString()
           : 'Unknown'
       ])
 
-      // Combine headers and data
       const csvContent = [headers, ...csvData]
         .map(row => row.join(','))
         .join('\n')
 
-      // Create and download the file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
-      
       link.setAttribute('href', url)
-      link.setAttribute('download', `phishguard-reports-${new Date().toISOString().split('T')[0]}.csv`)
+      link.setAttribute('download', `phishguard-telemetry-${new Date().toISOString().slice(0, 10)}.csv`)
       link.style.visibility = 'hidden'
-      
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
-      // Clean up the URL object
       URL.revokeObjectURL(url)
-      
-      // Show success message
-      setTimeout(() => {
-        alert(`Successfully exported ${filteredReports.length} reports to CSV!`)
-      }, 100)
-      
-    } catch (error) {
-      console.error('Error exporting CSV:', error)
-      alert('Failed to export data. Please try again.')
+
+      toast.success(`Exported ${filteredReports.length} reports to CSV.`)
+    } catch (err) {
+      console.error('Error exporting CSV:', err)
+      toast.error('Failed to export CSV report.')
     }
   }
 
   useEffect(() => {
     const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
       } as Report))
       setReports(data)
+      setLoading(false)
+    }, (err) => {
+      console.error('Firestore reports fetch error:', err)
       setLoading(false)
     })
 
     return () => unsubscribe()
   }, [])
 
-  // Enhanced analytics
   const analytics = useMemo(() => {
     const totalReports = reports.length
     const scamTypeCounts = reports.reduce((acc: Record<string, number>, report) => {
@@ -138,57 +119,44 @@ export default function DashboardPage() {
       return acc
     }, {})
 
-    const last7Days = new Date()
-    last7Days.setDate(last7Days.getDate() - 7)
-    
-    const recentReports = reports.filter(r => 
-      r.createdAt?.toDate && r.createdAt.toDate() > last7Days
-    ).length
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const recentReports = reports.filter(r => {
+      if (!r.createdAt?.toDate) return false
+      return r.createdAt.toDate() >= sevenDaysAgo
+    }).length
 
     const topScamType = Object.entries(scamTypeCounts)
-      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'None'
+      .sort(([, a], [, b]) => b - a)[0]?.[0] || 'None'
 
-    return {
-      totalReports,
-      scamTypeCounts,
-      recentReports,
-      topScamType
-    }
+    return { totalReports, recentReports, scamTypeCounts, topScamType }
   }, [reports])
 
-  // Filtered reports
   const filteredReports = useMemo(() => {
     return reports.filter(report => {
-      const matchesSearch = 
-        report.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.reporterEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesFilter = 
-        selectedFilter === 'all' || 
+      const matchesSearch =
+        (report.url || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (report.reporterEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (report.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesFilter =
+        selectedFilter === 'all' ||
         report.scamType === selectedFilter
 
       return matchesSearch && matchesFilter
     })
   }, [reports, searchTerm, selectedFilter])
 
+  // Modern Technical Palette for Charts
   const chartData = {
     labels: Object.keys(analytics.scamTypeCounts),
     datasets: [
       {
-        label: 'Reports by Type',
+        label: 'Incident Volume',
         data: Object.values(analytics.scamTypeCounts),
-        backgroundColor: [
-          'rgba(6, 182, 212, 0.8)',   // cyan
-          'rgba(251, 146, 60, 0.8)',  // orange
-          'rgba(34, 197, 94, 0.8)',   // green
-          'rgba(168, 85, 247, 0.8)',  // purple
-          'rgba(239, 68, 68, 0.8)',   // red
-          'rgba(245, 158, 11, 0.8)',  // yellow
-        ],
-        borderRadius: 8,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(244, 244, 245, 0.8)',
+        hoverBackgroundColor: '#ffffff',
+        borderRadius: 4,
+        borderWidth: 0,
       },
     ],
   }
@@ -199,14 +167,15 @@ export default function DashboardPage() {
       {
         data: Object.values(analytics.scamTypeCounts),
         backgroundColor: [
-          'rgba(6, 182, 212, 0.8)',
-          'rgba(251, 146, 60, 0.8)',
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(168, 85, 247, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
+          '#ef4444', // crimson
+          '#f59e0b', // amber
+          '#10b981', // emerald
+          '#38bdf8', // sky
+          '#a1a1aa', // zinc
+          '#6366f1', // indigo
         ],
-        borderWidth: 0,
+        borderColor: '#121215',
+        borderWidth: 2,
       },
     ],
   }
@@ -215,29 +184,24 @@ export default function DashboardPage() {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        labels: {
-          color: '#fff',
-          font: { size: 12 },
-          padding: 20,
-        },
-      },
+      legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#06b6d4',
-        bodyColor: '#fff',
-        borderColor: '#06b6d4',
+        backgroundColor: '#18181b',
+        titleColor: '#f4f4f5',
+        bodyColor: '#a1a1aa',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
+        padding: 8,
       },
     },
     scales: {
       x: {
-        ticks: { color: '#ccc', font: { size: 11 } },
-        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+        ticks: { color: '#71717a', font: { family: 'monospace', size: 10 } },
+        grid: { display: false },
       },
       y: {
-        ticks: { color: '#ccc', font: { size: 11 } },
-        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+        ticks: { color: '#71717a', font: { family: 'monospace', size: 10 } },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
       },
     },
   }
@@ -249,15 +213,18 @@ export default function DashboardPage() {
       legend: {
         position: 'bottom' as const,
         labels: {
-          color: '#fff',
-          font: { size: 11 },
-          padding: 15,
+          color: '#a1a1aa',
+          font: { family: 'monospace', size: 10 },
+          padding: 12,
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#06b6d4',
-        bodyColor: '#fff',
+        backgroundColor: '#18181b',
+        titleColor: '#f4f4f5',
+        bodyColor: '#a1a1aa',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        padding: 8,
       },
     },
   }
@@ -266,214 +233,186 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto py-20 px-4">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
-          <span className="ml-3 text-cyan-400">Loading dashboard...</span>
+      <div className="max-w-6xl mx-auto py-24 px-4 text-center">
+        <div className="inline-flex items-center gap-2 font-mono text-xs text-zinc-500">
+          <RefreshCw className="size-4 animate-spin" />
+          <span>Synchronizing Telemetry Feed...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-4">
-           PhishGuard Dashboard
-        </h1>
-        <p className="text-zinc-400 text-lg">Real-time monitoring of phishing and scam reports</p>
-      </div>
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/10 border border-cyan-500/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-cyan-400 text-sm font-medium">Total Reports</p>
-              <p className="text-3xl font-bold text-white">{analytics.totalReports}</p>
+        {/* Header Telemetry */}
+        <div className="space-y-3 border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+            <Activity className="size-3.5 text-zinc-400" />
+            <span>Institutional Telemetry</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-200">Incident Feed</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Security Telemetry Dashboard
+            </h1>
+            <span className="font-mono text-xs text-zinc-500">
+              Aggregated Community Reports & Classification Trends
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Real-time catalog of user-submitted scam reports, active malicious domains, and fraudulent recruiter contacts across the academic network.
+          </p>
+        </div>
+
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Total Reports</span>
+            <p className="font-mono text-2xl font-bold text-zinc-100">{analytics.totalReports}</p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Intake (7 Days)</span>
+            <p className="font-mono text-2xl font-bold text-zinc-100">{analytics.recentReports}</p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Top Threat Vector</span>
+            <p className="font-mono text-base font-bold text-amber-400 truncate">{analytics.topScamType}</p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Threat Diversity</span>
+            <p className="font-mono text-2xl font-bold text-zinc-100">{Object.keys(analytics.scamTypeCounts).length}</p>
+          </div>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                <BarChart3 className="size-3.5 text-zinc-500" />
+                Incident Distribution by Category
+              </span>
             </div>
-            <Shield className="w-8 h-8 text-cyan-400" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-400 text-sm font-medium">This Week</p>
-              <p className="text-3xl font-bold text-white">{analytics.recentReports}</p>
+            <div className="h-64">
+              <Bar data={chartData} options={chartOptions} />
             </div>
-            <TrendingUp className="w-8 h-8 text-orange-400" />
           </div>
-        </div>
 
-        <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-400 text-sm font-medium">Top Scam Type</p>
-              <p className="text-lg font-bold text-white truncate">{analytics.topScamType}</p>
+          <div className="lg:col-span-5 rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                <PieChart className="size-3.5 text-zinc-500" />
+                Category Breakdown
+              </span>
             </div>
-            <Activity className="w-8 h-8 text-green-400" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-400 text-sm font-medium">Unique Types</p>
-              <p className="text-3xl font-bold text-white">{Object.keys(analytics.scamTypeCounts).length}</p>
+            <div className="h-64">
+              <Doughnut data={doughnutData} options={doughnutOptions} />
             </div>
-            <AlertCircle className="w-8 h-8 text-purple-400" />
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Reports by Scam Type</h3>
-          <div className="h-80">
-            <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
 
-        <div className="bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Distribution</h3>
-          <div className="h-80">
-            <Doughnut data={doughnutData} options={doughnutOptions} />
-          </div>
-        </div>
-      </div>
+        {/* Search, Filter & Export Toolbar */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search by URL, reporter, or content..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+              />
+            </div>
 
-      {/* Filters and Search */}
-      <div className="bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-xl p-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search reports..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-cyan-500 transition-colors"
-            />
-          </div>
-          
-          <div className="relative">
-            <Filter className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
-            <select
-              value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors appearance-none"
+            <button
+              onClick={exportToCSV}
+              className="w-full sm:w-auto px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center justify-center gap-1.5 transition-colors"
             >
-              {uniqueScamTypes.map(type => (
-                <option key={type} value={type}>
-                  {type === 'all' ? 'All Types' : type}
-                </option>
-              ))}
-            </select>
+              <Download className="size-3" />
+              <span>Export CSV</span>
+            </button>
           </div>
 
-          <button 
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+          {/* Filter Pills */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {uniqueScamTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => setSelectedFilter(type || 'all')}
+                className={`px-2.5 py-1 rounded text-xs font-mono uppercase transition-colors ${
+                  selectedFilter === type
+                    ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                    : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Reports List */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-white">
-            Recent Reports ({filteredReports.length})
-          </h3>
-          
-          {filteredReports.length === 0 ? (
-            <div className="text-center py-12">
-              <Shield className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
-              <p className="text-zinc-500 text-lg">
-                {reports.length === 0 
-                  ? "No scam reports yet... you're safe for now 🛡️"
-                  : "No reports match your current filters"
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {filteredReports.map((report) => (
-                <div
-                  key={report.id}
-                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 hover:border-cyan-500/30 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                    <div className="flex-1 space-y-3">
-                      {/* URL */}
-                      <div className="flex items-center gap-2">
-                        <Globe2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                        <span className="text-cyan-400 font-medium break-all">{report.url}</span>
-                      </div>
+        {/* Reports Feed */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 overflow-hidden shadow-sm">
+          <div className="p-4 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300">
+              Verified Intake Stream ({filteredReports.length})
+            </span>
+            <span className="font-mono text-[10px] text-zinc-500">
+              AUTO-SYNC FIRESTORE
+            </span>
+          </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        {/* Reporter */}
-                        <div className="flex items-center gap-2 text-zinc-300">
-                          <User2 className="w-4 h-4 text-zinc-500" />
-                          <span>{report.reporterEmail || 'Anonymous'}</span>
-                        </div>
-
-                        {/* Date */}
-                        <div className="flex items-center gap-2 text-zinc-400">
-                          <CalendarDays className="w-4 h-4 text-zinc-500" />
-                          <span>
-                            {report.createdAt?.toDate
-                              ? new Date(report.createdAt.toDate()).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
-                              : 'Unknown'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Scam Type */}
-                      {report.scamType && (
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-orange-400" />
-                          <span className="bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs font-medium">
-                            {report.scamType}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Description */}
-                      {report.description && (
-                        <div className="text-zinc-300 text-sm bg-zinc-800/50 rounded-lg p-3 border border-zinc-700">
-                          <p className="italic">&quot;{report.description}&quot;</p>
-                        </div>
-                      )}
+          <div className="divide-y divide-zinc-800/80">
+            {filteredReports.length > 0 ? (
+              filteredReports.map((report) => (
+                <div key={report.id} className="p-4 sm:p-5 hover:bg-zinc-900/40 transition-colors space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-red-900/50 bg-red-950/30 text-red-300">
+                        {report.scamType || 'UNCLASSIFIED'}
+                      </span>
+                      <span className="font-mono text-xs text-zinc-300 font-semibold truncate max-w-md">
+                        {report.url}
+                      </span>
                     </div>
+                    <span className="font-mono text-[11px] text-zinc-500">
+                      {report.createdAt?.toDate ? report.createdAt.toDate().toLocaleString() : 'Recent'}
+                    </span>
+                  </div>
 
-                    {/* Image Preview */}
-                    {report.imageUrl && (
-                      <div className="lg:w-48 flex-shrink-0">
-                        {/* Plain <img>: user-supplied external URL, and next/image optimisation isn't available in the static export */}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={report.imageUrl}
-                          alt="Reported screenshot"
-                          className="w-full h-32 lg:h-24 object-cover rounded-lg border border-zinc-700 shadow-lg"
-                        />
-                      </div>
-                    )}
+                  {report.description && (
+                    <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                      {report.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                    <span>Reporter: {report.reporterEmail || 'Anonymous Student'}</span>
+                    <button
+                      onClick={() => window.open(report.url, '_blank')}
+                      className="hover:text-zinc-200 inline-flex items-center gap-1"
+                    >
+                      <span>Direct Target</span>
+                      <ExternalLink className="size-3" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="p-12 text-center text-zinc-500 font-mono text-xs">
+                No matching telemetry reports found for current query parameters.
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   )

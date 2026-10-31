@@ -2,30 +2,21 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { 
-  MessageCircle, 
-  Send, 
-  User, 
-  Bot, 
-  Shield, 
-  Clock,
+import {
+  MessageSquare,
+  Send,
+  Shield,
   CheckCircle,
-  Users,
-  FileText,
   Search,
-  Filter,
-  Star,
-  Heart,
+  Terminal,
   ThumbsUp,
-  Pin
+  RefreshCw,
+  CornerDownRight,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { auth, db } from '@/lib/firebase'
 import { collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore'
 import { User as FirebaseUser } from 'firebase/auth'
+import { toast } from 'sonner'
 
 interface Message {
   id: string
@@ -42,16 +33,7 @@ interface Message {
   category: string
   likes: number
   isResolved: boolean
-  isPinned: boolean
   replies?: Message[]
-}
-
-interface ChatCategory {
-  id: string
-  name: string
-  icon: React.ElementType
-  color: string
-  count: number
 }
 
 export default function ChatPage() {
@@ -72,15 +54,14 @@ export default function ChatPage() {
     return () => unsubscribe()
   }, [])
 
-  const categories: ChatCategory[] = [
-    { id: 'all', name: 'All Topics', icon: MessageCircle, color: 'blue', count: 45 },
-    { id: 'phishing', name: 'Phishing Detection', icon: Shield, color: 'red', count: 15 },
-    { id: 'scams', name: 'Scam Awareness', icon: Bot, color: 'yellow', count: 12 },
-    { id: 'security', name: 'General Security', icon: FileText, color: 'green', count: 8 },
-    { id: 'technical', name: 'Technical Help', icon: Search, color: 'purple', count: 10 }
+  const categories = [
+    { id: 'all', name: 'All Threads' },
+    { id: 'phishing', name: 'Phishing URLs' },
+    { id: 'scams', name: 'Internship Scams' },
+    { id: 'security', name: 'Account Defense' },
+    { id: 'technical', name: 'Technical Analysis' },
   ]
 
-  // Load messages from Firebase in real-time
   useEffect(() => {
     if (user) {
       const q = query(collection(db, 'questions'), orderBy('timestamp', 'desc'))
@@ -88,53 +69,51 @@ export default function ChatPage() {
         const questionsData: Message[] = []
         snapshot.forEach((doc) => {
           const data = doc.data()
-          
-          // Create the main question message
+
           const questionMessage: Message = {
             id: doc.id,
             content: data.content,
             sender: {
-              id: data.student.id,
-              name: data.student.name,
-              email: data.student.email,
-              avatar: data.student.avatar,
+              id: data.student?.id || 'anon',
+              name: data.student?.name || 'Student',
+              email: data.student?.email || '',
+              avatar: data.student?.avatar || `https://ui-avatars.com/api/?name=Student&background=18181b&color=f4f4f5`,
               role: 'student'
             },
-            timestamp: data.timestamp.toDate(),
+            timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
             type: 'question',
-            category: data.category,
+            category: data.category || 'general',
             likes: data.likes || 0,
             isResolved: data.status === 'answered' || data.status === 'resolved',
-            isPinned: false,
             replies: []
           }
-          
-          // If there's an admin answer, add it as a reply
+
           if (data.answer && data.status === 'answered') {
             const adminReply: Message = {
               id: `${doc.id}-answer`,
               content: data.answer.content,
               sender: {
-                id: data.answer.answeredBy.id,
-                name: data.answer.answeredBy.name,
-                email: data.answer.answeredBy.email,
-                avatar: data.answer.answeredBy.avatar,
+                id: data.answer.answeredBy?.id || 'lead',
+                name: data.answer.answeredBy?.name || 'Security Lead',
+                email: data.answer.answeredBy?.email || '',
+                avatar: data.answer.answeredBy?.avatar || `https://ui-avatars.com/api/?name=SecLead&background=047857&color=f4f4f5`,
                 role: 'team_lead'
               },
-              timestamp: data.answer.timestamp.toDate(),
+              timestamp: data.answer.timestamp?.toDate ? data.answer.timestamp.toDate() : new Date(),
               type: 'answer',
-              category: data.category,
+              category: data.category || 'general',
               likes: 0,
               isResolved: false,
-              isPinned: false,
               replies: []
             }
             questionMessage.replies = [adminReply]
           }
-          
+
           questionsData.push(questionMessage)
         })
         setMessages(questionsData)
+      }, (err) => {
+        console.error('Questions fetch error:', err)
       })
 
       return () => unsubscribe()
@@ -144,26 +123,26 @@ export default function ChatPage() {
   }, [user])
 
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user) return
+    if (!newMessage.trim()) return
+    if (!user) {
+      toast.error('Authentication required to dispatch security inquiries.')
+      return
+    }
 
     setIsLoading(true)
-    
+
     try {
       const questionData = {
-        content: newMessage,
+        content: newMessage.trim(),
         student: {
           id: user.uid,
           name: user.displayName || 'Student',
           email: user.email || '',
-          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Student')}&background=0891b2&color=fff`
+          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Student')}&background=18181b&color=f4f4f5`
         },
         category: selectedCategory === 'all' ? 'general' : selectedCategory,
         timestamp: new Date(),
@@ -175,14 +154,12 @@ export default function ChatPage() {
         replies: []
       }
 
-      // Save to Firebase
       await addDoc(collection(db, 'questions'), questionData)
-      
-
       setNewMessage('')
-      
+      toast.success('Inquiry dispatched to security team queue.')
     } catch (error) {
       console.error('Error saving question:', error)
+      toast.error('Failed to post question.')
     } finally {
       setIsLoading(false)
     }
@@ -192,15 +169,14 @@ export default function ChatPage() {
     if (!replyContent.trim() || !user) return
 
     setIsLoading(true)
-    
     const reply: Message = {
       id: `${parentMessageId}-reply-${Date.now()}`,
-      content: replyContent,
+      content: replyContent.trim(),
       sender: {
         id: user.uid,
         name: user.displayName || 'Student',
         email: user.email || '',
-        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Student')}&background=0891b2&color=fff`,
+        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Student')}&background=18181b&color=f4f4f5`,
         role: 'student'
       },
       timestamp: new Date(),
@@ -208,7 +184,6 @@ export default function ChatPage() {
       category: 'general',
       likes: 0,
       isResolved: false,
-      isPinned: false
     }
 
     setMessages(prev => prev.map(msg => {
@@ -218,38 +193,22 @@ export default function ChatPage() {
           replies: [...(msg.replies || []), reply]
         }
       }
-      // Also check if we're replying to a reply
-      if (msg.replies) {
-        const updatedReplies = msg.replies.map(r => {
-          if (r.id === parentMessageId) {
-            return {
-              ...r,
-              replies: [...(r.replies || []), reply]
-            }
-          }
-          return r
-        })
-        return { ...msg, replies: updatedReplies }
-      }
       return msg
     }))
-    
+
     setReplyContent('')
     setReplyingTo(null)
     setIsLoading(false)
+    toast.success('Follow-up appended to thread.')
   }
 
   const handleLikeMessage = (messageId: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
         ? { ...msg, likes: msg.likes + 1 }
         : {
             ...msg,
-            replies: msg.replies?.map(reply => 
-              reply.id === messageId 
-                ? { ...reply, likes: reply.likes + 1 }
-                : reply
-            )
+            replies: msg.replies?.map(r => r.id === messageId ? { ...r, likes: r.likes + 1 } : r)
           }
     ))
   }
@@ -261,315 +220,253 @@ export default function ChatPage() {
     return matchesCategory && matchesSearch
   })
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'team_lead': return 'bg-green-500/20 text-green-400 border-green-500/30'
-      case 'admin': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-      default: return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-    }
-  }
+  return (
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-8">
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'team_lead': return Shield
-      case 'admin': return Star
-      default: return User
-    }
-  }
+        {/* Header Telemetry */}
+        <div className="space-y-3 border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+            <MessageSquare className="size-3.5 text-zinc-400" />
+            <span>Advisory Channel</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-200">Security Advisor Terminal</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Security Advisor Terminal
+            </h1>
+            <span className="font-mono text-xs text-zinc-500">
+              Live Q&A Dispatch with Institutional Security Leads
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Direct consultative terminal for submitting unverified outreach, suspicious internship contracts, or domain spoofing queries to human security operators.
+          </p>
+        </div>
 
-  const renderMessage = (message: Message, depth = 0) => {
-    const isNested = depth > 0
-    const marginLeft = isNested ? { marginLeft: `${Math.min(depth * 32, 128)}px` } : {}
-    const avatarSize = isNested ? 'w-8 h-8' : 'w-10 h-10'
-    const textSize = isNested ? 'text-sm' : ''
-
-    return (
-      <div key={message.id} className="space-y-3" style={marginLeft}>
-        <div className="flex gap-3">
-          <div className="flex-shrink-0">
-            <div className={`${avatarSize} rounded-full overflow-hidden ${
-              message.sender.role === 'team_lead' 
-                ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                : 'bg-gradient-to-r from-cyan-500 to-blue-500'
-            }`}>
-              <Image 
-                src={message.sender.avatar} 
-                alt={message.sender.name}
-                width={isNested ? 32 : 40}
-                height={isNested ? 32 : 40}
-                className="w-full h-full object-cover"
-                unoptimized
+        {/* Toolbar & Category Filters */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search advisor threads..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
               />
             </div>
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`font-semibold text-white ${textSize}`}>{message.sender.name}</span>
-              <Badge className={`text-xs ${getRoleColor(message.sender.role)}`}>
-                {React.createElement(getRoleIcon(message.sender.role), { className: "w-3 h-3 mr-1" })}
-                {message.sender.role.replace('_', ' ')}
-              </Badge>
-              <span className="text-xs text-zinc-400">
-                {message.timestamp.toLocaleDateString()} {message.timestamp.toLocaleTimeString()}
-              </span>
-              {message.isPinned && <Pin className="w-3 h-3 text-yellow-400" />}
-              {message.isResolved && <CheckCircle className="w-3 h-3 text-green-400" />}
-            </div>
-            
-            <div className={`${
-              message.sender.role === 'team_lead' 
-                ? 'bg-green-500/10 border border-green-500/20' 
-                : 'bg-zinc-700/30 border border-zinc-600/30'
-            } rounded-lg p-3 mb-3`}>
-              <p className={`text-zinc-200 leading-relaxed ${textSize}`}>{message.content}</p>
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm">
-              <button
-                onClick={() => handleLikeMessage(message.id)}
-                className={`flex items-center gap-1 transition-colors ${
-                  message.sender.role === 'team_lead'
-                    ? 'text-zinc-400 hover:text-green-400'
-                    : 'text-zinc-400 hover:text-red-400'
-                }`}
-              >
-                {message.sender.role === 'team_lead' ? (
-                  <ThumbsUp className="w-3 h-3" />
-                ) : (
-                  <Heart className="w-4 h-4" />
-                )}
-                {message.likes}
-              </button>
-              
-              {user && (
+
+            <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
+              {categories.map((cat) => (
                 <button
-                  onClick={() => setReplyingTo(replyingTo === message.id ? null : message.id)}
-                  className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-xs"
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono uppercase transition-colors ${
+                    selectedCategory === cat.id
+                      ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                      : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  }`}
                 >
-                  <MessageCircle className="w-3 h-3" />
-                  Reply
+                  {cat.name}
                 </button>
-              )}
-              
-              {!isNested && (
-                <Badge variant="outline" className="text-xs text-white">
-                  {message.category}
-                </Badge>
-              )}
-            </div>
-
-            {/* Reply Input */}
-            {user && replyingTo === message.id && (
-              <div className="mt-3 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Ask a follow-up question or provide additional information..."
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    className="bg-zinc-700/50 border-zinc-600/50 text-white placeholder-zinc-400 resize-none text-sm"
-                    rows={2}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      onClick={() => handleSendReply(message.id)}
-                      disabled={!replyContent.trim() || isLoading}
-                      size="sm"
-                      className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-3"
-                    >
-                      {isLoading ? (
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Send className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setReplyingTo(null)
-                        setReplyContent('')
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs border-zinc-600 text-zinc-400"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Render Nested Replies */}
-        {message.replies && message.replies.map((reply) => renderMessage(reply, depth + 1))}
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center">
-              <MessageCircle className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Security Chat Hub
-              </h1>
-              <p className="text-zinc-400">Ask doubts, get expert answers from our security team</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm text-zinc-400">Active Users</span>
-              </div>
-              <p className="text-xl font-bold text-white">7</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-zinc-400">Questions</span>
-              </div>
-              <p className="text-xl font-bold text-white">10</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-zinc-400">Resolved</span>
-              </div>
-              <p className="text-xl font-bold text-white">8</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-zinc-400">Avg Response</span>
-              </div>
-              <p className="text-xl font-bold text-white">12m</p>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          {/* Sidebar - Categories */}
-          <div className="lg:col-span-1">
-            <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/50 sticky top-4">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Filter className="w-5 h-5 text-cyan-400" />
-                Categories
-              </h3>
-              
-              <div className="space-y-2">
-                {categories.map((category) => {
-                  const IconComponent = category.icon
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 ${
-                        selectedCategory === category.id
-                          ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                          : 'text-zinc-300 hover:bg-zinc-700/50 hover:text-white'
-                      }`}
-                    >
-                      <IconComponent className="w-4 h-4 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{category.name}</p>
-                      </div>
-                   
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Search */}
-              <div className="mt-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <Input
-                    placeholder="Search questions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-zinc-800/50 border-zinc-700/50 text-white placeholder-zinc-400"
-                  />
-                </div>
-              </div>
-            </div>
+        {/* Dispatch New Inquiry Input */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <Terminal className="size-3.5 text-zinc-500" />
+              Dispatch Security Inquiry
+            </span>
+            <span className="text-[11px] font-mono text-zinc-500">
+              {user ? 'AUTHENTICATED' : 'ANONYMOUS READ-ONLY'}
+            </span>
           </div>
 
-          {/* Main Chat Area */}
-          <div className="lg:col-span-3">
-            <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 h-[600px] flex flex-col">
-              
-              {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                {filteredMessages.map((message) => renderMessage(message))}
-                <div ref={messagesEndRef} />
-              </div>
+          <div className="space-y-3">
+            <textarea
+              rows={3}
+              placeholder={user ? "Ask a question about an offer letter, recruiter message, or suspicious campus email..." : "Sign in to post an inquiry to the security team..."}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              disabled={!user || isLoading}
+              className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none disabled:opacity-50"
+            />
 
-              {/* Message Input */}
-              {user && (
-                <div className="p-4 border-t border-zinc-700/50">
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-500">
-                        <Image 
-                          src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=0891b2&color=fff`}
-                          alt={user.displayName || 'You'}
-                          width={32}
-                          height={32}
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-mono text-zinc-500">
+                Responses are vetted by university security team leads.
+              </p>
+
+              <button
+                onClick={handleSendMessage}
+                disabled={!user || !newMessage.trim() || isLoading}
+                className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-40"
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Transmitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="size-3.5" />
+                    <span>Transmit Inquiry</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Threads List */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-400">
+              Active Inquiries ({filteredMessages.length})
+            </span>
+            <span className="font-mono text-[10px] text-zinc-500">
+              REALTIME SYNCHRONIZATION
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {filteredMessages.length > 0 ? (
+              filteredMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 space-y-3 shadow-sm hover:border-zinc-700 transition-colors"
+                >
+                  {/* Sender Metadata Header */}
+                  <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-7 rounded overflow-hidden border border-zinc-700 bg-zinc-800">
+                        <Image
+                          src={msg.sender.avatar}
+                          alt={msg.sender.name}
+                          width={28}
+                          height={28}
                           className="w-full h-full object-cover"
                           unoptimized
                         />
                       </div>
+                      <div className="space-y-0.5">
+                        <p className="font-mono text-xs text-zinc-200 font-semibold">{msg.sender.name}</p>
+                        <p className="text-[10px] font-mono text-zinc-500">
+                          {msg.timestamp.toLocaleDateString()} · {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 flex gap-2">
-                      <Textarea
-                        placeholder="Ask your cybersecurity question..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        className="bg-zinc-800/50 border-zinc-700/50 text-white placeholder-zinc-400 resize-none"
-                        rows={2}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault()
-                            handleSendMessage()
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim() || isLoading}
-                        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-4"
-                      >
-                        {isLoading ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                      </Button>
+
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded border border-zinc-800 bg-zinc-950 text-zinc-400">
+                        {msg.category}
+                      </span>
+                      {msg.isResolved && (
+                        <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded border border-emerald-800/60 bg-emerald-950/40 text-emerald-300 flex items-center gap-1 font-semibold">
+                          <CheckCircle className="size-3" />
+                          Answered
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {!user && (
-                <div className="p-4 border-t border-zinc-700/50 text-center">
-                  <p className="text-zinc-400">Please sign in to ask questions and participate in discussions</p>
+                  {/* Question Content */}
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                    {msg.content}
+                  </p>
+
+                  {/* Actions Bar */}
+                  <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-1">
+                    <button
+                      onClick={() => handleLikeMessage(msg.id)}
+                      className="hover:text-zinc-200 inline-flex items-center gap-1 transition-colors"
+                    >
+                      <ThumbsUp className="size-3" />
+                      <span>{msg.likes}</span>
+                    </button>
+
+                    {user && (
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === msg.id ? null : msg.id)}
+                        className="hover:text-zinc-200 inline-flex items-center gap-1 transition-colors"
+                      >
+                        <CornerDownRight className="size-3" />
+                        <span>Reply</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Inline Reply Input */}
+                  {user && replyingTo === msg.id && (
+                    <div className="pt-2 border-t border-zinc-800 space-y-2">
+                      <textarea
+                        rows={2}
+                        placeholder="Provide supplemental information or follow-up..."
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        className="w-full p-2.5 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none resize-none"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => { setReplyingTo(null); setReplyContent(''); }}
+                          className="px-2.5 py-1 rounded border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-zinc-200"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleSendReply(msg.id)}
+                          className="px-3 py-1 rounded bg-zinc-100 text-zinc-950 font-medium text-[11px] font-mono hover:bg-zinc-200"
+                        >
+                          Append
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Thread Replies */}
+                  {msg.replies && msg.replies.length > 0 && (
+                    <div className="pt-2 pl-4 border-l border-zinc-800 space-y-3">
+                      {msg.replies.map((reply) => (
+                        <div key={reply.id} className="p-3 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Shield className="size-3.5 text-emerald-400" />
+                              <span className="font-mono text-xs font-bold text-zinc-200">{reply.sender.name}</span>
+                              <span className="font-mono text-[9px] uppercase px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-800 text-emerald-300">
+                                Verified Analyst
+                              </span>
+                            </div>
+                            <span className="font-mono text-[10px] text-zinc-500">
+                              {reply.timestamp.toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                            {reply.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="p-12 text-center text-zinc-500 font-mono text-xs border border-zinc-800 rounded-lg">
+                {user ? 'No active inquiries matching selected filters.' : 'Please sign in to load the live security team Q&A feed.'}
+              </div>
+            )}
           </div>
+
+          <div ref={messagesEndRef} />
         </div>
+
       </div>
     </div>
   )

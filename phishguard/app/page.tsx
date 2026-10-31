@@ -1,567 +1,574 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { 
-  ShieldCheck, 
-  Bug, 
-  UploadCloud, 
-  Globe2, 
-  Download, 
-  Zap,
-  Users,
-  Star,
-  ArrowRight,
-  CheckCircle,
-  Shield,
-  Scan,
-  AlertTriangle,
-  TrendingUp,
-  Clock,
-  Award,
-  Eye,
-  Lock,
-  Wifi,
-  Database,
-  Target,
-  Activity,
-  Cpu,
-  Heart,
-  Rocket,
-  Search,
-  Brain,
-  Timer,
-  Fingerprint,
-  MousePointer,
-  Command
-} from 'lucide-react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
+import {
+  Shield,
+  Mail,
+  FileText,
+  Download,
+  ArrowRight,
+  Terminal,
+  Layers,
+  Lock,
+  Cpu,
+  RefreshCw,
+} from 'lucide-react'
+import { API_URL } from '@/lib/utils'
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false)
-  const [currentFeature, setCurrentFeature] = useState(0)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [activeTab, setActiveTab] = useState<'url' | 'email' | 'offer'>('url')
+  const [urlInput, setUrlInput] = useState('')
+  const [emailText, setEmailText] = useState('')
+  const [senderDomain, setSenderDomain] = useState('')
+  const [offerText, setOfferText] = useState('')
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<{
+    status: 'safe' | 'danger' | 'warning'
+    headline: string
+    confidence: number
+    details: string[]
+  } | null>(null)
+  const [scanError, setScanError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setMounted(true)
-    const interval = setInterval(() => {
-      setCurrentFeature((prev) => (prev + 1) % 4)
-    }, 3000)
+  const handleQuickScan = async () => {
+    setIsScanning(true)
+    setScanResult(null)
+    setScanError(null)
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      })
+    try {
+      if (activeTab === 'url') {
+        if (!urlInput.trim()) return
+        const res = await fetch(`${API_URL}/scan/link/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput.trim() }),
+        })
+        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        const data = await res.json()
+        const isLegit = data.prediction === 'Legit'
+        setScanResult({
+          status: isLegit ? 'safe' : 'danger',
+          headline: isLegit ? 'Verified Clean Link' : 'Malicious / Phishing URL Detected',
+          confidence: data.confidence,
+          details: [
+            `Model Prediction: ${data.prediction}`,
+            `Confidence: ${(data.confidence * 100).toFixed(1)}%`,
+            isLegit ? 'No known blacklisted heuristics triggered.' : 'High probability of credential harvesting or impersonation.',
+          ],
+        })
+      } else if (activeTab === 'email') {
+        if (!emailText.trim()) return
+        const res = await fetch(`${API_URL}/scan/email/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text_content: emailText.trim(),
+            sender_domain: senderDomain.trim() || 'gmail.com',
+          }),
+        })
+        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        const data = await res.json()
+        const isLegit = data.prediction === 'Legit'
+        setScanResult({
+          status: isLegit ? 'safe' : 'danger',
+          headline: isLegit ? 'Legitimate Communication' : 'Deceptive or Fee-Scam Pattern Detected',
+          confidence: data.confidence,
+          details: [
+            `Verdict: ${data.prediction}`,
+            `Confidence: ${(data.confidence * 100).toFixed(1)}%`,
+            ...(data.red_flag_words && data.red_flag_words.length > 0
+              ? data.red_flag_words.map((w: string) => `Flagged: ${w}`)
+              : ['Standard correspondence indicators observed.']),
+          ],
+        })
+      } else if (activeTab === 'offer') {
+        if (!offerText.trim()) return
+        const res = await fetch(`${API_URL}/scan/offer/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: offerText.trim() }),
+        })
+        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        const data = await res.json()
+        if (!data.is_offer) {
+          setScanResult({
+            status: 'warning',
+            headline: 'Non-Recruitment Content',
+            confidence: 0,
+            details: ['Message does not appear to be an internship or job offer.'],
+          })
+        } else {
+          const isFake = data.prediction === 'Fake'
+          setScanResult({
+            status: isFake ? 'danger' : 'safe',
+            headline: isFake ? 'High-Risk Internship Scam' : 'Verified Legitimate Offer',
+            confidence: data.confidence / 100,
+            details: [
+              `Classification: ${data.prediction}`,
+              `Confidence: ${data.confidence}%`,
+              ...(data.red_flags && data.red_flags.length > 0
+                ? data.red_flags.map((r: string) => `Alert: ${r}`)
+                : ['Standard institutional hiring language detected.']),
+            ],
+          })
+        }
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : 'Could not connect to the ML backend. Ensure FastAPI is active.')
+    } finally {
+      setIsScanning(false)
     }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [])
-
-  const features = [
-    { icon: Shield, text: "Real-time protection against phishing attacks", color: "cyan" },
-    { icon: Brain, text: "AI-powered URL analysis and threat detection", color: "blue" },
-    { icon: AlertTriangle, text: "Instant alerts for malicious content", color: "purple" },
-    { icon: Fingerprint, text: "Advanced behavioral pattern recognition", color: "pink" }
-  ]
-
-  const stats = [
-    { number: "50+", label: "URLs Scanned", icon: Search },
-    { number: "231+", label: "Threats Blocked", icon: Shield },
-    { number: "99.9%", label: "Accuracy Rate", icon: Target },
-    { number: "24/7", label: "Protection", icon: Clock }
-  ]
-
-  if (!mounted) {
-    return null
   }
+
   return (
-    <div className="relative min-h-screen bg-black text-white overflow-hidden">
-      {/* Dynamic Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl transition-all duration-1000 ease-out"
-          style={{
-            top: `${mousePosition.y}%`,
-            left: `${mousePosition.x}%`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        ></div>
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-400/8 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-400/8 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-pink-400/8 rounded-full blur-3xl animate-pulse delay-2000"></div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.1)_1px,transparent_1px)] bg-[size:50px_50px] opacity-20"></div>
-      </div>
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans">
 
-      <main className="relative z-10">
-        {/* Hero Section */}
-        <section className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-12 xl:py-20">
-          <div className="max-w-7xl mx-auto text-center space-y-6 sm:space-y-8 lg:space-y-12">
-            
-            {/* Status Badge */}
-            <div className="flex justify-center animate-fade-in">
-              <Badge 
-                variant="outline" 
-                className="text-cyan-400 px-4 sm:px-6 py-2 sm:py-3 border-cyan-400/50 bg-cyan-400/10 backdrop-blur-sm text-xs sm:text-sm lg:text-base font-medium hover:bg-cyan-400/20 transition-all duration-300 cursor-pointer group"
-              >
-                <Rocket className="w-3 h-3 sm:w-4 sm:h-4 mr-2 group-hover:animate-bounce" />
-                 Next-Gen AI Security Platform
-                <Activity className="w-3 h-3 sm:w-4 sm:h-4 ml-2 animate-pulse" />
-              </Badge>
-            </div>
+      {/* Blueprint Substrate Grid */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
 
-            {/* Main Heading - Enhanced Mobile Responsive */}
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold tracking-tight leading-tight px-2">
-              <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-1 xs:mb-2 sm:mb-4">
-                Advanced Phishing
-              </span>
-              <span className="block bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
-                Protection Suite
-              </span>
-            </h1>
+      {/* Hero Section */}
+      <section className="relative pt-16 pb-20 md:pt-24 md:pb-32 border-b border-zinc-800/80">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            {/* Dynamic Feature Display - Mobile Optimized */}
-            <div className="h-10 xs:h-12 sm:h-16 flex items-center justify-center px-2 sm:px-4">
-              <div className="flex items-center space-x-1 xs:space-x-2 sm:space-x-3 bg-zinc-800/50 backdrop-blur-sm rounded-full px-3 xs:px-4 sm:px-6 py-2 xs:py-2.5 sm:py-3 border border-zinc-700/50 transition-all duration-500 hover:border-cyan-400/50 hover:bg-zinc-800/70">
-                {React.createElement(features[currentFeature].icon, {
-                  className: `w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-${features[currentFeature].color}-400 animate-pulse flex-shrink-0`
-                })}
-                <span className="text-zinc-300 text-xs xs:text-xs sm:text-sm lg:text-base font-medium max-w-[200px] xs:max-w-xs sm:max-w-md lg:max-w-lg xl:max-w-xl text-center leading-relaxed truncate sm:whitespace-normal">
-                  {features[currentFeature].text}
-                </span>
-              </div>
-            </div>
-
-            {/* Enhanced Description - Mobile Optimized */}
-            <p className="text-sm xs:text-base sm:text-lg lg:text-xl xl:text-2xl text-zinc-300 leading-relaxed max-w-[280px] xs:max-w-sm sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-2 sm:px-4">
-              PhishGuard leverages <span className="text-cyan-400 font-semibold inline-flex items-center"><Brain className="w-3 h-3 xs:w-4 xs:h-4 mx-1" />advanced AI</span> and 
-              <span className="text-blue-400 font-semibold inline-flex items-center"><Cpu className="w-3 h-3 xs:w-4 xs:h-4 mx-1" />machine learning</span> to detect phishing, 
-              malware, and scam threats — <span className="text-purple-400 font-semibold inline-flex items-center"><Timer className="w-3 h-3 xs:w-4 xs:h-4 mx-1" />in real-time</span>.
-            </p>
-
-            {/* CTA Buttons - Enhanced Mobile Responsive */}
-            <div className="flex flex-col gap-3 xs:gap-4 sm:flex-row sm:justify-center sm:gap-4 lg:gap-6 mt-6 xs:mt-8 sm:mt-12 px-2 xs:px-4 w-full max-w-sm xs:max-w-md sm:max-w-2xl mx-auto">
-              <Link
-                href="/install"
-                className="group inline-flex items-center justify-center gap-2 xs:gap-2 sm:gap-3 px-4 xs:px-6 sm:px-8 lg:px-10 py-3 xs:py-3.5 sm:py-4 lg:py-5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-lg xs:rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105 text-xs xs:text-sm sm:text-base lg:text-lg"
-              >
-                <Download className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 group-hover:animate-bounce" />
-                Install Extension
-                <ArrowRight className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/report"
-                className="group inline-flex items-center justify-center gap-2 xs:gap-2 sm:gap-3 px-4 xs:px-6 sm:px-8 lg:px-10 py-3 xs:py-3.5 sm:py-4 lg:py-5 border-2 border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10 hover:border-cyan-400 font-semibold rounded-lg xs:rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-xs xs:text-sm sm:text-base lg:text-lg"
-              >
-                <UploadCloud className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 group-hover:animate-pulse" />
-                Report Threat
-                <MousePointer className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
-              </Link>
-            </div>
-
-            {/* Enhanced Stats Grid - Mobile Optimized */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-3 sm:gap-6 lg:gap-8 mt-8 xs:mt-12 sm:mt-16 lg:mt-20 px-2 xs:px-4 max-w-6xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center group cursor-pointer">
-                  <div className="bg-zinc-800/30 backdrop-blur-sm rounded-lg xs:rounded-xl sm:rounded-2xl p-2 xs:p-3 sm:p-6 lg:p-8 border border-zinc-700/50 hover:border-cyan-400/50 transition-all duration-300 hover:bg-zinc-800/50 group-hover:shadow-lg group-hover:shadow-cyan-400/10 transform hover:-translate-y-1">
-                    <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-1 xs:mb-2 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
-                      {React.createElement(stat.icon, {
-                        className: "w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white"
-                      })}
-                    </div>
-                    <div className="text-lg xs:text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
-                      {stat.number}
-                    </div>
-                    <div className="text-zinc-400 text-xs xs:text-xs sm:text-sm lg:text-base font-medium mt-0.5 xs:mt-1 sm:mt-2">
-                      {stat.label}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Enhanced Social Proof - Mobile Optimized */}
-            <div className="flex flex-col xs:flex-row items-center justify-center gap-2 xs:gap-3 sm:gap-6 lg:gap-8 mt-8 xs:mt-12 sm:mt-16 text-zinc-400 px-2 xs:px-4">
-              <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 bg-zinc-800/30 backdrop-blur-sm rounded-full px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-3 border border-zinc-700/50 hover:border-cyan-400/30 transition-all duration-300">
-                <Users className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-cyan-400" />
-                <span className="text-xs xs:text-xs sm:text-sm lg:text-base">
-                  Trusted by <span className="text-cyan-400 font-semibold">50+</span> users
-                </span>
-                <Heart className="w-3 h-3 xs:w-4 xs:h-4 text-pink-400 animate-pulse" />
-              </div>
-              <div className="hidden xs:block w-1 h-1 bg-zinc-600 rounded-full"></div>
-              <div className="flex items-center gap-1 xs:gap-1 sm:gap-2 bg-zinc-800/30 backdrop-blur-sm rounded-full px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-3 border border-zinc-700/50 hover:border-yellow-400/30 transition-all duration-300">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                ))}
-                <span className="ml-1 xs:ml-2 text-xs xs:text-xs sm:text-sm lg:text-base">4.2/5 rating</span>
-              </div>
-            </div>
+          {/* Eyebrow Pill */}
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900/80 text-zinc-400 font-mono text-[11px] uppercase tracking-wider mb-8">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>PhishGuard Security Suite</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-300">v2.3 Core</span>
           </div>
-        </section>
 
-        {/* Advanced Features Section - Mobile Enhanced */}
-        <section className="py-8 xs:py-12 sm:py-16 lg:py-20 xl:py-24 px-2 xs:px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-8 xs:mb-12 sm:mb-16 lg:mb-20">
-              <div className="inline-flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mb-4 xs:mb-6 sm:mb-8 shadow-lg shadow-cyan-500/30">
-                <Zap className="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 text-white animate-pulse" />
-              </div>
-              <h2 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-3 xs:mb-4 sm:mb-6 px-2">
-                Enterprise-Grade Security Features
-              </h2>
-              <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-zinc-400 max-w-[280px] xs:max-w-sm sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto leading-relaxed px-2">
-                Comprehensive cybersecurity solutions powered by cutting-edge AI technology and machine learning algorithms
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+
+            {/* Left Narrative */}
+            <div className="lg:col-span-7 space-y-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-100 leading-[1.08]">
+                Autonomous threat detection built for student environments.
+              </h1>
+
+              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
+                PhishGuard protects universities and students from deceptive recruitment pitches, credential-harvesting portals, and fraudulent internship scams across Web, Gmail, WhatsApp, and LinkedIn.
               </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Link
+                  href="/scanner"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  <Layers className="size-3.5" />
+                  <span>Open Full Workstation</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
+
+                <Link
+                  href="/install"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded border border-zinc-800 bg-zinc-900/60 text-zinc-300 font-medium text-xs hover:bg-zinc-800/80 hover:text-white transition-colors"
+                >
+                  <Download className="size-3.5 text-zinc-400" />
+                  <span>Download Browser Extension</span>
+                </Link>
+              </div>
+
+              {/* Architecture Badges */}
+              <div className="pt-6 grid grid-cols-3 gap-4 border-t border-zinc-800/80 max-w-md">
+                <div>
+                  <div className="font-mono text-lg font-semibold text-zinc-200">5</div>
+                  <div className="text-[11px] text-zinc-500 uppercase tracking-wider font-mono">ML Engines</div>
+                </div>
+                <div>
+                  <div className="font-mono text-lg font-semibold text-zinc-200">18</div>
+                  <div className="text-[11px] text-zinc-500 uppercase tracking-wider font-mono">Offer Signals</div>
+                </div>
+                <div>
+                  <div className="font-mono text-lg font-semibold text-emerald-400">0.0</div>
+                  <div className="text-[11px] text-zinc-500 uppercase tracking-wider font-mono">Mock Fallbacks</div>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4 sm:gap-6 lg:gap-8">
-              {/* Real-Time Detection - Mobile Enhanced */}
-              <div className="group bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-3 xs:p-4 sm:p-6 lg:p-8 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl border border-zinc-700/50 hover:border-cyan-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-400/10 transform hover:-translate-y-2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg xs:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 xs:mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-cyan-500/30">
-                    <ShieldCheck className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 text-white group-hover:text-cyan-400 transition-colors">
-                    Real-Time Detection
-                  </h3>
-                  <p className="text-zinc-400 text-xs xs:text-sm sm:text-base leading-relaxed mb-3 xs:mb-4">
-                    Advanced AI algorithms analyze URLs instantly using machine learning patterns and threat intelligence databases.
-                  </p>
-                  <div className="flex items-center text-cyan-400 text-xs xs:text-xs sm:text-sm font-medium">
-                    <CheckCircle className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 mr-1 xs:mr-2" />
-                    99.9% accuracy rate
-                    <Eye className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 ml-1 xs:ml-2 animate-pulse" />
-                  </div>
-                </div>
-              </div>
+            {/* Right Live Quick-Scan Console */}
+            <div className="lg:col-span-5 w-full">
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/90 shadow-2xl overflow-hidden backdrop-blur-sm">
 
-              {/* Malware Protection - Mobile Enhanced */}
-              <div className="group bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-3 xs:p-4 sm:p-6 lg:p-8 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl border border-zinc-700/50 hover:border-red-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-red-400/10 transform hover:-translate-y-2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg xs:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 xs:mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-red-500/30">
-                    <Bug className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
+                {/* Console Title Bar */}
+                <div className="px-4 py-2.5 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="size-3.5 text-zinc-400" />
+                    <span className="font-mono text-xs text-zinc-300 font-medium uppercase tracking-wider">
+                      Live Threat Inspector
+                    </span>
                   </div>
-                  <h3 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 text-white group-hover:text-red-400 transition-colors">
-                    Malware Protection
-                  </h3>
-                  <p className="text-zinc-400 text-xs xs:text-sm sm:text-base leading-relaxed mb-3 xs:mb-4">
-                    Proactive defense against malware, ransomware, and malicious scripts with behavioral analysis.
-                  </p>
-                  <div className="flex items-center text-red-400 text-xs xs:text-xs sm:text-sm font-medium">
-                    <Lock className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 mr-1 xs:mr-2" />
-                    Enterprise-grade protection
-                    <Database className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 ml-1 xs:ml-2 animate-pulse" />
-                  </div>
+                  <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
+                    API :8000
+                  </span>
                 </div>
-              </div>
 
-              {/* Global Coverage - Mobile Enhanced */}
-              <div className="group bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-3 xs:p-4 sm:p-6 lg:p-8 rounded-lg xs:rounded-xl sm:rounded-2xl lg:rounded-3xl border border-zinc-700/50 hover:border-purple-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-400/10 transform hover:-translate-y-2 relative overflow-hidden sm:col-span-2 lg:col-span-1">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg xs:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 xs:mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-purple-500/30">
-                    <Globe2 className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 text-white group-hover:text-purple-400 transition-colors">
-                    Global Threat Intelligence
-                  </h3>
-                  <p className="text-zinc-400 text-xs xs:text-sm sm:text-base leading-relaxed mb-3 xs:mb-4">
-                    Worldwide threat monitoring with real-time updates from our global security network.
-                  </p>
-                  <div className="flex items-center text-purple-400 text-xs xs:text-xs sm:text-sm font-medium">
-                    <Wifi className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 mr-1 xs:mr-2" />
-                    200+ countries monitored
-                    <Command className="w-3 h-3 xs:w-3 xs:h-3 sm:w-4 sm:h-4 ml-1 xs:ml-2 animate-pulse" />
-                  </div>
+                {/* Sub-Tabs */}
+                <div className="flex border-b border-zinc-800 bg-zinc-950/40 text-xs font-mono">
+                  <button
+                    onClick={() => { setActiveTab('url'); setScanResult(null); }}
+                    className={`flex-1 py-2 text-center transition-colors border-b-2 ${
+                      activeTab === 'url' ? 'border-zinc-200 text-zinc-100 bg-zinc-900/80 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    URL Inspection
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('email'); setScanResult(null); }}
+                    className={`flex-1 py-2 text-center transition-colors border-b-2 ${
+                      activeTab === 'email' ? 'border-zinc-200 text-zinc-100 bg-zinc-900/80 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    Email Analysis
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('offer'); setScanResult(null); }}
+                    className={`flex-1 py-2 text-center transition-colors border-b-2 ${
+                      activeTab === 'offer' ? 'border-zinc-200 text-zinc-100 bg-zinc-900/80 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    Offer Scam
+                  </button>
+                </div>
+
+                {/* Console Body */}
+                <div className="p-4 space-y-3">
+                  {activeTab === 'url' && (
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                        Destination URL
+                      </label>
+                      <input
+                        type="url"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        placeholder="https://internship-confirm.tk/login"
+                        className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === 'email' && (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                          Sender Domain
+                        </label>
+                        <input
+                          type="text"
+                          value={senderDomain}
+                          onChange={(e) => setSenderDomain(e.target.value)}
+                          placeholder="company-recruiter.org"
+                          className="w-full h-8 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                          Message Body
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={emailText}
+                          onChange={(e) => setEmailText(e.target.value)}
+                          placeholder="Paste recruiter email or outreach content..."
+                          className="w-full p-2.5 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'offer' && (
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                        Offer Pitch / WhatsApp Message
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={offerText}
+                        onChange={(e) => setOfferText(e.target.value)}
+                        placeholder="Congratulations! You have been selected for web internship. Deposit Rs 1999 registration fee..."
+                        className="w-full p-2.5 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleQuickScan}
+                    disabled={isScanning}
+                    className="w-full h-9 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isScanning ? (
+                      <>
+                        <RefreshCw className="size-3.5 animate-spin" />
+                        <span>Evaluating Heuristics...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="size-3.5" />
+                        <span>Run Model Inference</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Scan Error */}
+                  {scanError && (
+                    <div className="p-3 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono">
+                      {scanError}
+                    </div>
+                  )}
+
+                  {/* Scan Result Readout */}
+                  {scanResult && (
+                    <div className={`p-3 rounded border font-mono text-xs space-y-2 ${
+                      scanResult.status === 'safe'
+                        ? 'bg-emerald-950/30 border-emerald-800/50 text-emerald-200'
+                        : scanResult.status === 'warning'
+                        ? 'bg-amber-950/30 border-amber-800/50 text-amber-200'
+                        : 'bg-red-950/30 border-red-800/50 text-red-200'
+                    }`}>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>{scanResult.headline}</span>
+                        {scanResult.confidence > 0 && (
+                          <span className="text-[11px] opacity-80">
+                            {(scanResult.confidence * 100).toFixed(0)}% Conf
+                          </span>
+                        )}
+                      </div>
+                      <ul className="text-[11px] space-y-1 opacity-90 border-t border-white/10 pt-2">
+                        {scanResult.details.map((detail, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="text-zinc-500">•</span>
+                            <span>{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                 </div>
               </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Architecture & Telemetry Strip */}
+      <section className="py-12 border-b border-zinc-800/80 bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="space-y-1">
+              <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Inference Target</span>
+              <p className="font-semibold text-sm text-zinc-200">FastAPI Architecture</p>
+              <p className="text-xs text-zinc-400">Sub-50ms local tokenization and scoring.</p>
+            </div>
+            <div className="space-y-1">
+              <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Intercept Channels</span>
+              <p className="font-semibold text-sm text-zinc-200">Gmail · WA · LinkedIn</p>
+              <p className="text-xs text-zinc-400">Contextual DOM injection and link guards.</p>
+            </div>
+            <div className="space-y-1">
+              <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Remediation</span>
+              <p className="font-semibold text-sm text-zinc-200">Autonomous Ingestion</p>
+              <p className="text-xs text-zinc-400">Thread-level warning draft injection.</p>
+            </div>
+            <div className="space-y-1">
+              <span className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Security Contract</span>
+              <p className="font-semibold text-sm text-zinc-200">Zero Mocking Policy</p>
+              <p className="text-xs text-zinc-400">True failures report cleanly; never invented.</p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Pricing & Revenue Model Section */}
-        <section className="py-12 sm:py-16 lg:py-20 xl:py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mb-4 sm:mb-6 shadow-lg shadow-green-500/30">
-                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white animate-pulse" />
-              </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-4 sm:mb-6">
-                Simple, Transparent Pricing
-              </h2>
-              <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
-                Choose the perfect plan for your security needs. From students to enterprises, we&apos;ve got you covered.
-              </p>
-            </div>
+      {/* Bento Grid: Defense Capabilities */}
+      <section className="py-20 border-b border-zinc-800/80">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
-              
-              {/* Free Plan */}
-              <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl lg:rounded-3xl border border-zinc-700/50 hover:border-blue-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-blue-400/10 transform hover:-translate-y-1 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Free Plan</h3>
-                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Students</Badge>
-                  </div>
-                  <div className="mb-4 sm:mb-6">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">₹0</span>
-                    <span className="text-zinc-400 text-sm sm:text-base ml-2">forever</span>
-                  </div>
-                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Link & Email Scanning
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Basic Phishing Protection
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Browser Extension
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Community Support
-                    </li>
-                  </ul>
-                  <Link
-                    href="/install"
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
-                  >
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Get Started Free
-                  </Link>
-                </div>
-              </div>
-
-              {/* Pro Plan - Most Popular */}
-              <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl lg:rounded-3xl border-2 border-cyan-400/50 hover:border-cyan-400 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-400/20 transform hover:-translate-y-2 relative overflow-hidden scale-105">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10"></div>
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 px-3 py-1 text-xs font-semibold shadow-lg">
-                    Most Popular
-                  </Badge>
-                </div>
-                <div className="relative z-10 pt-2">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Pro Plan</h3>
-                    <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">Individual</Badge>
-                  </div>
-                  <div className="mb-4 sm:mb-6">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">₹299</span>
-                    <span className="text-zinc-400 text-sm sm:text-base ml-2">/month</span>
-                  </div>
-                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Everything in Free
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      AI Document Scanning
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Custom Security Alerts
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Advanced Analytics
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Priority Support
-                    </li>
-                  </ul>
-                  <Link
-                    href="/install"
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base shadow-lg shadow-cyan-500/25"
-                  >
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Upgrade to Pro
-                  </Link>
-                </div>
-              </div>
-
-              {/* Enterprise Plan */}
-              <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl lg:rounded-3xl border border-zinc-700/50 hover:border-purple-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-purple-400/10 transform hover:-translate-y-1 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Enterprise</h3>
-                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Universities</Badge>
-                  </div>
-                  <div className="mb-4 sm:mb-6">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">₹2,999</span>
-                    <span className="text-zinc-400 text-sm sm:text-base ml-2">/year</span>
-                  </div>
-                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      SAP-Powered Dashboards
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Scam Trend Reports
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Campus-wide Alerts
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      API Integration
-                    </li>
-                    <li className="flex items-center text-zinc-300 text-sm sm:text-base">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
-                      Dedicated Support
-                    </li>
-                  </ul>
-                  <Link
-                    href="/contact"
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 border-2 border-purple-400/50 text-purple-400 hover:bg-purple-400/10 hover:border-purple-400 font-semibold rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
-                  >
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Contact Sales
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Revenue Model Info */}
-            <div className="mt-12 sm:mt-16 lg:mt-20">
-              <div className="bg-gradient-to-r from-zinc-800/30 to-zinc-900/30 backdrop-blur-sm rounded-xl sm:rounded-2xl p-6 sm:p-8 lg:p-10 border border-zinc-700/50">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-center mb-6 sm:mb-8 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                  Revenue Model – How PhishGuard Generates Value
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-                  
-                  {/* Freemium Model */}
-                  <div className="bg-zinc-800/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-zinc-700/30 hover:border-blue-400/30 transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Freemium Plan</h4>
-                    <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-3">
-                      Free core features for students, premium advanced features for enhanced protection.
-                    </p>
-                    <div className="text-cyan-400 text-xs sm:text-sm font-medium">
-                      Free → ₹299/month
-                    </div>
-                  </div>
-
-                  {/* University Subscriptions */}
-                  <div className="bg-zinc-800/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-zinc-700/30 hover:border-purple-400/30 transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">University Subscriptions</h4>
-                    <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-3">
-                      Institutional dashboards, analytics, and campus-wide security monitoring.
-                    </p>
-                    <div className="text-purple-400 text-xs sm:text-sm font-medium">
-                      ₹2,999/year
-                    </div>
-                  </div>
-
-                  {/* API Integration */}
-                  <div className="bg-zinc-800/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-zinc-700/30 hover:border-green-400/30 transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                      <Globe2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">API Integration</h4>
-                    <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-3">
-                      Scam verification APIs for career portals like Internshala, LinkedIn.
-                    </p>
-                    <div className="text-green-400 text-xs sm:text-sm font-medium">
-                      Negotiable pricing
-                    </div>
-                  </div>
-
-                  {/* Partnerships */}
-                  <div className="bg-zinc-800/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-zinc-700/30 hover:border-yellow-400/30 transition-all duration-300">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                      <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Partnerships</h4>
-                    <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-3">
-                      Cybersecurity partnerships for awareness campaigns and sponsored content.
-                    </p>
-                    <div className="text-yellow-400 text-xs sm:text-sm font-medium">
-                      Long-term revenue
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Enhanced CTA Section */}
-        <section className="py-12 sm:py-16 lg:py-20 xl:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-cyan-900/20 via-blue-900/20 to-purple-900/20 backdrop-blur-sm border-y border-zinc-700/50 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.1)_0%,transparent_70%)]"></div>
-          <div className="max-w-5xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mb-6 sm:mb-8 lg:mb-10 shadow-lg shadow-cyan-500/30 animate-pulse">
-              <Award className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 lg:mb-8">
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Secure Your Digital Life Today
-              </span>
+          <div className="space-y-2">
+            <span className="font-mono text-xs text-zinc-400 uppercase tracking-wider">[ DEFENSE SURFACES ]</span>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Specialized security mechanisms engineered for academia.
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-zinc-300 mb-6 sm:mb-8 lg:mb-10 leading-relaxed max-w-4xl mx-auto">
-              Join thousands of security-conscious users who trust PhishGuard to protect their online activities. 
-              Experience next-generation cybersecurity protection.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 lg:gap-6 max-w-2xl mx-auto">
-              <Link
-                href="/scanner"
-                className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base lg:text-lg"
-              >
-                <Scan className="w-4 h-4 sm:w-5 sm:h-5 group-hover:animate-spin" />
-                Launch Security Scanner
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/dashboard"
-                className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 border-2 border-zinc-600 text-zinc-300 hover:border-cyan-400 hover:text-cyan-400 hover:bg-cyan-400/5 font-semibold rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base lg:text-lg"
-              >
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 group-hover:animate-bounce" />
-                Security Dashboard
-              </Link>
-            </div>
-            
-            {/* Additional Trust Indicators */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-8 sm:mt-12 lg:mt-16 max-w-4xl mx-auto">
-              <div className="flex items-center justify-center space-x-2 sm:space-x-3 bg-zinc-800/30 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-zinc-700/50 hover:border-green-400/30 transition-all duration-300">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
-                <span className="text-zinc-300 text-xs sm:text-sm font-medium">SSL Secure</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 sm:space-x-3 bg-zinc-800/30 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-zinc-700/50 hover:border-blue-400/30 transition-all duration-300">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-                <span className="text-zinc-300 text-xs sm:text-sm font-medium">Privacy Protected</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2 sm:space-x-3 bg-zinc-800/30 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-zinc-700/50 hover:border-purple-400/30 transition-all duration-300 sm:col-span-3 lg:col-span-1">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-                <span className="text-zinc-300 text-xs sm:text-sm font-medium">24/7 Support</span>
-              </div>
-            </div>
           </div>
-        </section>
-      </main>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* Bento Card 1: Multi-Platform Extension */}
+            <div className="md:col-span-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 space-y-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                  <Shield className="size-4 text-zinc-200" />
+                </div>
+                <span className="font-mono text-[10px] uppercase text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded">
+                  Manifest V3
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-zinc-100">Multi-Channel In-Situ Interceptor</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Rather than forcing users to copy-paste URLs into an external scanner, the PhishGuard Chrome extension monitors navigation in real-time. It injects contextual warning banners into Gmail message headers, highlights scam recruiter pitches in WhatsApp Web and LinkedIn, and guards all new tab navigations via a declarative blocked interstitial.
+              </p>
+              <div className="pt-2 flex items-center gap-2">
+                <Link href="/install" className="text-xs text-zinc-300 font-medium inline-flex items-center gap-1 hover:text-white">
+                  <span>Explore Extension Installation</span>
+                  <ArrowRight className="size-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Bento Card 2: Document Inspection */}
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 space-y-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                  <FileText className="size-4 text-zinc-200" />
+                </div>
+                <span className="font-mono text-[10px] uppercase text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded">
+                  5 MB Limit
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-zinc-100">Structural Document Audit</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                PyMuPDF parser evaluating PDF, DOCX, and TXT offer attachments across 22 lexical patterns, spotting deceptive fee requirements and disguised hostnames.
+              </p>
+              <div className="pt-2 flex items-center gap-2">
+                <Link href="/doc" className="text-xs text-zinc-300 font-medium inline-flex items-center gap-1 hover:text-white">
+                  <span>Open Document Scanner</span>
+                  <ArrowRight className="size-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Bento Card 3: Autonomous Gmail Pipeline */}
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 space-y-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                  <Mail className="size-4 text-zinc-200" />
+                </div>
+                <span className="font-mono text-[10px] uppercase text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded">
+                  Pub/Sub Ingestion
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-zinc-100">Gmail Gateway Pipeline</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Asynchronous ingestion inspecting RFC 8601 cryptographic headers from mx.google.com, applying heuristic rules, and running L2 NLP evaluation without user intervention.
+              </p>
+              <div className="pt-2 flex items-center gap-2">
+                <Link href="/email" className="text-xs text-zinc-300 font-medium inline-flex items-center gap-1 hover:text-white">
+                  <span>View Email Engine</span>
+                  <ArrowRight className="size-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Bento Card 4: Threat Intelligence */}
+            <div className="md:col-span-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-6 space-y-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                  <Cpu className="size-4 text-zinc-200" />
+                </div>
+                <span className="font-mono text-[10px] uppercase text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded">
+                  MCP Integration
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-zinc-100">Model Context Protocol Threat Feeds</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Inbound suspicious entities are checked through Model Context Protocol (MCP) bridges connecting live VirusTotal intelligence databases, governed by a local token-bucket rate limiter (4 requests/minute) and strict DNS pinning to guard against SSRF and host rebinding.
+              </p>
+              <div className="pt-2 flex items-center gap-2">
+                <Link href="/dashboard" className="text-xs text-zinc-300 font-medium inline-flex items-center gap-1 hover:text-white">
+                  <span>Inspect Threat Telemetry</span>
+                  <ArrowRight className="size-3" />
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Academic Threat Model Matrix */}
+      <section className="py-20 border-b border-zinc-800/80 bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+          <div className="space-y-2">
+            <span className="font-mono text-xs text-zinc-400 uppercase tracking-wider">[ THREAT MATRIX ]</span>
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-100">
+              Addressed attack vectors in student ecosystems.
+            </h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border border-zinc-800 rounded-lg overflow-hidden">
+              <thead className="bg-zinc-900 border-b border-zinc-800 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Threat Vector</th>
+                  <th className="py-3 px-4">Attacker Tactic</th>
+                  <th className="py-3 px-4">PhishGuard Countermeasure</th>
+                  <th className="py-3 px-4">Surface</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800 bg-zinc-950/60 font-sans text-zinc-300">
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-zinc-100">Fake Internship Offer</td>
+                  <td className="py-3.5 px-4 text-zinc-400">Demanding UPI &ldquo;training fees&rdquo; or refundable deposits within 24 hours.</td>
+                  <td className="py-3.5 px-4 font-mono text-emerald-400">/scan/offer/ (18 custom lexical & financial indicators)</td>
+                  <td className="py-3.5 px-4 text-zinc-500 font-mono">Email / WhatsApp</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-zinc-100">College Domain Spoofing</td>
+                  <td className="py-3.5 px-4 text-zinc-400">Sending from placement@nmamit.in.attacker.com or fake institutional subdomains.</td>
+                  <td className="py-3.5 px-4 font-mono text-emerald-400">Exact-or-subdomain anchored parser + RFC 8601 SPF header inspection</td>
+                  <td className="py-3.5 px-4 text-zinc-500 font-mono">Gmail / Ingest</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-zinc-100">Credential Harvest Link</td>
+                  <td className="py-3.5 px-4 text-zinc-400">Urgent account verification pages disguised on free TLDs (.tk, .cf, .xyz).</td>
+                  <td className="py-3.5 px-4 font-mono text-emerald-400">GradientBoostingClassifier + DNR dynamic interceptor</td>
+                  <td className="py-3.5 px-4 text-zinc-500 font-mono">Browser / Navigation</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-zinc-100">Fraudulent PDF Attachment</td>
+                  <td className="py-3.5 px-4 text-zinc-400">Offer letters requiring Aadhaar/PAN scans or upfront payment slips.</td>
+                  <td className="py-3.5 px-4 font-mono text-emerald-400">PyMuPDF structural extractor + whole-word warning categorizer</td>
+                  <td className="py-3.5 px-4 text-zinc-500 font-mono">Document Scan</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Bottom Dispatch CTA */}
+      <section className="py-20 bg-zinc-950">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <div className="size-10 rounded border border-zinc-800 bg-zinc-900 mx-auto flex items-center justify-center">
+            <Lock className="size-5 text-zinc-200" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+            Activate institutional cybersecurity defense.
+          </h2>
+          <p className="text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            Begin with the web workstation to evaluate suspicious links and attachments, or deploy the browser extension for real-time channel protection.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link
+              href="/scanner"
+              className="px-5 py-2.5 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all"
+            >
+              Launch Inspection Workstation
+            </Link>
+            <Link
+              href="/install"
+              className="px-5 py-2.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium text-xs hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              Extension Deployment Guide
+            </Link>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }

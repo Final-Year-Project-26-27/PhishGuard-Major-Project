@@ -1,25 +1,17 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { 
-  Shield, 
-  MessageCircle, 
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Star,
+import {
+  Shield,
   Search,
-  Eye,
-  Reply
+  Send,
+  Terminal,
+  Lock,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { auth, db } from '@/lib/firebase'
 import { collection, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore'
 import { User as FirebaseUser } from 'firebase/auth'
-import Image from 'next/image'
+import { toast } from 'sonner'
 
 interface Question {
   id: string
@@ -65,19 +57,18 @@ export default function AdminChatPage() {
   }, [])
 
   useEffect(() => {
-    // Load questions from Firebase in real-time
     if (isAuthorized) {
       const q = query(collection(db, 'questions'), orderBy('timestamp', 'desc'))
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const questionsData: Question[] = []
-        snapshot.forEach((doc) => {
-          const data = doc.data()
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data()
           questionsData.push({
-            id: doc.id,
+            id: docSnap.id,
             content: data.content,
             student: data.student,
             category: data.category,
-            timestamp: data.timestamp.toDate(),
+            timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
             priority: data.priority || 'medium',
             status: data.status || 'unanswered',
             likes: data.likes || 0,
@@ -94,338 +85,227 @@ export default function AdminChatPage() {
 
   const handleAnswerSubmit = async () => {
     if (!answer.trim() || !selectedQuestion || !user) return
-    
     setIsLoading(true)
-    
+
     try {
-      // Create answer data
       const answerData = {
-        content: answer,
+        content: answer.trim(),
         answeredBy: {
           id: user.uid,
-          name: user.displayName || 'Team Lead',
+          name: user.displayName || 'Security Lead',
           email: user.email || '',
-          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Team Lead')}&background=059669&color=fff`
+          avatar: user.photoURL || `https://ui-avatars.com/api/?name=SecLead&background=047857&color=f4f4f5`
         },
         timestamp: new Date()
       }
 
-      // Update question status and add answer
       const questionRef = doc(db, 'questions', selectedQuestion.id)
       await updateDoc(questionRef, {
         status: 'answered',
         answer: answerData
       })
-      
-      // Update local state
-      setQuestions(prev => prev.map(q => 
-        q.id === selectedQuestion.id 
+
+      setQuestions(prev => prev.map(q =>
+        q.id === selectedQuestion.id
           ? { ...q, status: 'answered' as const }
           : q
       ))
-      
+
       setAnswer('')
       setSelectedQuestion(null)
-      
+      toast.success('Response dispatched to student inquiry.')
     } catch (error) {
       console.error('Error submitting answer:', error)
+      toast.error('Failed to submit response.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-500/20 text-red-400 border-red-500/30'
-      case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-      default: return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'answered': return 'bg-green-500/20 text-green-400 border-green-500/30'
-      case 'resolved': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-    }
-  }
-
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         q.student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         q.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+                         q.student?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         q.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     const matchesFilter = filterStatus === 'all' || q.status === filterStatus
     return matchesSearch && matchesFilter
   })
 
-  const stats = {
-    total: questions.length,
-    unanswered: questions.filter(q => q.status === 'unanswered').length,
-    answered: questions.filter(q => q.status === 'answered').length,
-    avgResponse: '12m'
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center font-mono text-xs text-zinc-500">
+        Authenticating Operator Token...
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full rounded-lg border border-red-900/60 bg-red-950/20 p-6 text-center space-y-4">
+          <Lock className="size-8 text-red-400 mx-auto" />
+          <h1 className="text-lg font-bold text-red-200">Restricted Administration Surface</h1>
+          <p className="text-xs text-zinc-400 leading-relaxed font-mono">
+            This operator workstation requires verified administrative UID privileges.
+          </p>
+          <button
+            onClick={() => window.location.href = '/chat'}
+            className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 transition-colors"
+          >
+            Return to Advisory Feed
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {authLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-zinc-400">Checking authorization...</p>
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+
+        {/* Header Telemetry */}
+        <div className="space-y-3 border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+            <Shield className="size-3.5 text-zinc-400" />
+            <span>SecOps Console</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-200">Incident Resolution Desk</span>
           </div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Inquiry Resolution Console
+            </h1>
+            <span className="font-mono text-xs text-zinc-500">
+              Admin UID Verified · Queue Active
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Review incoming student threat questions, provide verified advisory responses, and resolve active incident reports.
+          </p>
         </div>
-      ) : !isAuthorized ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center max-w-md mx-auto px-4">
-            <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-red-400 mb-2">Access Denied</h1>
-            <p className="text-zinc-400 mb-4">
-              You don&apos;t have permission to access the admin dashboard. Only authorized team leads can view this page.
+
+        {/* Queue Metrics */}
+        <div className="grid grid-cols-3 gap-4 font-mono">
+          <div className="p-3.5 rounded border border-zinc-800 bg-zinc-900/60 space-y-1">
+            <span className="text-[10px] uppercase text-zinc-500 block">Total Queries</span>
+            <p className="text-xl font-bold text-zinc-100">{questions.length}</p>
+          </div>
+          <div className="p-3.5 rounded border border-zinc-800 bg-zinc-900/60 space-y-1">
+            <span className="text-[10px] uppercase text-amber-500 block">Pending Resolution</span>
+            <p className="text-xl font-bold text-amber-400">
+              {questions.filter(q => q.status === 'unanswered').length}
             </p>
-            <Button 
-              onClick={() => window.location.href = '/chat'}
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
-            >
-              Go to Student Chat
-            </Button>
+          </div>
+          <div className="p-3.5 rounded border border-zinc-800 bg-zinc-900/60 space-y-1">
+            <span className="text-[10px] uppercase text-emerald-500 block">Resolved</span>
+            <p className="text-xl font-bold text-emerald-400">
+              {questions.filter(q => q.status === 'answered').length}
+            </p>
           </div>
         </div>
-      ) : (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                <Shield className="w-7 h-7 text-white" />
+
+        {/* Workstation Split Pane */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          {/* Question Queue List */}
+          <div className="lg:col-span-7 rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+                <input
+                  placeholder="Search inquiries or student name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+                />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                  Team Lead Dashboard
-                </h1>
-                <p className="text-zinc-400">Manage student questions and provide expert guidance</p>
-              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="h-8 px-2 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-300"
+              >
+                <option value="all">All Queue</option>
+                <option value="unanswered">Unanswered</option>
+                <option value="answered">Answered</option>
+              </select>
             </div>
-            
-            {user && (
-              <div className="flex items-center gap-3 bg-zinc-800/30 rounded-xl p-3 border border-zinc-700/50">
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-r from-green-500 to-emerald-500">
-                  <Image
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Team Lead')}&background=059669&color=fff`}
-                    alt={user.displayName || 'Team Lead'}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    unoptimized
+
+            <div className="max-h-[550px] overflow-y-auto space-y-2">
+              {filteredQuestions.map((q) => (
+                <div
+                  key={q.id}
+                  onClick={() => setSelectedQuestion(q)}
+                  className={`p-3.5 rounded border text-xs cursor-pointer transition-colors space-y-2 ${
+                    selectedQuestion?.id === q.id
+                      ? 'border-zinc-400 bg-zinc-800/80'
+                      : 'border-zinc-800/80 bg-zinc-950 hover:border-zinc-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-mono text-[10px]">
+                    <span className="font-semibold text-zinc-200">{q.student?.name}</span>
+                    <span className={q.status === 'answered' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                      {q.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-zinc-300 line-clamp-2 font-sans">{q.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Response Editor Pane */}
+          <div className="lg:col-span-5 rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                <Terminal className="size-3.5 text-zinc-500" />
+                Response Dispatch
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">
+                OFFICIAL VERDICT
+              </span>
+            </div>
+
+            {selectedQuestion ? (
+              <div className="space-y-4">
+                <div className="p-3 rounded bg-zinc-950 border border-zinc-800 space-y-1">
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase block">Selected Student Inquiry</span>
+                  <p className="text-xs text-zinc-200 leading-relaxed font-sans">{selectedQuestion.content}</p>
+                  <p className="text-[10px] font-mono text-zinc-500 pt-1">
+                    From: {selectedQuestion.student?.name} ({selectedQuestion.student?.email})
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                    Official Security Analysis
+                  </label>
+                  <textarea
+                    rows={6}
+                    placeholder="Provide detailed security verification, guidance, or next steps for this student..."
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none"
                   />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{user.displayName || 'Team Lead'}</p>
-                  <p className="text-xs text-green-400">Expert Status</p>
-                </div>
+
+                <button
+                  onClick={handleAnswerSubmit}
+                  disabled={isLoading || !answer.trim()}
+                  className="w-full h-9 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40"
+                >
+                  <Send className="size-3.5" />
+                  <span>{isLoading ? 'Publishing...' : 'Dispatch Verified Response'}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="p-12 text-center text-zinc-500 font-mono text-xs">
+                Select an inquiry from the queue on the left to review details and draft an analysis response.
               </div>
             )}
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageCircle className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-zinc-400">Total Questions</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{stats.total}</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
-                <span className="text-sm text-zinc-400">Unanswered</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{stats.unanswered}</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-zinc-400">Answered</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{stats.answered}</p>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-zinc-400">Avg Response</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{stats.avgResponse}</p>
-            </div>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Questions List */}
-          <div className="lg:col-span-2">
-            <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50">
-              <div className="p-4 border-b border-zinc-700/50">
-                <div className="flex gap-4 mb-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <Input
-                      placeholder="Search questions, students, or tags..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-zinc-800/50 border-zinc-700/50 text-white placeholder-zinc-400"
-                    />
-                  </div>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white text-sm"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="unanswered">Unanswered</option>
-                    <option value="answered">Answered</option>
-                    <option value="resolved">Resolved</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="max-h-[600px] overflow-y-auto">
-                {filteredQuestions.map((question) => (
-                  <div
-                    key={question.id}
-                    onClick={() => setSelectedQuestion(question)}
-                    className={`p-4 border-b border-zinc-700/30 cursor-pointer transition-all duration-200 hover:bg-zinc-700/30 ${
-                      selectedQuestion?.id === question.id ? 'bg-cyan-500/10 border-l-4 border-l-cyan-400' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-500 flex-shrink-0">
-                        <Image
-                          src={question.student.avatar}
-                          alt={question.student.name}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                          unoptimized
-                        />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold text-white text-sm">{question.student.name}</span>
-                          <Badge className={`text-xs ${getPriorityColor(question.priority)}`}>
-                            {question.priority}
-                          </Badge>
-                          <Badge className={`text-xs ${getStatusColor(question.status)}`}>
-                            {question.status}
-                          </Badge>
-                          <span className="text-xs text-zinc-400 ml-auto">
-                            {question.timestamp.toLocaleDateString()}
-                          </span>
-                        </div>
-                        
-                        <p className="text-zinc-200 text-sm leading-relaxed mb-3 line-clamp-2">
-                          {question.content}
-                        </p>
-                        
-                        <div className="flex items-center gap-4 text-xs text-zinc-400">
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
-                            {question.views}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3" />
-                            {question.likes}
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {question.category}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex gap-1 mt-2">
-                          {question.tags.slice(0, 3).map((tag, index) => (
-                            <span
-                              key={index}
-                              className="text-xs bg-zinc-700/50 text-zinc-300 px-2 py-1 rounded"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Answer Panel */}
-          <div className="lg:col-span-1">
-            <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4 sticky top-4">
-              {selectedQuestion ? (
-                <div>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                      <Reply className="w-5 h-5 text-green-400" />
-                      Answer Question
-                    </h3>
-                    <div className="bg-zinc-700/30 rounded-lg p-3 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium text-white">{selectedQuestion.student.name}</span>
-                        <Badge className={`text-xs ${getPriorityColor(selectedQuestion.priority)}`}>
-                          {selectedQuestion.priority}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-zinc-200 leading-relaxed">{selectedQuestion.content}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <Textarea
-                      placeholder="Provide a detailed and helpful answer..."
-                      value={answer}
-                      onChange={(e) => setAnswer(e.target.value)}
-                      className="bg-zinc-800/50 border-zinc-700/50 text-white placeholder-zinc-400 min-h-[200px]"
-                    />
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleAnswerSubmit}
-                        disabled={!answer.trim() || isLoading}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-                      >
-                        {isLoading ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        ) : (
-                          <Reply className="w-4 h-4 mr-2" />
-                        )}
-                        {isLoading ? 'Sending...' : 'Send Answer'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setSelectedQuestion(null)}
-                        className="border-zinc-600 text-zinc-300"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <MessageCircle className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-zinc-400 mb-2">Select a Question</h3>
-                  <p className="text-sm text-zinc-500">Choose a question from the list to provide an answer</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
-      )}
     </div>
   )
 }

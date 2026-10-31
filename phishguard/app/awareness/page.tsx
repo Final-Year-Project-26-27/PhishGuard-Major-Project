@@ -1,25 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { auth } from '../../lib/firebase'
-import { User as FirebaseUser } from 'firebase/auth'
 import React from 'react'
 import {
   BookOpen,
   Shield,
-  AlertTriangle,
-  CheckCircle,
   Brain,
-  TrendingUp,
-  Clock,
-  Play,
-  ChevronRight,
   FileText,
   Mail,
-  Smartphone
+  Smartphone,
+  Award,
+  Terminal,
+  RotateCcw,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
 interface UserProgress {
   points: number
@@ -69,57 +62,38 @@ interface Article {
 }
 
 export default function AwarenessHub() {
-  const [user, setUser] = useState<FirebaseUser | null>(null)
   const [userProgress, setUserProgress] = useState<UserProgress>({
-    points: 0, // Start with 0 points
+    points: 0,
     level: 1,
     completedLessons: [],
     badges: [],
     streak: 0
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all')
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [pointsAnimation, setPointsAnimation] = useState<number | null>(null)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  // Load progress from localStorage on component mount
-  useEffect(() => {
-    const savedProgress = localStorage.getItem('phishguard-progress')
-    if (savedProgress) {
+    const saved = localStorage.getItem('phishguard-progress')
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedProgress)
-        setUserProgress(parsed)
-      } catch (error) {
-        console.error('Error loading saved progress:', error)
+        setUserProgress(JSON.parse(saved))
+      } catch {
+        // ignore
       }
     }
   }, [])
 
-  // Save progress to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('phishguard-progress', JSON.stringify(userProgress))
   }, [userProgress])
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u)
-    })
-    return () => unsubscribe()
-  }, [])
-
   const lessons: Lesson[] = [
     {
       id: 'phish-basics',
-      title: 'Phishing Fundamentals',
-      description: 'Learn the basics of identifying phishing attempts and protect yourself from common scams.',
+      title: 'Phishing Fundamentals & Anatomy',
+      description: 'Foundational principles of social engineering outreach and domain impersonation identification.',
       category: 'phishing',
       difficulty: 'beginner',
       points: 100,
@@ -128,31 +102,31 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'What is Phishing?',
-          content: 'Phishing is a cybercrime where attackers impersonate legitimate organizations to steal sensitive information like passwords, credit card numbers, or personal data. These attacks typically come through email, text messages, or fake websites that look authentic.',
+          title: 'Anatomy of Academic Phishing',
+          content: 'Phishing represents the primary intrusion vector into educational environments. Attackers impersonate university registrars, career placement cells, or enterprise partners to harvest single sign-on (SSO) credentials or demand advance payments.',
           keyPoints: [
-            'Phishing attacks target personal and financial information',
-            'Attackers impersonate trusted organizations',
-            'Common targets include banks, social media, and email providers',
-            'Always verify suspicious communications independently'
+            'Attacks frequently exploit institutional trust and urgency',
+            'Lookalike domains mimic university naming conventions (e.g., mail-nitte.in)',
+            'Legitimate departments never demand cash deposits via UPI for interviews',
+            'Always inspect destination URLs before providing credentials'
           ]
         },
         page2: {
-          title: 'Identifying Phishing Attempts',
-          content: 'Learn to recognize common signs of phishing attempts. Look for urgent language, spelling errors, suspicious links, and requests for sensitive information. Legitimate organizations rarely ask for passwords or personal data via email.',
+          title: 'Inspection Verification Matrix',
+          content: 'Examine message headers for mismatched sender domains, unanchored subdomains, and pressurized response timelines. Unsolicited requests for bank account details, Aadhaar, or PAN cards represent high-certainty scam indicators.',
           keyPoints: [
-            'Check sender email addresses carefully',
-            'Look for spelling and grammar mistakes',
-            'Hover over links to see real destinations',
-            'Be suspicious of urgent or threatening language'
+            'Inspect the exact envelope domain, not just the display name',
+            'Look for artificial deadlines (e.g., within 24 hours to secure seat)',
+            'Verify unexpected communications through direct departmental contact',
+            'Report unverified outreach to institutional administrators'
           ],
           quiz: {
-            question: 'Which of these is a common sign of a phishing email?',
+            question: 'Which of the following is a primary indicator of a deceptive academic outreach?',
             options: [
-              'Perfect grammar and spelling',
-              'Urgent requests for personal information',
-              'Links that match the sender domain',
-              'Personalized greeting with your name'
+              'Originating from an authorized .edu or .in institutional domain',
+              'Requiring an upfront refundable deposit via UPI to confirm an interview',
+              'Providing a publicly listed campus office location and phone number',
+              'Listing official university placement committee coordinators'
             ],
             correct: 1
           }
@@ -161,8 +135,8 @@ export default function AwarenessHub() {
     },
     {
       id: 'email-safety',
-      title: 'Email Security Mastery',
-      description: 'Advanced techniques for spotting malicious emails and protecting your inbox.',
+      title: 'Cryptographic Email Authentication',
+      description: 'Understanding SPF, DKIM, and DMARC enforcement mechanisms in mailbox defense.',
       category: 'phishing',
       difficulty: 'intermediate',
       points: 150,
@@ -171,31 +145,31 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'Email Header Analysis',
-          content: 'Understanding email headers is crucial for identifying spoofed emails. Learn to examine sender information, routing details, and authentication records to verify email authenticity.',
+          title: 'RFC 8601 Authentication Records',
+          content: 'Modern mail transfer agents validate authenticity using SPF (IP sender authorization), DKIM (cryptographic body signature), and DMARC (alignment policy). Attackers frequently attempt to plant fake downstream headers to simulate a pass.',
           keyPoints: [
-            'Check the "From" field for exact domain matches',
-            'Examine routing information for suspicious paths',
-            'Look for SPF, DKIM, and DMARC authentication',
-            'Be wary of emails from external domains'
+            'SPF specifies which IP addresses are authorized to send for a domain',
+            'DKIM provides cryptographic non-repudiation using public-key cryptography',
+            'DMARC instructs the receiving MTA how to handle verification failures',
+            'Only the topmost Authentication-Results from trusted MTAs should be evaluated'
           ]
         },
         page2: {
-          title: 'Advanced Email Threats',
-          content: 'Modern email threats include spear phishing, business email compromise, and sophisticated social engineering. These attacks are highly targeted and use personal information to appear legitimate.',
+          title: 'Targeted Spear Phishing Recognition',
+          content: 'Spear phishing campaigns harvest public student profile data from LinkedIn and campus directories to craft personalized, high-credibility messages claiming to represent reputable tech recruiters.',
           keyPoints: [
-            'Spear phishing targets specific individuals',
-            'BEC attacks impersonate executives or vendors',
-            'Attackers research targets on social media',
-            'Always verify requests through separate channels'
+            'Attackers leverage scraped resume details to bypass initial skepticism',
+            'Recruiters will not conduct hiring exclusively through WhatsApp or Telegram',
+            'Formal offers must arrive with verifiable corporate email signatures',
+            'Use PhishGuard Link Inspector to verify all application portals'
           ],
           quiz: {
-            question: 'What is the main characteristic of spear phishing?',
+            question: 'Why does PhishGuard strictly inspect the topmost Authentication-Results header?',
             options: [
-              'It uses generic messages sent to many people',
-              'It targets specific individuals with personalized content',
-              'It only comes through text messages',
-              'It always contains malware attachments'
+              'Topmost headers are shorter and faster to process',
+              'Receiving MTAs prepend headers; downstream copies can be forged by senders',
+              'Middle headers only contain styling information',
+              'Gmail removes all other headers automatically'
             ],
             correct: 1
           }
@@ -204,8 +178,8 @@ export default function AwarenessHub() {
     },
     {
       id: 'mobile-security',
-      title: 'Mobile Security Essentials',
-      description: 'Protect your smartphone and mobile apps from security threats.',
+      title: 'Mobile & Messaging Threat Vectors',
+      description: 'Securing student mobile devices against SMS phishing, WhatsApp scams, and malicious APKs.',
       category: 'mobile',
       difficulty: 'beginner',
       points: 125,
@@ -214,31 +188,31 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'Mobile Threat Landscape',
-          content: 'Mobile devices face unique security challenges including malicious apps, SMS phishing, unsecured WiFi, and device theft. Understanding these threats is the first step to protection.',
+          title: 'WhatsApp & SMS Scam Ecosystem',
+          content: 'Mobile channels exhibit higher student response rates than traditional email. Threat actors utilize automated WhatsApp business accounts to distribute fraudulent job offers, requesting registration fees or distributing malicious APK download links.',
           keyPoints: [
-            'Download apps only from official stores',
-            'Keep your operating system updated',
-            'Use strong authentication methods',
-            'Be cautious on public WiFi networks'
+            'Never install Android package (.apk) files received over messaging apps',
+            'Legitimate hiring processes do not require direct UPI deposits',
+            'Verify phone number country codes against claimed corporate headquarters',
+            'Forward suspicious outreach to the PhishGuard WhatsApp Assistant'
           ]
         },
         page2: {
-          title: 'Mobile Security Best Practices',
-          content: 'Implement security measures like app permissions review, regular updates, secure messaging, and remote wipe capabilities to protect your mobile device and data.',
+          title: 'Defense Best Practices',
+          content: 'Enforce multi-factor authentication across student accounts, restrict side-loading permissions on mobile operating systems, and verify suspicious recruitment links before navigation.',
           keyPoints: [
-            'Review app permissions regularly',
-            'Enable automatic security updates',
-            'Use encrypted messaging apps',
-            'Set up remote wipe for lost devices'
+            'Audit application permissions regularly',
+            'Keep device security patch levels up to date',
+            'Use hardware or authenticator-app 2FA rather than SMS OTPs',
+            'Report scam numbers directly to messaging platforms'
           ],
           quiz: {
-            question: 'What should you check before downloading a mobile app?',
+            question: 'What is the safest action when receiving an unsolicited APK file on WhatsApp?',
             options: [
-              'Only the app icon design',
-              'App permissions and developer reputation',
-              'The number of downloads only',
-              'The app size'
+              'Install it to inspect its permissions',
+              'Never install it; report the sender and delete the payload',
+              'Forward it to peers to see if they recognize it',
+              'Rename the extension and open it in a browser'
             ],
             correct: 1
           }
@@ -247,129 +221,43 @@ export default function AwarenessHub() {
     },
     {
       id: 'social-engineering',
-      title: 'Social Engineering Defense',
-      description: 'Understand psychological manipulation tactics used by cybercriminals.',
+      title: 'Social Engineering & Psychological Leverage',
+      description: 'Deconstructing urgency, authority bias, and FOMO tactics deployed in academic scams.',
       category: 'social',
       difficulty: 'intermediate',
       points: 175,
-      duration: '30 min',
+      duration: '25 min',
       icon: Brain,
       completed: false,
       content: {
         page1: {
-          title: 'Psychology of Social Engineering',
-          content: 'Social engineers exploit human psychology using techniques like authority, urgency, fear, and trust. They manipulate emotions to bypass logical thinking and security procedures.',
+          title: 'Psychological Exploitation Vectors',
+          content: 'Cybercriminals rely on human cognitive biases rather than technical vulnerabilities. Key levers include authority impersonation (professors, placement deans), artificial urgency (2-hour deadlines), and fear of missing out on coveted career opportunities.',
           keyPoints: [
-            'Attackers use authority figures to intimidate',
-            'Urgency creates pressure to act quickly',
-            'Fear of consequences overrides caution',
-            'Trust is built through familiarity and helpfulness'
+            'Authority bias prevents students from challenging fraudulent requests',
+            'Urgency compresses decision-making time to bypass critical thinking',
+            'High-prestige brand names (Google, Microsoft) are used as emotional hooks',
+            'Scammers often promise 100% placement with zero technical interviews'
           ]
         },
         page2: {
-          title: 'Defending Against Manipulation',
-          content: 'Develop defensive strategies against social engineering by establishing verification procedures, taking time to think, and maintaining healthy skepticism of unsolicited requests.',
+          title: 'Systematic Cognitive Countermeasures',
+          content: 'Establish a mandatory 15-minute reflection window before responding to any communication demanding payments, account verification, or credential updates. Always contact the claimed sender via an independently sourced phone number or email.',
           keyPoints: [
-            'Always verify requests through known channels',
-            'Take time to think before acting',
-            'Question unsolicited offers or requests',
-            'Trust your instincts when something feels wrong'
+            'Pause and disengage when an email or message demands immediate compliance',
+            'Validate unusual administrative requests with departmental staff directly',
+            'Consult the PhishGuard Community Telemetry feed for active campaigns',
+            'Remember that legitimate career fairs never demand advance entry fees'
           ],
           quiz: {
-            question: 'What is the best defense against social engineering?',
+            question: 'What is the primary psychological purpose of a 2-hour deadline in a scam message?',
             options: [
-              'Installing antivirus software',
-              'Verification through independent channels',
-              'Using strong passwords',
-              'Avoiding all phone calls'
+              'To adhere to corporate hiring guidelines',
+              'To create artificial panic and suppress logical verification',
+              'To ensure high network throughput',
+              'To comply with data privacy regulations'
             ],
             correct: 1
-          }
-        }
-      }
-    },
-    {
-      id: 'malware-detection',
-      title: 'Malware Recognition',
-      description: 'Identify different types of malware and learn prevention strategies.',
-      category: 'malware',
-      difficulty: 'advanced',
-      points: 250,
-      duration: '35 min',
-      icon: AlertTriangle,
-      completed: false,
-      content: {
-        page1: {
-          title: 'Types of Malware',
-          content: 'Malware comes in many forms including viruses, trojans, ransomware, spyware, and adware. Each type has different characteristics and methods of infection. Understanding these differences is crucial for effective protection.',
-          keyPoints: [
-            'Viruses replicate and spread to other files',
-            'Trojans disguise themselves as legitimate software',
-            'Ransomware encrypts files and demands payment',
-            'Spyware secretly monitors user activities'
-          ]
-        },
-        page2: {
-          title: 'Malware Prevention and Detection',
-          content: 'Effective malware protection requires multiple layers including antivirus software, regular updates, safe browsing habits, and backup strategies. Learn to recognize suspicious behavior and respond appropriately.',
-          keyPoints: [
-            'Keep antivirus software updated and active',
-            'Avoid downloading from untrusted sources',
-            'Regular system and data backups',
-            'Monitor system performance for unusual activity'
-          ],
-          quiz: {
-            question: 'Which type of malware encrypts your files and demands payment?',
-            options: [
-              'Virus',
-              'Trojan',
-              'Ransomware',
-              'Spyware'
-            ],
-            correct: 2
-          }
-        }
-      }
-    },
-    {
-      id: 'password-security',
-      title: 'Password Security & Management',
-      description: 'Create strong passwords and learn secure password management practices.',
-      category: 'general',
-      difficulty: 'beginner',
-      points: 110,
-      duration: '16 min',
-      icon: Shield,
-      completed: false,
-      content: {
-        page1: {
-          title: 'Password Fundamentals',
-          content: 'Strong passwords are your first line of defense against unauthorized access. Learn the principles of creating secure passwords that are both strong and memorable while avoiding common pitfalls.',
-          keyPoints: [
-            'Use at least 12 characters with mixed case, numbers, and symbols',
-            'Avoid personal information and common words',
-            'Use unique passwords for each account',
-            'Consider passphrases for better memorability'
-          ]
-        },
-        page2: {
-          title: 'Password Managers and 2FA',
-          content: 'Password managers help you generate and store unique passwords securely. Two-factor authentication adds an extra layer of security that significantly reduces the risk of account compromise.',
-          keyPoints: [
-            'Password managers generate and store unique passwords',
-            'Enable 2FA wherever possible',
-            'Use authenticator apps over SMS when available',
-            'Keep backup codes in a secure location'
-          ],
-          quiz: {
-            question: 'What is the recommended minimum length for a secure password?',
-            options: [
-              '6 characters',
-              '8 characters',
-              '12 characters',
-              '16 characters'
-            ],
-            correct: 2
           }
         }
       }
@@ -379,137 +267,75 @@ export default function AwarenessHub() {
   const articles: Article[] = [
     {
       id: '1',
-      title: 'The Evolution of Phishing: From Simple Emails to AI-Powered Attacks',
-      excerpt: 'Explore how phishing attacks have evolved and what the future holds for cybersecurity.',
-      category: 'Trends',
+      title: 'Dissecting Fake Internship Campaigns in Engineering Colleges',
+      excerpt: 'How deceptive syndicates impersonate tier-1 technology companies to extract training fees from engineering students.',
+      category: 'Investigation',
       readTime: '8 min read',
-      date: '2 days ago',
+      date: 'Latest',
       featured: true
     },
     {
       id: '2',
-      title: 'Top 10 Red Flags in Suspicious Emails',
-      excerpt: 'Learn to spot the most common warning signs that indicate a malicious email.',
-      category: 'Email Security',
-      readTime: '5 min read',
-      date: '1 week ago',
+      title: 'RFC 8601 Header Validation: Protecting Student Mailboxes',
+      excerpt: 'A technical breakdown of Authentication-Results header isolation and why DNS fallbacks create vulnerability gaps.',
+      category: 'Architecture',
+      readTime: '6 min read',
+      date: 'Technical',
       featured: true
     },
     {
       id: '3',
-      title: 'Case Study: How a Small Business Prevented a $50k Scam',
-      excerpt: 'Real-world example of how security awareness training saved a company from fraud.',
-      category: 'Case Studies',
-      readTime: '12 min read',
-      date: '3 days ago'
+      title: 'The Rise of WhatsApp Recruiter Scams: A Defensive Guide',
+      excerpt: 'Analyzing automated business accounts, fake offer letters, and UPI payment pressure tactics targeting freshers.',
+      category: 'Field Report',
+      readTime: '5 min read',
+      date: 'Recent'
     },
     {
       id: '4',
-      title: 'Mobile App Security: What to Look For',
-      excerpt: 'Essential security features to check before downloading any mobile application.',
-      category: 'Mobile Security',
-      readTime: '6 min read',
-      date: '5 days ago'
-    },
-    {
-      id: '5',
-      title: 'Password Managers: Your First Line of Defense',
-      excerpt: 'Why password managers are crucial and how to choose the right one for you.',
-      category: 'Tools',
-      readTime: '10 min read',
-      date: '1 week ago'
-    },
-    {
-      id: '6',
-      title: 'Social Engineering Tactics: The Human Element of Cybercrime',
-      excerpt: 'Understanding how attackers manipulate psychology to bypass technical security.',
-      category: 'Social Engineering',
-      readTime: '15 min read',
-      date: '2 weeks ago'
+      title: 'PyMuPDF vs OCR: Structural Feature Extraction in Phishing PDFs',
+      excerpt: 'Why lexical indicator modeling outperforms raw OCR for detecting scam signatures in digital documents.',
+      category: 'Machine Learning',
+      readTime: '7 min read',
+      date: 'Research'
     }
   ]
 
-  const categories = [
-    { id: 'all', name: 'All Categories', icon: BookOpen },
-    { id: 'phishing', name: 'Phishing', icon: Mail },
-    { id: 'malware', name: 'Malware', icon: AlertTriangle },
-    { id: 'social', name: 'Social Engineering', icon: Brain },
-    { id: 'mobile', name: 'Mobile Security', icon: Smartphone },
-    { id: 'general', name: 'General Security', icon: Shield }
-  ]
-
-  const difficulties = [
-    { id: 'all', name: 'All Levels' },
-    { id: 'beginner', name: 'Beginner' },
-    { id: 'intermediate', name: 'Intermediate' },
-    { id: 'advanced', name: 'Advanced' }
-  ]
-
   const filteredLessons = lessons.filter(lesson => {
-    const categoryMatch = selectedCategory === 'all' || lesson.category === selectedCategory
-    const difficultyMatch = selectedDifficulty === 'all' || lesson.difficulty === selectedDifficulty
-    return categoryMatch && difficultyMatch
+    return selectedCategory === 'all' || lesson.category === selectedCategory
   })
 
   const completeLesson = (lessonId: string) => {
     const lesson = lessons.find(l => l.id === lessonId)
     if (lesson && !userProgress.completedLessons.includes(lessonId)) {
       const newPoints = userProgress.points + lesson.points
-      const newLevel = Math.floor(newPoints / 500) + 1 // Level up every 500 points
-      
-      // Show points animation
-      setPointsAnimation(lesson.points)
-      setTimeout(() => setPointsAnimation(null), 2000)
-      
-      // Award badges based on milestones
+      const newLevel = Math.floor(newPoints / 300) + 1
       const newBadges = [...userProgress.badges]
-      if (userProgress.completedLessons.length === 0) {
-        newBadges.push('First Steps')
+      if (!newBadges.includes(lesson.title)) {
+        newBadges.push(lesson.title)
       }
-      if (userProgress.completedLessons.length + 1 === 3) {
-        newBadges.push('Quick Learner')
-      }
-      if (newPoints >= 500 && !newBadges.includes('Security Expert')) {
-        newBadges.push('Security Expert')
-      }
-      if (lesson.category === 'phishing' && !newBadges.includes('Phishing Hunter')) {
-        newBadges.push('Phishing Hunter')
-      }
-      
-      setUserProgress(prev => ({
-        ...prev,
+
+      setUserProgress({
         points: newPoints,
         level: newLevel,
-        completedLessons: [...prev.completedLessons, lessonId],
+        completedLessons: [...userProgress.completedLessons, lessonId],
         badges: newBadges,
-        streak: prev.streak + 1
-      }))
-      
-      // Show success message (you could add a toast library here)
-      console.log(`Course completed! Earned ${lesson.points} points. Total: ${newPoints}`)
+        streak: userProgress.streak + 1,
+      })
+      toast.success(`Completed ${lesson.title} (+${lesson.points} XP)`)
     }
   }
 
   const startLesson = (lesson: Lesson) => {
     setSelectedLesson(lesson)
     setCurrentPage(1)
+    setSelectedAnswer(null)
   }
 
   const closeLessonViewer = () => {
     setSelectedLesson(null)
     setCurrentPage(1)
-  }
-
-  const nextPage = () => {
-    if (currentPage < 2) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
+    setSelectedAnswer(null)
   }
 
   const finishLesson = () => {
@@ -519,74 +345,57 @@ export default function AwarenessHub() {
     }
   }
 
-  // Reset progress function for testing
   const resetProgress = () => {
-    const defaultProgress = {
-      points: 0,
-      level: 1,
-      completedLessons: [],
-      badges: [],
-      streak: 0
-    }
-    setUserProgress(defaultProgress)
-    localStorage.setItem('phishguard-progress', JSON.stringify(defaultProgress))
-  }
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'text-green-400 bg-green-500/10 border-green-500/30'
-      case 'intermediate': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
-      case 'advanced': return 'text-red-400 bg-red-500/10 border-red-500/30'
-      default: return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30'
-    }
+    const def = { points: 0, level: 1, completedLessons: [], badges: [], streak: 0 }
+    setUserProgress(def)
+    localStorage.removeItem('phishguard-progress')
+    toast.success('Training progress reset.')
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Course Viewer Modal */}
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+
+      {/* Lesson Modal */}
       {selectedLesson && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+
+            {/* Modal Header */}
+            <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">{selectedLesson.title}</h2>
-                <p className="text-zinc-400 mt-1">Page {currentPage} of 2</p>
+                <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-wider block">
+                  MODULE {selectedLesson.id.toUpperCase()} · STEP {currentPage} OF 2
+                </span>
+                <h2 className="text-base font-bold text-zinc-100 mt-0.5">{selectedLesson.title}</h2>
               </div>
-              <Button
+              <button
                 onClick={closeLessonViewer}
-                variant="outline"
-                className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                className="px-2.5 py-1 rounded border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 text-xs font-mono"
               >
-                Close
-              </Button>
+                Exit
+              </button>
             </div>
 
-          
-            <div className="p-6">
+            {/* Modal Body */}
+            <div className="p-6 space-y-6 flex-1">
               {currentPage === 1 && (
-                <div className="space-y-6">
-                  <div className="flex items-center mb-4">
-                    <selectedLesson.icon className="w-8 h-8 text-blue-400 mr-3" />
-                    <h3 className="text-xl font-semibold text-white">{selectedLesson.content.page1.title}</h3>
-                  </div>
-                  
-                  <div className="prose prose-invert max-w-none">
-                    <p className="text-zinc-300 text-lg leading-relaxed mb-6">
-                      {selectedLesson.content.page1.content}
-                    </p>
-                  </div>
+                <div className="space-y-5">
+                  <h3 className="text-sm font-semibold text-zinc-200 font-mono">
+                    {selectedLesson.content.page1.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                    {selectedLesson.content.page1.content}
+                  </p>
 
-                  <div className="bg-zinc-800/50 rounded-lg p-6">
-                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-                      Key Points
-                    </h4>
-                    <ul className="space-y-3">
-                      {selectedLesson.content.page1.keyPoints.map((point, index) => (
-                        <li key={index} className="flex items-start">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="text-zinc-300">{point}</span>
+                  <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 block font-semibold">
+                      Key Analysis Points
+                    </span>
+                    <ul className="text-xs text-zinc-300 space-y-2">
+                      {selectedLesson.content.page1.keyPoints.map((point, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-emerald-400 font-mono">•</span>
+                          <span>{point}</span>
                         </li>
                       ))}
                     </ul>
@@ -595,44 +404,57 @@ export default function AwarenessHub() {
               )}
 
               {currentPage === 2 && (
-                <div className="space-y-6">
-                  <div className="flex items-center mb-4">
-                    <selectedLesson.icon className="w-8 h-8 text-blue-400 mr-3" />
-                    <h3 className="text-xl font-semibold text-white">{selectedLesson.content.page2.title}</h3>
-                  </div>
-                  
-                  <div className="prose prose-invert max-w-none">
-                    <p className="text-zinc-300 text-lg leading-relaxed mb-6">
-                      {selectedLesson.content.page2.content}
-                    </p>
-                  </div>
+                <div className="space-y-5">
+                  <h3 className="text-sm font-semibold text-zinc-200 font-mono">
+                    {selectedLesson.content.page2.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                    {selectedLesson.content.page2.content}
+                  </p>
 
-                  <div className="bg-zinc-800/50 rounded-lg p-6">
-                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-                      Key Points
-                    </h4>
-                    <ul className="space-y-3">
-                      {selectedLesson.content.page2.keyPoints.map((point, index) => (
-                        <li key={index} className="flex items-start">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="text-zinc-300">{point}</span>
+                  <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 block font-semibold">
+                      Defensive Indicators
+                    </span>
+                    <ul className="text-xs text-zinc-300 space-y-2">
+                      {selectedLesson.content.page2.keyPoints.map((point, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-emerald-400 font-mono">•</span>
+                          <span>{point}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  {/* Quiz Section */}
+                  {/* Knowledge Check */}
                   {selectedLesson.content.page2.quiz && (
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
-                      <h4 className="text-lg font-semibold text-white mb-4">Knowledge Check</h4>
-                      <p className="text-zinc-300 mb-4">{selectedLesson.content.page2.quiz.question}</p>
-                      <div className="space-y-2">
-                        {selectedLesson.content.page2.quiz.options.map((option, index) => (
-                          <div key={index} className="flex items-center p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
-                            <div className="w-4 h-4 border border-zinc-500 rounded-full mr-3"></div>
-                            <span className="text-zinc-300">{option}</span>
-                          </div>
+                    <div className="p-4 rounded border border-zinc-800 bg-zinc-950/80 space-y-3 font-mono text-xs">
+                      <span className="text-[10px] uppercase text-amber-400 block font-semibold">
+                        Checkpoint Question
+                      </span>
+                      <p className="text-zinc-200 font-sans text-xs">
+                        {selectedLesson.content.page2.quiz.question}
+                      </p>
+                      <div className="space-y-1.5 pt-1">
+                        {selectedLesson.content.page2.quiz.options.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedAnswer(idx)}
+                            className={`w-full text-left p-2.5 rounded border text-xs transition-colors flex items-center justify-between ${
+                              selectedAnswer === idx
+                                ? idx === selectedLesson.content.page2.quiz?.correct
+                                  ? 'border-emerald-800/80 bg-emerald-950/40 text-emerald-300'
+                                  : 'border-red-800/80 bg-red-950/40 text-red-300'
+                                : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                            }`}
+                          >
+                            <span>{opt}</span>
+                            {selectedAnswer === idx && (
+                              <span className="font-mono text-[10px] font-bold">
+                                {idx === selectedLesson.content.page2.quiz?.correct ? 'CORRECT' : 'INCORRECT'}
+                              </span>
+                            )}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -641,323 +463,206 @@ export default function AwarenessHub() {
               )}
             </div>
 
-            {/* Footer Navigation */}
-            <div className="flex items-center justify-between p-6 border-t border-zinc-700">
-              <Button
-                onClick={prevPage}
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-zinc-800 flex items-center justify-between bg-zinc-950">
+              <button
+                onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                variant="outline"
-                className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+                className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs font-mono disabled:opacity-40"
               >
                 Previous
-              </Button>
-              
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${currentPage === 1 ? 'bg-blue-400' : 'bg-zinc-600'}`}></div>
-                <div className={`w-2 h-2 rounded-full ${currentPage === 2 ? 'bg-blue-400' : 'bg-zinc-600'}`}></div>
-              </div>
+              </button>
 
-              {currentPage < 2 ? (
-                <Button
-                  onClick={nextPage}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+              {currentPage === 1 ? (
+                <button
+                  onClick={() => setCurrentPage(2)}
+                  className="px-3 py-1.5 rounded bg-zinc-100 text-zinc-950 font-medium text-xs font-mono hover:bg-zinc-200"
                 >
-                  Next
-                </Button>
+                  Proceed to Checkpoint
+                </button>
               ) : (
-                <Button
+                <button
                   onClick={finishLesson}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="px-3 py-1.5 rounded bg-emerald-500 text-zinc-950 font-medium text-xs font-mono hover:bg-emerald-400"
                 >
-                  Complete Course
-                </Button>
+                  Complete Module (+{selectedLesson.points} XP)
+                </button>
               )}
             </div>
+
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto py-8 px-4 space-y-8">
-        
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-lg mb-4">
-            <BookOpen className="w-6 h-6 text-white" />
+      <div className="max-w-6xl mx-auto space-y-10">
+
+        {/* Header Telemetry */}
+        <div className="space-y-3 border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+            <BookOpen className="size-3.5 text-zinc-400" />
+            <span>Educational Operations</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-200">Defense Training Hub</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-            Security Education Center
-          </h1>
-          <p className="text-zinc-400 text-base max-w-2xl mx-auto">
-            Learn cybersecurity fundamentals through structured courses and expert-written articles
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Security Awareness Academy
+            </h1>
+            <span className="font-mono text-xs text-zinc-500">
+              Interactive Incident Simulation & Heuristic Training
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Curated interactive modules training students to dissect recruiter deception, malicious headers, and social engineering vectors.
           </p>
         </div>
 
-        {/* User Progress Dashboard */}
-        {user && (
-          <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-blue-400" />
-                Your Learning Progress
-              </h2>
-              <Button
-                onClick={resetProgress}
-                variant="outline"
-                className="border-zinc-600 text-zinc-400 hover:bg-zinc-800 text-xs px-3 py-1"
-              >
-                Reset Progress
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              
-              {/* Level & Progress */}
-              <div className="text-center p-4 bg-zinc-800/30 rounded-lg">
-                <div className="text-2xl font-bold text-white mb-1">Level {userProgress.level}</div>
-                <div className="text-sm text-zinc-400 mb-2">
-                  {userProgress.points % 500} / 500 XP
-                </div>
-                <div className="w-full bg-zinc-700 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${((userProgress.points % 500) / 500) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Completed Lessons */}
-              <div className="text-center p-4 bg-zinc-800/30 rounded-lg">
-                <div className="text-2xl font-bold text-white mb-1">{userProgress.completedLessons.length}</div>
-                <div className="text-sm text-zinc-400">Lessons Completed</div>
-              </div>
-
-              {/* Total Points with Animation */}
-              <div className="text-center p-4 bg-zinc-800/30 rounded-lg relative">
-                <div className="text-2xl font-bold text-white mb-1 transition-all duration-300">
-                  {userProgress.points}
-                  {pointsAnimation && (
-                    <span className="absolute -top-2 -right-2 text-green-400 text-sm font-bold animate-bounce">
-                      +{pointsAnimation}
-                    </span>
-                  )}
-                </div>
-                <div className="text-sm text-zinc-400">Points Earned</div>
-              </div>
-
-              {/* Badges */}
-              <div className="text-center p-4 bg-zinc-800/30 rounded-lg">
-                <div className="text-2xl font-bold text-white mb-1">{userProgress.badges.length}</div>
-                <div className="text-sm text-zinc-400">Badges Earned</div>
-              </div>
-            </div>
-
-            {/* Badges Display */}
-            {userProgress.badges.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-zinc-700/50">
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  🏆 Your Achievements
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {userProgress.badges.map((badge, index) => (
-                    <Badge key={index} className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30 px-3 py-1">
-                      ⭐ {badge}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Progress Tracker Card */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <Award className="size-3.5 text-zinc-500" />
+              Operator Progress
+            </span>
+            <button
+              onClick={resetProgress}
+              className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 flex items-center gap-1"
+            >
+              <RotateCcw className="size-3" />
+              <span>Reset</span>
+            </button>
           </div>
-        )}
 
-        {/* Learning Courses */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <Shield className="w-6 h-6 mr-3 text-blue-400" />
-            Security Training Courses
-          </h2>
-
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Filter by Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </select>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono">
+            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
+              <span className="text-[10px] uppercase text-zinc-500 block">Operator Rank</span>
+              <p className="text-base font-bold text-zinc-100">Level {userProgress.level}</p>
             </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Filter by Difficulty</label>
-              <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {difficulties.map(difficulty => (
-                  <option key={difficulty.id} value={difficulty.id}>{difficulty.name}</option>
-                ))}
-              </select>
+            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
+              <span className="text-[10px] uppercase text-zinc-500 block">Total Experience</span>
+              <p className="text-base font-bold text-zinc-100">{userProgress.points} XP</p>
+            </div>
+            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
+              <span className="text-[10px] uppercase text-zinc-500 block">Modules Cleared</span>
+              <p className="text-base font-bold text-emerald-400">{userProgress.completedLessons.length} / {lessons.length}</p>
+            </div>
+            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
+              <span className="text-[10px] uppercase text-zinc-500 block">Badges Awarded</span>
+              <p className="text-base font-bold text-zinc-100">{userProgress.badges.length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Course Modules Grid */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <Terminal className="size-3.5 text-zinc-500" />
+              Available Training Modules
+            </span>
+            <div className="flex items-center gap-1.5 font-mono text-xs">
+              {(['all', 'phishing', 'mobile', 'social'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-2 py-0.5 rounded text-[11px] uppercase transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                      : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Lessons Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredLessons.map((lesson) => {
               const isCompleted = userProgress.completedLessons.includes(lesson.id)
+              const Icon = lesson.icon
               return (
                 <div
                   key={lesson.id}
-                  className={`bg-zinc-900/50 border rounded-xl p-6 hover:border-blue-500/30 transition-all duration-300 ${
-                    isCompleted ? 'border-green-500/30 bg-green-500/5' : 'border-zinc-700/50'
+                  className={`rounded-lg border p-5 space-y-3 transition-colors ${
+                    isCompleted
+                      ? 'border-emerald-800/50 bg-emerald-950/10'
+                      : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isCompleted ? 'bg-green-500/20' : 'bg-zinc-800/50'
-                    }`}>
-                      {isCompleted ? (
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      ) : (
-                        <lesson.icon className="w-5 h-5 text-blue-400" />
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge className={`text-xs ${getDifficultyColor(lesson.difficulty)} border`}>
-                        {lesson.difficulty}
-                      </Badge>
-                      <div className="flex items-center text-zinc-400 text-sm">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {lesson.duration}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                        <Icon className="size-4 text-zinc-300" />
+                      </div>
+                      <div>
+                        <span className="font-mono text-[10px] uppercase text-zinc-500 block">
+                          {lesson.difficulty} · {lesson.duration}
+                        </span>
+                        <h3 className="text-xs sm:text-sm font-semibold text-zinc-200">{lesson.title}</h3>
                       </div>
                     </div>
+
+                    <span className="font-mono text-xs text-zinc-400 font-medium">
+                      +{lesson.points} XP
+                    </span>
                   </div>
 
-                  <h3 className="text-lg font-semibold text-white mb-2">{lesson.title}</h3>
-                  <p className="text-zinc-400 text-sm mb-4">{lesson.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-blue-400 text-sm font-medium">
-                      {lesson.points} points
-                    </div>
-                    <Button
+                  <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                    {lesson.description}
+                  </p>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-zinc-800/60">
+                    <span className="font-mono text-[11px] text-zinc-500">
+                      {isCompleted ? 'Status: Completed' : 'Status: Ready'}
+                    </span>
+
+                    <button
                       onClick={() => startLesson(lesson)}
-                      disabled={isCompleted}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors ${
                         isCompleted
-                          ? 'bg-green-500/20 text-green-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          ? 'border border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
+                          : 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200'
                       }`}
                     >
-                      {isCompleted ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Completed
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Course
-                        </>
-                      )}
-                    </Button>
+                      {isCompleted ? 'Review Content' : 'Start Module'}
+                    </button>
                   </div>
                 </div>
               )
             })}
           </div>
-        </section>
+        </div>
 
-        {/* Knowledge Base */}
-        <section>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <FileText className="w-6 h-6 mr-3 text-blue-400" />
-            Knowledge Base & Articles
-          </h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Featured Articles */}
-            <div className="lg:col-span-2">
-              <h3 className="text-lg font-semibold text-white mb-4">Featured Articles</h3>
-              <div className="space-y-4">
-                {articles.filter(article => article.featured).map((article) => (
-                  <div
-                    key={article.id}
-                    className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-6 hover:border-blue-500/30 transition-all duration-300 cursor-pointer group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                        {article.category}
-                      </Badge>
-                      <span className="text-zinc-500 text-sm">{article.date}</span>
-                    </div>
-                    <h4 className="text-xl font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                      {article.title}
-                    </h4>
-                    <p className="text-zinc-400 mb-4">{article.excerpt}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 text-sm flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {article.readTime}
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Articles Sidebar */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Recent Articles</h3>
-              <div className="space-y-3">
-                {articles.filter(article => !article.featured).map((article) => (
-                  <div
-                    key={article.id}
-                    className="bg-zinc-900/30 border border-zinc-700/30 rounded-lg p-4 hover:border-blue-500/30 transition-all duration-300 cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className="text-xs border-zinc-600 text-zinc-400">
-                        {article.category}
-                      </Badge>
-                      <span className="text-zinc-500 text-xs">{article.date}</span>
-                    </div>
-                    <h5 className="text-sm font-medium text-white mb-2 group-hover:text-blue-400 transition-colors">
-                      {article.title}
-                    </h5>
-                    <div className="flex items-center text-zinc-500 text-xs">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {article.readTime}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Intelligence Briefings Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <FileText className="size-3.5 text-zinc-500" />
+              Technical Analysis Briefings
+            </span>
+            <span className="text-[11px] font-mono text-zinc-500">
+              DOCUMENTATION
+            </span>
           </div>
-        </section>
 
-        {/* Get Started Section */}
-        <section className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-8 text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">
-            Start Your Security Education Journey
-          </h3>
-          <p className="text-zinc-400 mb-6 max-w-2xl mx-auto">
-            Begin with our foundational courses and progress to advanced topics. 
-            Build your cybersecurity knowledge at your own pace.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
-              <Play className="w-5 h-5 mr-2" />
-              Start Learning
-            </Button>
-            <Button variant="outline" className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 px-6 py-3 rounded-lg font-medium">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Browse Articles
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {articles.map((art) => (
+              <div
+                key={art.id}
+                className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 space-y-2 hover:border-zinc-700 transition-colors"
+              >
+                <div className="flex items-center justify-between font-mono text-[11px]">
+                  <span className="text-zinc-500 uppercase">{art.category}</span>
+                  <span className="text-zinc-500">{art.readTime}</span>
+                </div>
+                <h4 className="text-xs sm:text-sm font-semibold text-zinc-200">{art.title}</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed font-sans">{art.excerpt}</p>
+              </div>
+            ))}
           </div>
-        </section>
+        </div>
+
       </div>
     </div>
   )

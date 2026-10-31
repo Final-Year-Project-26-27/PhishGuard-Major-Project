@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="dark scroll-smooth">
       <head>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
@@ -50,10 +50,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-gradient-to-b from-black via-zinc-950 to-zinc-900 text-zinc-100 antialiased font-sans">
+      <body className="bg-background text-foreground antialiased min-h-screen flex flex-col selection:bg-zinc-700 selection:text-zinc-100">
         <Navbar />
-        <Toaster position="top-center" richColors expand duration={4000} />
-        <main className="min-h-screen px-4 py-8">{children}</main>
+        <Toaster
+          position="top-right"
+          theme="dark"
+          richColors
+          toastOptions={{
+            style: {
+              background: '#121215',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#f4f4f5',
+            },
+          }}
+        />
+        <main className="flex-1 w-full">{children}</main>
         <Footer />
       </body>
     </html>

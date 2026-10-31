@@ -6,23 +6,13 @@ import {
   User,
   Shield,
   Bell,
-  Moon,
-  Sun,
-  Monitor,
-  Lock,
-  Eye,
-  EyeOff,
   Save,
   RefreshCw,
   Download,
   Upload,
-  Key,
-  AlertTriangle,
-  Zap,
   Brain,
-  Activity,
-  Heart,
-  Sparkles
+  RotateCcw,
+  LogOut,
 } from 'lucide-react'
 import { auth, db } from '../../lib/firebase'
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth'
@@ -91,20 +81,9 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings>(defaultSettings)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [activeTab, setActiveTab] = useState('general')
-  const [showApiKey, setShowApiKey] = useState(false)
+  const [activeTab, setActiveTab] = useState('scanning')
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      })
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser)
       if (currentUser) {
@@ -113,10 +92,7 @@ export default function SettingsPage() {
       setLoading(false)
     })
 
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      unsubscribe()
-    }
+    return () => unsubscribe()
   }, [])
 
   const loadUserSettings = async (userId: string) => {
@@ -131,15 +107,18 @@ export default function SettingsPage() {
   }
 
   const saveSettings = async () => {
-    if (!user) return
+    if (!user) {
+      toast.error('Authentication required to sync settings.')
+      return
+    }
 
     setSaving(true)
     try {
       await setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), settings)
-      toast.success('Settings saved successfully!')
+      toast.success('Security preferences saved to cloud.')
     } catch (error) {
       console.error('Error saving settings:', error)
-      toast.error('Failed to save settings')
+      toast.error('Failed to save settings.')
     } finally {
       setSaving(false)
     }
@@ -164,7 +143,7 @@ export default function SettingsPage() {
     link.download = 'phishguard-settings.json'
     link.click()
     URL.revokeObjectURL(url)
-    toast.success('Settings exported successfully!')
+    toast.success('Configuration exported.')
   }
 
   const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,11 +153,11 @@ export default function SettingsPage() {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const importedSettings = JSON.parse(e.target?.result as string)
-        setSettings({ ...defaultSettings, ...importedSettings })
-        toast.success('Settings imported successfully!')
+        const imported = JSON.parse(e.target?.result as string)
+        setSettings({ ...defaultSettings, ...imported })
+        toast.success('Configuration imported.')
       } catch {
-        toast.error('Invalid settings file')
+        toast.error('Invalid configuration format.')
       }
     }
     reader.readAsText(file)
@@ -186,487 +165,312 @@ export default function SettingsPage() {
 
   const resetSettings = () => {
     setSettings(defaultSettings)
-    toast.info('Settings reset to defaults')
+    toast.info('Settings reset to defaults.')
   }
 
   const handleSignOut = async () => {
     try {
       await signOut(auth)
-      toast.success('Signed out successfully!')
+      toast.success('Signed out.')
     } catch {
-      toast.error('Failed to sign out')
+      toast.error('Sign out failed.')
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <RefreshCw className="w-6 h-6 animate-spin text-cyan-400" />
-          <span className="text-lg">Loading settings...</span>
+      <div className="max-w-6xl mx-auto py-24 px-4 text-center">
+        <div className="inline-flex items-center gap-2 font-mono text-xs text-zinc-500">
+          <RefreshCw className="size-4 animate-spin" />
+          <span>Loading Operator Settings...</span>
         </div>
       </div>
     )
   }
 
   const tabs = [
-    { id: 'general', label: 'General', icon: Settings },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Shield },
-    { id: 'scanning', label: 'Scanning', icon: Brain },
-    { id: 'appearance', label: 'Appearance', icon: Eye },
-    { id: 'account', label: 'Account', icon: User }
+    { id: 'scanning', label: 'Detection Engines', icon: Brain },
+    { id: 'privacy', label: 'Privacy & Storage', icon: Shield },
+    { id: 'notifications', label: 'Alerting', icon: Bell },
+    { id: 'account', label: 'Operator Identity', icon: User },
   ]
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* Dynamic Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute w-96 h-96 bg-cyan-400/8 rounded-full blur-3xl transition-all duration-1000 ease-out"
-          style={{
-            top: `${mousePosition.y}%`,
-            left: `${mousePosition.x}%`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        ></div>
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-400/6 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-purple-400/6 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
-        {/* Cyber Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.05)_1px,transparent_1px)] bg-[size:60px_60px] opacity-30"></div>
-      </div>
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-8">
 
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="max-w-6xl mx-auto">
-          
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-6 shadow-lg shadow-cyan-500/30 relative group">
-              <Settings className="w-8 h-8 text-white animate-pulse" />
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full animate-ping opacity-20"></div>
-            </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight">
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Settings
-              </span>
+        {/* Header Telemetry */}
+        <div className="space-y-3 border-b border-zinc-800 pb-6">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
+            <Settings className="size-3.5 text-zinc-400" />
+            <span>Client Config</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-200">Operator Preferences</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              Security Settings
             </h1>
-            
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Customize your PhishGuard experience and security preferences
-            </p>
+            <span className="font-mono text-xs text-zinc-500">
+              Target: Cloud Firestore & Local Engine Defaults
+            </span>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
-            {/* Sidebar Navigation */}
-            <div className="lg:col-span-1">
-              <div className="bg-slate-800/30 backdrop-blur-sm rounded-3xl p-6 border border-slate-700/50 sticky top-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-cyan-400" />
-                  Categories
-                </h3>
-                <div className="space-y-2">
-                  {tabs.map((tab) => {
-                    const IconComponent = tab.icon
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-left ${
-                          activeTab === tab.id
-                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30'
-                            : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-                        }`}
-                      >
-                        <IconComponent className="w-5 h-5" />
-                        <span className="font-medium">{tab.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="mt-6 pt-6 border-t border-slate-600/50">
-                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h4>
-                  <div className="space-y-2">
-                    <button
-                      onClick={saveSettings}
-                      disabled={saving}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 transition-all duration-300 text-sm"
-                    >
-                      {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      {saving ? 'Saving...' : 'Save All'}
-                    </button>
-                    <button
-                      onClick={exportSettings}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition-all duration-300 text-sm"
-                    >
-                      <Download className="w-4 h-4" />
-                      Export
-                    </button>
-                    <label className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 transition-all duration-300 text-sm cursor-pointer">
-                      <Upload className="w-4 h-4" />
-                      Import
-                      <input
-                        type="file"
-                        accept=".json"
-                        onChange={importSettings}
-                        className="hidden"
-                      />
-                    </label>
-                    <button
-                      onClick={resetSettings}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 transition-all duration-300 text-sm"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Reset
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="bg-slate-800/30 backdrop-blur-sm rounded-3xl p-6 sm:p-8 border border-slate-700/50">
-                
-                {/* General Settings */}
-                {activeTab === 'general' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Settings className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">General Settings</h2>
-                    </div>
-
-                    {/* Theme Selection */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white">Theme</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {(['light', 'dark', 'system'] as const).map((theme) => (
-                          <button
-                            key={theme}
-                            onClick={() => updateSetting('theme', 'theme', theme)}
-                            className={`p-4 rounded-xl border transition-all duration-300 ${
-                              settings.theme === theme
-                                ? 'border-cyan-400 bg-cyan-500/10'
-                                : 'border-slate-600/50 bg-slate-700/30 hover:border-slate-500'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              {theme === 'light' && <Sun className="w-5 h-5 text-yellow-400" />}
-                              {theme === 'dark' && <Moon className="w-5 h-5 text-blue-400" />}
-                              {theme === 'system' && <Monitor className="w-5 h-5 text-gray-400" />}
-                              <span className="capitalize text-white font-medium">{theme}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Language Selection */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white">Language</h3>
-                      <select className="w-full p-3 rounded-xl bg-slate-700/50 border border-slate-600/50 text-white">
-                        <option value="en">English</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                        <option value="de">Deutsch</option>
-                        <option value="zh">中文</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Notifications Settings */}
-                {activeTab === 'notifications' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Bell className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">Notifications</h2>
-                    </div>
-
-                    <div className="space-y-4">
-                      {Object.entries(settings.notifications).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <div>
-                            <h4 className="font-medium text-white capitalize">
-                              {key.replace(/([A-Z])/g, ' $1').trim()}
-                            </h4>
-                            <p className="text-sm text-slate-400">
-                              {key === 'scanComplete' && 'Get notified when scans are completed'}
-                              {key === 'threatDetected' && 'Receive alerts for detected threats'}
-                              {key === 'weeklyReport' && 'Weekly security summary reports'}
-                              {key === 'systemUpdates' && 'System and feature updates'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => updateSetting('notifications', key, !value)}
-                            className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
-                              value ? 'bg-cyan-500' : 'bg-slate-600'
-                            }`}
-                          >
-                            <div
-                              className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-all duration-300 ${
-                                value ? 'left-6' : 'left-0.5'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Privacy Settings */}
-                {activeTab === 'privacy' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Shield className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">Privacy & Security</h2>
-                    </div>
-
-                    <div className="space-y-4">
-                      {Object.entries(settings.privacy).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <div>
-                            <h4 className="font-medium text-white capitalize">
-                              {key.replace(/([A-Z])/g, ' $1').trim()}
-                            </h4>
-                            <p className="text-sm text-slate-400">
-                              {key === 'saveHistory' && 'Save scan history for future reference'}
-                              {key === 'anonymousMode' && 'Use anonymous scanning mode'}
-                              {key === 'shareAnalytics' && 'Help improve PhishGuard with usage data'}
-                              {key === 'autoDeleteHistory' && 'Automatically delete old scan history'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => updateSetting('privacy', key, !value)}
-                            className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
-                              value ? 'bg-cyan-500' : 'bg-slate-600'
-                            }`}
-                          >
-                            <div
-                              className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-all duration-300 ${
-                                value ? 'left-6' : 'left-0.5'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Scanning Settings */}
-                {activeTab === 'scanning' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Brain className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">Scanning Options</h2>
-                    </div>
-
-                    <div className="space-y-4">
-                      {Object.entries(settings.scanning).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <div>
-                            <h4 className="font-medium text-white capitalize">
-                              {key.replace(/([A-Z])/g, ' $1').trim()}
-                            </h4>
-                            <p className="text-sm text-slate-400">
-                              {key === 'deepScan' && 'Enable comprehensive deep scanning'}
-                              {key === 'realTimeProtection' && 'Real-time threat monitoring'}
-                              {key === 'cloudSync' && 'Sync scan results across devices'}
-                              {key === 'autoScan' && 'Automatically scan uploaded files'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => updateSetting('scanning', key, !value)}
-                            className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
-                              value ? 'bg-cyan-500' : 'bg-slate-600'
-                            }`}
-                          >
-                            <div
-                              className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-all duration-300 ${
-                                value ? 'left-6' : 'left-0.5'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Appearance Settings */}
-                {activeTab === 'appearance' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Eye className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">Appearance</h2>
-                    </div>
-
-                    {/* Color Scheme */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white">Color Scheme</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {(['cyan', 'blue', 'purple', 'green'] as const).map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => updateSetting('appearance', 'colorScheme', color)}
-                            className={`p-4 rounded-xl border transition-all duration-300 ${
-                              settings.appearance.colorScheme === color
-                                ? 'border-cyan-400 bg-cyan-500/10'
-                                : 'border-slate-600/50 bg-slate-700/30 hover:border-slate-500'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-4 h-4 rounded-full bg-${color}-400`}></div>
-                              <span className="capitalize text-white font-medium">{color}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Other Appearance Options */}
-                    <div className="space-y-4">
-                      {Object.entries(settings.appearance).map(([key, value]) => {
-                        if (key === 'colorScheme') return null
-                        return (
-                          <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                            <div>
-                              <h4 className="font-medium text-white capitalize">
-                                {key.replace(/([A-Z])/g, ' $1').trim()}
-                              </h4>
-                              <p className="text-sm text-slate-400">
-                                {key === 'compactMode' && 'Use compact layout for better space usage'}
-                                {key === 'animationsEnabled' && 'Enable smooth animations and transitions'}
-                                {key === 'soundEffects' && 'Play sound effects for notifications'}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => updateSetting('appearance', key, !value)}
-                              className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
-                                value ? 'bg-cyan-500' : 'bg-slate-600'
-                              }`}
-                            >
-                              <div
-                                className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-all duration-300 ${
-                                  value ? 'left-6' : 'left-0.5'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Account Settings */}
-                {activeTab === 'account' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <User className="w-6 h-6 text-cyan-400" />
-                      <h2 className="text-2xl font-bold text-white">Account Settings</h2>
-                    </div>
-
-                    {user ? (
-                      <div className="space-y-6">
-                        {/* Profile Information */}
-                        <div className="p-6 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-cyan-400/50">
-                              <Image
-                                src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email || 'User')}&background=0891b2&color=fff`}
-                                alt="Profile"
-                                width={64}
-                                height={64}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                            <div>
-                              <p className="text-white font-medium">{user.displayName || 'Anonymous User'}</p>
-                              <p className="text-slate-400">{user.email}</p>
-                              <p className="text-xs text-slate-500">Member since {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'Unknown'}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* API Key Section */}
-                        <div className="p-6 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <h3 className="text-lg font-semibold text-white mb-4">API Access</h3>
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
-                              <Key className="w-5 h-5 text-yellow-400" />
-                              <span className="text-white font-medium">API Key:</span>
-                              <code className="flex-1 text-slate-300 bg-slate-900/50 px-3 py-1 rounded">
-                                {showApiKey ? user.uid : '••••••••••••••••'}
-                              </code>
-                              <button
-                                onClick={() => setShowApiKey(!showApiKey)}
-                                className="text-cyan-400 hover:text-cyan-300"
-                              >
-                                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Account Actions */}
-                        <div className="p-6 rounded-xl bg-slate-700/30 border border-slate-600/30">
-                          <h3 className="text-lg font-semibold text-white mb-4">Account Actions</h3>
-                          <div className="space-y-3">
-                            <button
-                              onClick={handleSignOut}
-                              className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 transition-all duration-300"
-                            >
-                              <AlertTriangle className="w-5 h-5" />
-                              Sign Out
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <Lock className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-white mb-2">Not Signed In</h3>
-                        <p className="text-slate-400 mb-6">Sign in to access account settings and cloud features</p>
-                        <button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl px-6 py-3 transition-all duration-300">
-                          Sign In
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Stats */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-              <Activity className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-white">99.9%</p>
-              <p className="text-slate-400">Uptime</p>
-            </div>
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-              <Sparkles className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
-              <p className="text-2xl font-bold text-white">50K+</p>
-              <p className="text-slate-400">Scans Completed</p>
-            </div>
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-              <Heart className="w-8 h-8 text-pink-400 mx-auto mb-3 animate-pulse" />
-              <p className="text-2xl font-bold text-white">24/7</p>
-              <p className="text-slate-400">Support</p>
-            </div>
-          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Manage heuristic inspection depth, telemetry persistence rules, and account authentication parameters.
+          </p>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          {/* Navigation Sidebar */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 space-y-1">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-mono transition-colors text-left ${
+                      activeTab === tab.id
+                        ? 'bg-zinc-100 text-zinc-950 font-semibold'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+                    }`}
+                  >
+                    <Icon className="size-3.5" />
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Quick Actions Panel */}
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-3 font-mono text-xs">
+              <span className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider block">
+                Profile Operations
+              </span>
+
+              <div className="space-y-1.5">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving || !user}
+                  className="w-full px-3 py-1.5 rounded bg-zinc-100 text-zinc-950 font-medium hover:bg-zinc-200 transition-colors flex items-center justify-between disabled:opacity-40"
+                >
+                  <span>{saving ? 'Syncing...' : 'Save Configuration'}</span>
+                  <Save className="size-3.5" />
+                </button>
+
+                <button
+                  onClick={exportSettings}
+                  className="w-full px-3 py-1.5 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 transition-colors flex items-center justify-between"
+                >
+                  <span>Export JSON</span>
+                  <Download className="size-3.5 text-zinc-500" />
+                </button>
+
+                <label className="w-full px-3 py-1.5 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 transition-colors flex items-center justify-between cursor-pointer">
+                  <span>Import JSON</span>
+                  <Upload className="size-3.5 text-zinc-500" />
+                  <input type="file" accept=".json" onChange={importSettings} className="hidden" />
+                </label>
+
+                <button
+                  onClick={resetSettings}
+                  className="w-full px-3 py-1.5 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-400 transition-colors flex items-center justify-between"
+                >
+                  <span>Reset Defaults</span>
+                  <RotateCcw className="size-3.5 text-zinc-500" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings Detail Pane */}
+          <div className="lg:col-span-8 rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+
+            {/* Scanning Controls */}
+            {activeTab === 'scanning' && (
+              <div className="space-y-4">
+                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
+                  <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200 font-semibold">
+                    Detection & Heuristic Tuning
+                  </h3>
+                  <span className="font-mono text-[10px] text-zinc-500">FASTAPI INTEGRATION</span>
+                </div>
+
+                <div className="divide-y divide-zinc-800/80">
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Real-Time In-Situ Interception</p>
+                      <p className="text-[11px] text-zinc-500">Allow browser extension to scan active DOM nodes in Gmail and WhatsApp Web.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.scanning.realTimeProtection}
+                      onChange={(e) => updateSetting('scanning', 'realTimeProtection', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Deep Structural Document Inspection</p>
+                      <p className="text-[11px] text-zinc-500">Run secondary 22-indicator lexical matching on PDF/DOCX attachments.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.scanning.deepScan}
+                      onChange={(e) => updateSetting('scanning', 'deepScan', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Cloud History Synchronization</p>
+                      <p className="text-[11px] text-zinc-500">Store scan tokens and verdicts in user private Firestore collection.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.scanning.cloudSync}
+                      onChange={(e) => updateSetting('scanning', 'cloudSync', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Controls */}
+            {activeTab === 'privacy' && (
+              <div className="space-y-4">
+                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
+                  <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200 font-semibold">
+                    Privacy & Telemetry Persistence
+                  </h3>
+                  <span className="font-mono text-[10px] text-zinc-500">DATA POLICY</span>
+                </div>
+
+                <div className="divide-y divide-zinc-800/80">
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Retain Local History</p>
+                      <p className="text-[11px] text-zinc-500">Preserve past URLs and files in browser localStorage.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.privacy.saveHistory}
+                      onChange={(e) => updateSetting('privacy', 'saveHistory', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Anonymous Intake Mode</p>
+                      <p className="text-[11px] text-zinc-500">Omit reporter email address when submitting community threat reports.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.privacy.anonymousMode}
+                      onChange={(e) => updateSetting('privacy', 'anonymousMode', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Alerting Controls */}
+            {activeTab === 'notifications' && (
+              <div className="space-y-4">
+                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
+                  <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200 font-semibold">
+                    Alerting & Threat Notifications
+                  </h3>
+                  <span className="font-mono text-[10px] text-zinc-500">CHANNELS</span>
+                </div>
+
+                <div className="divide-y divide-zinc-800/80">
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Threat Detected Toast</p>
+                      <p className="text-[11px] text-zinc-500">Display immediate banner when link or message classification exceeds 75% risk.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.threatDetected}
+                      onChange={(e) => updateSetting('notifications', 'threatDetected', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">Scan Completion Notification</p>
+                      <p className="text-[11px] text-zinc-500">Acknowledge completion of multi-page document scans.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications.scanComplete}
+                      onChange={(e) => updateSetting('notifications', 'scanComplete', e.target.checked)}
+                      className="size-4 accent-zinc-200 rounded cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Account Info */}
+            {activeTab === 'account' && (
+              <div className="space-y-4">
+                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
+                  <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200 font-semibold">
+                    Authenticated Identity
+                  </h3>
+                  <span className="font-mono text-[10px] text-zinc-500">FIREBASE AUTH</span>
+                </div>
+
+                {user ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 rounded bg-zinc-950 border border-zinc-800">
+                      <div className="size-10 rounded overflow-hidden border border-zinc-700 bg-zinc-800 shrink-0">
+                        <Image
+                          src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email || 'User')}&background=18181b&color=f4f4f5`}
+                          alt="Profile"
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0 font-mono text-xs">
+                        <p className="font-semibold text-zinc-100 truncate">{user.displayName || 'Security Operator'}</p>
+                        <p className="text-zinc-500 truncate">{user.email}</p>
+                        <p className="text-[10px] text-zinc-600 truncate mt-0.5">UID: {user.uid}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleSignOut}
+                      className="px-3 py-1.5 rounded border border-red-900/60 bg-red-950/30 text-red-300 text-xs font-mono hover:bg-red-950/60 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="size-3.5" />
+                      <span>Sign Out Current Session</span>
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-500 font-mono py-2">
+                    Not currently authenticated. Sign in with Google via the top navigation bar to associate cloud telemetry with your identity.
+                  </p>
+                )}
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
       </div>
     </div>
   )
