@@ -61,7 +61,7 @@ export default function DashboardPage() {
   // CSV Export Function
   const exportToCSV = () => {
     if (filteredReports.length === 0) {
-      toast.warning('No report data available to export.')
+      toast.warning('No reports to download.')
       return
     }
 
@@ -87,17 +87,17 @@ export default function DashboardPage() {
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
       link.setAttribute('href', url)
-      link.setAttribute('download', `phishguard-telemetry-${new Date().toISOString().slice(0, 10)}.csv`)
+      link.setAttribute('download', `phishguard-reports-${new Date().toISOString().slice(0, 10)}.csv`)
       link.style.visibility = 'hidden'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success(`Exported ${filteredReports.length} reports to CSV.`)
+      toast.success(`Downloaded ${filteredReports.length} reports.`)
     } catch (err) {
       console.error('Error exporting CSV:', err)
-      toast.error('Failed to export CSV report.')
+      toast.error("Couldn't download the reports. Try again.")
     }
   }
 
@@ -158,7 +158,7 @@ export default function DashboardPage() {
     labels: Object.keys(analytics.scamTypeCounts),
     datasets: [
       {
-        label: 'Incident Volume',
+        label: 'Reports',
         data: Object.values(analytics.scamTypeCounts),
         backgroundColor: 'rgba(244, 244, 245, 0.8)',
         hoverBackgroundColor: '#ffffff',
@@ -176,7 +176,7 @@ export default function DashboardPage() {
         backgroundColor: [
           '#ef4444', // crimson
           '#f59e0b', // amber
-          '#10b981', // emerald
+          '#14b8a6', // emerald
           '#38bdf8', // sky
           '#a1a1aa', // zinc
           '#f472b6', // pink
@@ -242,28 +242,28 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto py-24 px-4 text-center">
         <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
           <RefreshCw className="size-4 animate-spin" />
-          <span>Synchronizing Telemetry Feed...</span>
+          <span>Loading reports...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Security Telemetry Dashboard
+              Scam reports
             </h1>
             <span className="text-sm text-zinc-400">
-              Aggregated Community Reports & Classification Trends
+              Sent in by students
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Real-time catalog of user-submitted scam reports, active malicious domains, and fraudulent recruiter contacts across the academic network.
+            Every scam report students have sent in, newest first: fake recruiters, phishing sites and payment scams. The list updates as new reports arrive.
           </p>
         </div>
 
@@ -275,17 +275,17 @@ export default function DashboardPage() {
           </div>
 
           <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
-            <span className="text-sm text-zinc-400">Intake (7 Days)</span>
+            <span className="text-sm text-zinc-400">Last 7 days</span>
             <p className="text-2xl font-bold text-zinc-100">{analytics.recentReports}</p>
           </div>
 
           <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
-            <span className="text-sm text-zinc-400">Top Threat Vector</span>
+            <span className="text-sm text-zinc-400">Most reported</span>
             <p className="text-base font-bold text-amber-400 truncate">{analytics.topScamType}</p>
           </div>
 
           <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
-            <span className="text-sm text-zinc-400">Threat Diversity</span>
+            <span className="text-sm text-zinc-400">Scam types</span>
             <p className="text-2xl font-bold text-zinc-100">{Object.keys(analytics.scamTypeCounts).length}</p>
           </div>
         </div>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between border-zinc-800/80 pb-3">
               <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                 <BarChart3 className="size-3.5 text-zinc-400" />
-                Incident Distribution by Category
+                Reports by scam type
               </span>
             </div>
             <div className="h-64">
@@ -308,7 +308,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between border-zinc-800/80 pb-3">
               <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                 <PieChart className="size-3.5 text-zinc-400" />
-                Category Breakdown
+                Share of each type
               </span>
             </div>
             <div className="h-64">
@@ -324,7 +324,7 @@ export default function DashboardPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Search by URL, reporter, or content..."
+                placeholder="Search by link, email or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
@@ -336,7 +336,7 @@ export default function DashboardPage() {
               className="w-full sm:w-auto px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center justify-center gap-1.5 transition-colors"
             >
               <Download className="size-3" />
-              <span>Export CSV</span>
+              <span>Download as spreadsheet</span>
             </button>
           </div>
 
@@ -362,10 +362,10 @@ export default function DashboardPage() {
         <div className="rounded-lg bg-[#15171a] overflow-hidden">
           <div className="p-4 bg-zinc-950 border-zinc-800 flex items-center justify-between">
             <span className="text-sm text-zinc-300">
-              Verified Intake Stream ({filteredReports.length})
+              All reports ({filteredReports.length})
             </span>
             <span className="text-sm text-zinc-400">
-              AUTO-SYNC FIRESTORE
+              Updates live
             </span>
           </div>
 
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold px-2 py-0.5 rounded border border-red-900/50 bg-red-950/30 text-red-300">
-                        {report.scamType || 'UNCLASSIFIED'}
+                        {report.scamType || 'Other'}
                       </span>
                       <span className="text-sm text-zinc-300 font-semibold truncate max-w-md">
                         {report.url}
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                       onClick={() => openExternal(report.url)}
                       className="hover:text-zinc-200 inline-flex items-center gap-1"
                     >
-                      <span>Direct Target</span>
+                      <span>Open link</span>
                       <ExternalLink className="size-3" />
                     </button>
                   </div>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="p-12 text-center text-zinc-400 text-sm">
-                No matching telemetry reports found for current query parameters.
+                No reports match your search.
               </div>
             )}
           </div>

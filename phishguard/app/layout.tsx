@@ -4,6 +4,7 @@ import './globals.css';
 import { ReactNode, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
 import { Toaster } from 'sonner';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
@@ -24,6 +25,7 @@ const trackPageview = (url: string) => {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const isHome = pathname === '/';
 
   useEffect(() => {
     if (pathname) {
@@ -53,8 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased min-h-dvh flex flex-col selection:bg-zinc-700 selection:text-zinc-100">
-        <Navbar />
+      <body className="bg-background text-foreground antialiased min-h-dvh selection:bg-zinc-700 selection:text-zinc-100">
         <Toaster
           position="top-right"
           theme="dark"
@@ -67,8 +68,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             },
           }}
         />
-        <main className="flex-1 w-full">{children}</main>
-        <Footer />
+        {isHome ? (
+          <div className="min-h-dvh flex flex-col">
+            <Navbar />
+            <main className="flex-1 w-full">{children}</main>
+            <Footer />
+          </div>
+        ) : (
+          <div className="min-h-dvh flex flex-col lg:flex-row">
+            <Sidebar />
+            <div className="flex-1 min-w-0 flex flex-col">
+              <main className="flex-1 w-full">{children}</main>
+              <Footer />
+            </div>
+          </div>
+        )}
       </body>
     </html>
   );

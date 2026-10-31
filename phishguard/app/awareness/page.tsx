@@ -92,8 +92,8 @@ export default function AwarenessHub() {
   const lessons: Lesson[] = [
     {
       id: 'phish-basics',
-      title: 'Phishing Fundamentals & Anatomy',
-      description: 'Foundational principles of social engineering outreach and domain impersonation identification.',
+      title: 'Phishing basics',
+      description: 'How scammers pretend to be your college or a company, and how to spot a fake website address.',
       category: 'phishing',
       difficulty: 'beginner',
       points: 100,
@@ -102,31 +102,31 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'Anatomy of Academic Phishing',
-          content: 'Phishing represents the primary intrusion vector into educational environments. Attackers impersonate university registrars, career placement cells, or enterprise partners to harvest single sign-on (SSO) credentials or demand advance payments.',
+          title: 'How phishing targets students',
+          content: 'Phishing is the most common way scammers reach students. They pretend to be the exam office, the placement cell or a well-known company, so you hand over your college login or pay money up front.',
           keyPoints: [
-            'Attacks frequently exploit institutional trust and urgency',
-            'Lookalike domains mimic university naming conventions (e.g., mail-nitte.in)',
+            'Scammers count on you trusting your college and acting fast',
+            'Fake website addresses look almost like your college\'s (e.g., mail-nitte.in)',
             'Legitimate departments never demand cash deposits via UPI for interviews',
-            'Always inspect destination URLs before providing credentials'
+            'Check the website address before you type a password'
           ]
         },
         page2: {
-          title: 'Inspection Verification Matrix',
-          content: 'Examine message headers for mismatched sender domains, unanchored subdomains, and pressurized response timelines. Unsolicited requests for bank account details, Aadhaar, or PAN cards represent high-certainty scam indicators.',
+          title: 'What to check in every message',
+          content: 'Check who really sent the message, whether the link goes where it claims, and whether you are being rushed. A message you didn\'t expect that asks for your bank details, Aadhaar or PAN card is almost always a scam.',
           keyPoints: [
-            'Inspect the exact envelope domain, not just the display name',
+            'Look at the full email address, not just the sender\'s name',
             'Look for artificial deadlines (e.g., within 24 hours to secure seat)',
-            'Verify unexpected communications through direct departmental contact',
-            'Report unverified outreach to institutional administrators'
+            'If a message surprises you, call or visit the department yourself',
+            'Report suspicious messages to your college'
           ],
           quiz: {
-            question: 'Which of the following is a primary indicator of a deceptive academic outreach?',
+            question: 'Which of these is a strong sign that a message is a scam?',
             options: [
-              'Originating from an authorized .edu or .in institutional domain',
-              'Requiring an upfront refundable deposit via UPI to confirm an interview',
-              'Providing a publicly listed campus office location and phone number',
-              'Listing official university placement committee coordinators'
+              'It comes from your college\'s official email address',
+              'It asks for a refundable UPI deposit to confirm your interview',
+              'It lists the campus office address and phone number',
+              'It names the placement coordinators you already know'
             ],
             correct: 1
           }
@@ -135,8 +135,8 @@ export default function AwarenessHub() {
     },
     {
       id: 'email-safety',
-      title: 'Cryptographic Email Authentication',
-      description: 'Understanding SPF, DKIM, and DMARC enforcement mechanisms in mailbox defense.',
+      title: 'Is this email really from them?',
+      description: 'How your inbox checks who sent an email, and what to do when that check fails.',
       category: 'phishing',
       difficulty: 'intermediate',
       points: 150,
@@ -145,31 +145,31 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'RFC 8601 Authentication Records',
-          content: 'Modern mail transfer agents validate authenticity using SPF (IP sender authorization), DKIM (cryptographic body signature), and DMARC (alignment policy). Attackers frequently attempt to plant fake downstream headers to simulate a pass.',
+          title: 'How your inbox checks the sender',
+          content: 'When an email arrives, Gmail and other inboxes check that it really came from the company it names. Scammers try to fake this, so trust the warning your inbox shows over anything written inside the email.',
           keyPoints: [
-            'SPF specifies which IP addresses are authorized to send for a domain',
-            'DKIM provides cryptographic non-repudiation using public-key cryptography',
-            'DMARC instructs the receiving MTA how to handle verification failures',
-            'Only the topmost Authentication-Results from trusted MTAs should be evaluated'
+            'Companies tell inboxes which servers may send their email',
+            'Real emails carry a hidden signature that proves they weren\'t changed',
+            'If those checks fail, your inbox may warn you or send the email to spam',
+            'A warning banner from Gmail matters more than a "verified" badge inside the email'
           ]
         },
         page2: {
-          title: 'Targeted Spear Phishing Recognition',
-          content: 'Spear phishing campaigns harvest public student profile data from LinkedIn and campus directories to craft personalized, high-credibility messages claiming to represent reputable tech recruiters.',
+          title: 'Scams made just for you',
+          content: 'Some scammers read your LinkedIn profile and campus directory, then write a personal message that seems to come from a recruiter at a well-known tech company.',
           keyPoints: [
-            'Attackers use scraped resume details to bypass initial skepticism',
+            'They mention your real projects and skills so you trust them',
             'Recruiters will not conduct hiring exclusively through WhatsApp or Telegram',
-            'Formal offers must arrive with verifiable corporate email signatures',
-            'Use PhishGuard Link Inspector to verify all application portals'
+            'A real offer comes from the company\'s own email address',
+            'Check every application link with PhishGuard first'
           ],
           quiz: {
-            question: 'Why does PhishGuard strictly inspect the topmost Authentication-Results header?',
+            question: 'An email says "Verified sender" in its text, but Gmail shows a warning that it may not be from the company. What should you trust?',
             options: [
-              'Topmost headers are shorter and faster to process',
-              'Receiving MTAs prepend headers; downstream copies can be forged by senders',
-              'Middle headers only contain styling information',
-              'Gmail removes all other headers automatically'
+              'The "Verified sender" text, because it is in the email',
+              'Gmail\'s warning, because the sender can write anything inside the email',
+              'Neither, so reply and ask the sender',
+              'Both, because they can be true at the same time'
             ],
             correct: 1
           }
@@ -178,8 +178,8 @@ export default function AwarenessHub() {
     },
     {
       id: 'mobile-security',
-      title: 'Mobile & Messaging Threat Vectors',
-      description: 'Securing student mobile devices against SMS phishing, WhatsApp scams, and malicious APKs.',
+      title: 'Scams on your phone',
+      description: 'Staying safe from scam texts, WhatsApp job offers and dangerous app files.',
       category: 'mobile',
       difficulty: 'beginner',
       points: 125,
@@ -188,29 +188,29 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'WhatsApp & SMS Scam Ecosystem',
-          content: 'Mobile channels exhibit higher student response rates than traditional email. Threat actors utilize automated WhatsApp business accounts to distribute fraudulent job offers, requesting registration fees or distributing malicious APK download links.',
+          title: 'WhatsApp and SMS scams',
+          content: 'Students reply to WhatsApp and SMS faster than to email, and scammers know it. They use WhatsApp business accounts to send fake job offers that ask for a registration fee or link to a dangerous app file.',
           keyPoints: [
-            'Never install Android package (.apk) files received over messaging apps',
+            'Never install an app file (.apk) someone sends you in a chat',
             'Legitimate hiring processes do not require direct UPI deposits',
-            'Verify phone number country codes against claimed corporate headquarters',
+            'Check that the phone number\'s country code matches where the company is',
             'Forward suspicious outreach to the PhishGuard WhatsApp Assistant'
           ]
         },
         page2: {
-          title: 'Defense Best Practices',
-          content: 'Enforce multi-factor authentication across student accounts, restrict side-loading permissions on mobile operating systems, and verify suspicious recruitment links before navigation.',
+          title: 'Habits that keep you safe',
+          content: 'Turn on two-step login for your accounts, only install apps from the official app store, and check recruitment links before you open them.',
           keyPoints: [
-            'Audit application permissions regularly',
-            'Keep device security patch levels up to date',
-            'Use hardware or authenticator-app 2FA rather than SMS OTPs',
+            'Review which apps can see your contacts, photos and messages',
+            'Install phone updates when they arrive',
+            'Use an authenticator app for two-step login instead of SMS codes',
             'Report scam numbers directly to messaging platforms'
           ],
           quiz: {
             question: 'What is the safest action when receiving an unsolicited APK file on WhatsApp?',
             options: [
               'Install it to inspect its permissions',
-              'Never install it; report the sender and delete the payload',
+              'Don\'t install it; report the sender and delete the file',
               'Forward it to peers to see if they recognize it',
               'Rename the extension and open it in a browser'
             ],
@@ -221,8 +221,8 @@ export default function AwarenessHub() {
     },
     {
       id: 'social-engineering',
-      title: 'Social Engineering & Psychological Pressure',
-      description: 'Deconstructing urgency, authority bias, and FOMO tactics deployed in academic scams.',
+      title: 'Pressure tricks scammers use',
+      description: 'How scammers use deadlines, fake authority and fear of missing out to rush you.',
       category: 'social',
       difficulty: 'intermediate',
       points: 175,
@@ -231,22 +231,22 @@ export default function AwarenessHub() {
       completed: false,
       content: {
         page1: {
-          title: 'Psychological Exploitation Vectors',
-          content: 'Cybercriminals rely on human cognitive biases rather than technical vulnerabilities. Key levers include authority impersonation (professors, placement deans), artificial urgency (2-hour deadlines), and fear of missing out on coveted career opportunities.',
+          title: 'Why smart people fall for scams',
+          content: 'Most scams work on people, not computers. Scammers pretend to be a professor or the placement dean, set a 2-hour deadline, and make you afraid of losing a great job.',
           keyPoints: [
-            'Authority bias prevents students from challenging fraudulent requests',
-            'Urgency compresses decision-making time to bypass critical thinking',
-            'High-prestige brand names (Google, Microsoft) are used as emotional hooks',
+            'It feels wrong to question someone who seems senior',
+            'A tight deadline leaves you no time to think it through',
+            'Big names like Google or Microsoft make an offer feel real',
             'Scammers often promise 100% placement with zero technical interviews'
           ]
         },
         page2: {
-          title: 'Systematic Cognitive Countermeasures',
-          content: 'Establish a mandatory 15-minute reflection window before responding to any communication demanding payments, account verification, or credential updates. Always contact the claimed sender via an independently sourced phone number or email.',
+          title: 'How to slow a scam down',
+          content: 'Wait 15 minutes before you reply to any message asking for money, a login or account details. Then contact the sender using a phone number or email you found yourself, not one from the message.',
           keyPoints: [
-            'Pause and disengage when an email or message demands immediate compliance',
-            'Validate unusual administrative requests with departmental staff directly',
-            'Consult the PhishGuard Community Telemetry feed for active campaigns',
+            'Stop when a message says you must act right now',
+            'Check odd requests with department staff in person',
+            'Look at PhishGuard\'s scam reports to see what is going around',
             'Remember that legitimate career fairs never demand advance entry fees'
           ],
           quiz: {
@@ -254,7 +254,7 @@ export default function AwarenessHub() {
             options: [
               'To adhere to corporate hiring guidelines',
               'To create artificial panic and suppress logical verification',
-              'To ensure high network throughput',
+              'To keep their servers running fast',
               'To comply with data privacy regulations'
             ],
             correct: 1
@@ -267,37 +267,37 @@ export default function AwarenessHub() {
   const articles: Article[] = [
     {
       id: '1',
-      title: 'Dissecting Fake Internship Campaigns in Engineering Colleges',
-      excerpt: 'How deceptive syndicates impersonate tier-1 technology companies to extract training fees from engineering students.',
-      category: 'Investigation',
+      title: 'How fake internship scams work',
+      excerpt: 'How scam groups pretend to be top tech companies to collect training fees from engineering students.',
+      category: 'Explainer',
       readTime: '8 min read',
       date: 'Latest',
       featured: true
     },
     {
       id: '2',
-      title: 'RFC 8601 Header Validation: Protecting Student Mailboxes',
-      excerpt: 'A technical breakdown of Authentication-Results header isolation and why DNS fallbacks create vulnerability gaps.',
-      category: 'Architecture',
+      title: 'Spotting emails that fake your college',
+      excerpt: 'Why a familiar name in the From line proves nothing, and how to tell a real college email from a fake one.',
+      category: 'Guide',
       readTime: '6 min read',
-      date: 'Technical',
+      date: 'Guide',
       featured: true
     },
     {
       id: '3',
       title: 'The Rise of WhatsApp Recruiter Scams: A Defensive Guide',
-      excerpt: 'Analyzing automated business accounts, fake offer letters, and UPI payment pressure tactics targeting freshers.',
+      excerpt: 'Fake WhatsApp business accounts, fake offer letters and UPI payment pressure aimed at freshers.',
       category: 'Field Report',
       readTime: '5 min read',
       date: 'Recent'
     },
     {
       id: '4',
-      title: 'PyMuPDF vs OCR: Structural Feature Extraction in Phishing PDFs',
-      excerpt: 'Why lexical indicator modeling outperforms raw OCR for detecting scam signatures in digital documents.',
-      category: 'Machine Learning',
+      title: 'How to spot a fake offer letter',
+      excerpt: 'The words and requests that give away a fake offer letter PDF, from training fees to urgent deadlines.',
+      category: 'Guide',
       readTime: '7 min read',
-      date: 'Research'
+      date: 'Guide'
     }
   ]
 
@@ -349,11 +349,11 @@ export default function AwarenessHub() {
     const def = { points: 0, level: 1, completedLessons: [], badges: [], streak: 0 }
     setUserProgress(def)
     localStorage.removeItem('phishguard-progress')
-    toast.success('Training progress reset.')
+    toast.success('Your progress was reset.')
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
 
       {/* Lesson Modal */}
       {selectedLesson && (
@@ -364,7 +364,7 @@ export default function AwarenessHub() {
             <div className="p-5 border-zinc-800 flex items-center justify-between">
               <div>
                 <span className="text-sm text-zinc-400 block">
-                  MODULE {selectedLesson.id.toUpperCase()} · STEP {currentPage} OF 2
+                  Step {currentPage} of 2
                 </span>
                 <h2 className="text-base font-bold text-zinc-100 mt-0.5">{selectedLesson.title}</h2>
               </div>
@@ -389,12 +389,12 @@ export default function AwarenessHub() {
 
                   <div className="p-4 rounded bg-[#0f1012] space-y-2">
                     <span className="text-sm text-zinc-400 block font-semibold">
-                      Key Analysis Points
+                      Key points
                     </span>
                     <ul className="text-sm text-zinc-300 space-y-2">
                       {selectedLesson.content.page1.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400">•</span>
+                          <span className="text-teal-400">•</span>
                           <span>{point}</span>
                         </li>
                       ))}
@@ -414,12 +414,12 @@ export default function AwarenessHub() {
 
                   <div className="p-4 rounded bg-[#0f1012] space-y-2">
                     <span className="text-sm text-zinc-400 block font-semibold">
-                      Defensive Indicators
+                      What to do
                     </span>
                     <ul className="text-sm text-zinc-300 space-y-2">
                       {selectedLesson.content.page2.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400">•</span>
+                          <span className="text-teal-400">•</span>
                           <span>{point}</span>
                         </li>
                       ))}
@@ -430,7 +430,7 @@ export default function AwarenessHub() {
                   {selectedLesson.content.page2.quiz && (
                     <div className="p-4 rounded bg-[#0f1012] space-y-3 text-sm">
                       <span className="text-sm text-amber-400 block font-semibold">
-                        Checkpoint Question
+                        Quick check
                       </span>
                       <p className="text-zinc-200 font-sans text-base">
                         {selectedLesson.content.page2.quiz.question}
@@ -443,7 +443,7 @@ export default function AwarenessHub() {
                             className={`w-full text-left p-2.5 rounded border text-sm transition-colors flex items-center justify-between ${
                               selectedAnswer === idx
                                 ? idx === selectedLesson.content.page2.quiz?.correct
-                                  ? 'border-emerald-800/80 bg-emerald-950/40 text-emerald-300'
+                                  ? 'border-teal-800/80 bg-teal-950/40 text-teal-300'
                                   : 'border-red-800/80 bg-red-950/40 text-red-300'
                                 : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                             }`}
@@ -451,7 +451,7 @@ export default function AwarenessHub() {
                             <span>{opt}</span>
                             {selectedAnswer === idx && (
                               <span className="text-sm font-bold">
-                                {idx === selectedLesson.content.page2.quiz?.correct ? 'CORRECT' : 'INCORRECT'}
+                                {idx === selectedLesson.content.page2.quiz?.correct ? 'Correct' : 'Not quite'}
                               </span>
                             )}
                           </button>
@@ -478,14 +478,14 @@ export default function AwarenessHub() {
                   onClick={() => setCurrentPage(2)}
                   className="px-3 py-1.5 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200"
                 >
-                  Proceed to Checkpoint
+                  Next
                 </button>
               ) : (
                 <button
                   onClick={finishLesson}
-                  className="px-3 py-1.5 rounded bg-emerald-500 text-zinc-950 font-medium text-sm hover:bg-emerald-400"
+                  className="px-3 py-1.5 rounded bg-teal-500 text-zinc-950 font-medium text-sm hover:bg-teal-400"
                 >
-                  Complete Module (+{selectedLesson.points} XP)
+                  Finish lesson (+{selectedLesson.points} XP)
                 </button>
               )}
             </div>
@@ -500,14 +500,14 @@ export default function AwarenessHub() {
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Security Awareness Academy
+              Learn to spot scams
             </h1>
             <span className="text-sm text-zinc-400">
-              Interactive Incident Simulation & Heuristic Training
+              Short lessons with quick checks
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Curated interactive modules training students to dissect recruiter deception, malicious headers, and social engineering vectors.
+            Short lessons on fake recruiters, fake emails, phone scams and the pressure tricks scammers use. Each ends with a quick question.
           </p>
         </div>
 
@@ -516,7 +516,7 @@ export default function AwarenessHub() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-3">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <Award className="size-3.5 text-zinc-400" />
-              Operator Progress
+              Your progress
             </span>
             <button
               onClick={resetProgress}
@@ -529,19 +529,19 @@ export default function AwarenessHub() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-3 rounded bg-[#0f1012] space-y-1">
-              <span className="text-sm text-zinc-400 block">Operator Rank</span>
+              <span className="text-sm text-zinc-400 block">Level</span>
               <p className="text-base font-bold text-zinc-100">Level {userProgress.level}</p>
             </div>
             <div className="p-3 rounded bg-[#0f1012] space-y-1">
-              <span className="text-sm text-zinc-400 block">Total Experience</span>
+              <span className="text-sm text-zinc-400 block">Points</span>
               <p className="text-base font-bold text-zinc-100">{userProgress.points} XP</p>
             </div>
             <div className="p-3 rounded bg-[#0f1012] space-y-1">
-              <span className="text-sm text-zinc-400 block">Modules Cleared</span>
-              <p className="text-base font-bold text-emerald-400">{userProgress.completedLessons.length} / {lessons.length}</p>
+              <span className="text-sm text-zinc-400 block">Lessons done</span>
+              <p className="text-base font-bold text-teal-400">{userProgress.completedLessons.length} / {lessons.length}</p>
             </div>
             <div className="p-3 rounded bg-[#0f1012] space-y-1">
-              <span className="text-sm text-zinc-400 block">Badges Awarded</span>
+              <span className="text-sm text-zinc-400 block">Badges</span>
               <p className="text-base font-bold text-zinc-100">{userProgress.badges.length}</p>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function AwarenessHub() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-3">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <Terminal className="size-3.5 text-zinc-400" />
-              Available Training Modules
+              Lessons
             </span>
             <div className="flex items-center gap-1.5 text-sm">
               {(['all', 'phishing', 'mobile', 'social'] as const).map((cat) => (
@@ -580,7 +580,7 @@ export default function AwarenessHub() {
                   key={lesson.id}
                   className={`rounded-lg border p-5 space-y-3 transition-colors ${
                     isCompleted
-                      ? 'border-emerald-800/50 bg-emerald-950/10'
+                      ? 'border-teal-800/50 bg-teal-950/10'
                       : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'
                   }`}
                 >
@@ -608,18 +608,18 @@ export default function AwarenessHub() {
 
                   <div className="pt-2 flex items-center justify-between border-zinc-800/60">
                     <span className="text-sm text-zinc-400">
-                      {isCompleted ? 'Status: Completed' : 'Status: Ready'}
+                      {isCompleted ? 'Completed' : 'Not started'}
                     </span>
 
                     <button
                       onClick={() => startLesson(lesson)}
                       className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                         isCompleted
-                          ? 'border border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
+                          ? 'border border-teal-800/60 bg-teal-950/40 text-teal-300'
                           : 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200'
                       }`}
                     >
-                      {isCompleted ? 'Review Content' : 'Start Module'}
+                      {isCompleted ? 'Review lesson' : 'Start lesson'}
                     </button>
                   </div>
                 </div>
@@ -633,10 +633,10 @@ export default function AwarenessHub() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-3">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <FileText className="size-3.5 text-zinc-400" />
-              Technical Analysis Briefings
+              Further reading
             </span>
             <span className="text-sm text-zinc-400">
-              DOCUMENTATION
+              Guides
             </span>
           </div>
 

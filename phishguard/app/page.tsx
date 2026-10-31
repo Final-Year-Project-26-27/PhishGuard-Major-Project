@@ -7,11 +7,22 @@ import {
   Shield,
   Download,
   ArrowRight,
-  Terminal,
-  Layers,
   RefreshCw,
 } from 'lucide-react'
 import { API_URL } from '@/lib/utils'
+import DetectionLayers from '@/components/DetectionLayers'
+
+function Credit({ href, by, licence }: { href: string; by: string; licence: string }) {
+  return (
+    <p className="text-sm text-zinc-400">
+      Photo:{' '}
+      <a href={href} target="_blank" rel="noopener noreferrer" className="underline decoration-zinc-600 hover:text-zinc-200">
+        {by}
+      </a>
+      , {licence}, via Wikimedia Commons
+    </p>
+  )
+}
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'url' | 'email' | 'offer'>('url')
@@ -41,7 +52,7 @@ export default function HomePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput.trim() }),
         })
-        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
         const data = await res.json()
         const isLegit = data.prediction === 'Legit'
         setScanResult({
@@ -49,9 +60,9 @@ export default function HomePage() {
           headline: isLegit ? 'Verified clean link' : 'Phishing destination detected',
           confidence: data.confidence,
           details: [
-            `Model verdict: ${data.prediction}`,
+            `Verdict: ${data.prediction}`,
             `Certainty: ${(data.confidence * 100).toFixed(1)}%`,
-            isLegit ? 'No known blacklisted patterns identified.' : 'High probability of credential harvesting or impersonation.',
+            isLegit ? 'Nothing in the link matches known phishing patterns.' : 'Looks built to steal a login or pose as someone else.',
           ],
         })
       } else if (activeTab === 'email') {
@@ -64,7 +75,7 @@ export default function HomePage() {
             sender_domain: senderDomain.trim() || 'gmail.com',
           }),
         })
-        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
         const data = await res.json()
         const isLegit = data.prediction === 'Legit'
         setScanResult({
@@ -76,7 +87,7 @@ export default function HomePage() {
             `Certainty: ${(data.confidence * 100).toFixed(1)}%`,
             ...(data.red_flag_words && data.red_flag_words.length > 0
               ? data.red_flag_words.map((w: string) => `Flagged: ${w}`)
-              : ['Standard correspondence indicators observed.']),
+              : ['No scam signals found in the text.']),
           ],
         })
       } else if (activeTab === 'offer') {
@@ -86,14 +97,14 @@ export default function HomePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: offerText.trim() }),
         })
-        if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
         const data = await res.json()
         if (!data.is_offer) {
           setScanResult({
             status: 'warning',
             headline: 'Non-recruitment message',
             confidence: 0,
-            details: ['Content does not match an internship or job offer structure.'],
+            details: ['This doesn’t read like a job or internship offer.'],
           })
         } else {
           const isFake = data.prediction === 'Fake'
@@ -106,13 +117,14 @@ export default function HomePage() {
               `Certainty: ${data.confidence}%`,
               ...(data.red_flags && data.red_flags.length > 0
                 ? data.red_flags.map((r: string) => `Alert: ${r}`)
-                : ['Standard institutional hiring language identified.']),
+                : ['Reads like a normal hiring message.']),
             ],
           })
         }
       }
     } catch (err) {
-      setScanError(err instanceof Error ? err.message : 'Could not reach the classification backend.')
+      // fetch() itself throws a TypeError ("Failed to fetch") when the scanner is offline
+      setScanError(err instanceof Error && !(err instanceof TypeError) ? err.message : 'Couldn’t reach the scanner. Try again in a moment.')
     } finally {
       setIsScanning(false)
     }
@@ -133,42 +145,25 @@ export default function HomePage() {
               </h1>
 
               <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-xl taste-enter-d1">
-                PhishGuard intercepts deceptive recruiter outreach, registration fee scams, and malicious URLs across Gmail, WhatsApp, and the browser.
+                PhishGuard catches fake internship offers, registration-fee scams and phishing links in Gmail, WhatsApp, LinkedIn and your browser.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4 taste-enter-d2">
                 <Link
                   href="/scanner"
-                  className="px-5 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white transition-colors inline-flex items-center gap-2"
+                  className="group px-5 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-[15px] hover:bg-white active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
                 >
-                  <Layers className="size-4" />
-                  <span>Launch scanner workstation</span>
-                  <ArrowRight className="size-4" />
+                  <span>Open the scanner</span>
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
 
                 <Link
                   href="/install"
-                  className="px-5 py-3 rounded bg-zinc-900 text-zinc-200 font-medium text-sm hover:bg-zinc-800 transition-colors inline-flex items-center gap-2"
+                  className="px-5 py-3 rounded bg-zinc-800 text-zinc-100 font-medium text-[15px] hover:bg-zinc-700 active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
                 >
                   <Download className="size-4" />
-                  <span>Download browser extension</span>
+                  <span>Get the extension</span>
                 </Link>
-              </div>
-
-              {/* Sub-signals */}
-              <div className="pt-8 grid grid-cols-3 gap-6 max-w-md taste-enter-d3">
-                <div>
-                  <div className="text-2xl font-bold text-white">5</div>
-                  <div className="text-sm text-zinc-400 mt-1">Inference engines</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">18</div>
-                  <div className="text-sm text-zinc-400 mt-1">Recruitment signals</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-emerald-400">&lt;50ms</div>
-                  <div className="text-sm text-zinc-400 mt-1">Local response time</div>
-                </div>
               </div>
             </div>
 
@@ -176,13 +171,9 @@ export default function HomePage() {
             <div className="lg:col-span-5 w-full taste-enter-d2" data-ui="quick-scanner">
               <div className="rounded bg-[#15171a] p-5 space-y-4">
 
-                {/* Fragment Bar */}
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="size-4 text-emerald-400" />
-                    <span className="text-sm font-semibold text-white">Live Threat Inspector</span>
-                  </div>
-                  <span className="text-sm text-zinc-400">FastAPI backend</span>
+                <div className="space-y-1">
+                  <p className="text-lg font-semibold text-white">Check something now</p>
+                  <p className="text-sm text-zinc-400">Paste a link, an email or a job offer. Nothing is saved.</p>
                 </div>
 
                 {/* Intake Selector */}
@@ -221,7 +212,7 @@ export default function HomePage() {
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
                       placeholder="https://internship-confirm.tk/verify"
-                      className="w-full h-10 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                      className="w-full h-10 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500"
                     />
                   )}
 
@@ -232,14 +223,14 @@ export default function HomePage() {
                         value={senderDomain}
                         onChange={(e) => setSenderDomain(e.target.value)}
                         placeholder="company-recruiter.org"
-                        className="w-full h-9 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                        className="w-full h-9 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500"
                       />
                       <textarea
                         rows={3}
                         value={emailText}
                         onChange={(e) => setEmailText(e.target.value)}
                         placeholder="Paste recruiter message body..."
-                        className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+                        className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500 resize-none"
                       />
                     </div>
                   )}
@@ -250,24 +241,24 @@ export default function HomePage() {
                       value={offerText}
                       onChange={(e) => setOfferText(e.target.value)}
                       placeholder="Congratulations! You are shortlisted for web internship. Deposit Rs 1999 registration fee via UPI..."
-                      className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+                      className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500 resize-none"
                     />
                   )}
 
                   <button
                     onClick={handleQuickScan}
                     disabled={isScanning}
-                    className="w-full h-10 rounded bg-emerald-500 text-zinc-950 font-semibold text-sm hover:bg-emerald-400 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full h-10 rounded bg-teal-500 text-zinc-950 font-semibold text-sm hover:bg-teal-400 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isScanning ? (
                       <>
                         <RefreshCw className="size-4 animate-spin" />
-                        <span>Evaluating indicators...</span>
+                        <span>Checking…</span>
                       </>
                     ) : (
                       <>
                         <Shield className="size-4" />
-                        <span>Run threat inference</span>
+                        <span>Check for scams</span>
                       </>
                     )}
                   </button>
@@ -281,7 +272,7 @@ export default function HomePage() {
                   {scanResult && (
                     <div className={`p-4 rounded text-sm space-y-2 ${
                       scanResult.status === 'safe'
-                        ? 'bg-emerald-950/40 text-emerald-200'
+                        ? 'bg-teal-950/40 text-teal-200'
                         : scanResult.status === 'warning'
                         ? 'bg-amber-950/40 text-amber-200'
                         : 'bg-red-950/40 text-red-200'
@@ -309,35 +300,37 @@ export default function HomePage() {
       </section>
 
       {/* 2. Features Statement Section */}
-      <section className="py-24 bg-[#121316]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+      <section className="py-24">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-6">
           <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight taste-enter">
-            Protection across every channel students use daily.
+            Scams reach you where you already talk.
           </h2>
           <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-2xl taste-enter-d1">
-            PhishGuard combines a browser extension for Gmail and WhatsApp Web with an autonomous Google Workspace ingestion pipeline. When a suspicious offer arrives, our ML models decompose the text into 18 recruitment indicators, flagging advance-fee demands and lookalike college domains in real time.
+            Fake offers land in Gmail, WhatsApp and LinkedIn, often naming your own college. The PhishGuard extension checks them where they arrive. For anything else, paste the link, email or offer letter into the scanner.
           </p>
           <div className="pt-2 taste-enter-d2">
             <Link
               href="/install"
-              className="text-emerald-400 font-semibold hover:text-emerald-300 text-base inline-flex items-center gap-1.5"
+              className="group text-teal-300 font-semibold hover:text-teal-200 text-base inline-flex items-center gap-1.5"
             >
-              <span>Read the extension installation manual</span>
-              <ArrowRight className="size-4" />
+              <span>Install the extension in two minutes</span>
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
         </div>
       </section>
+
+      <DetectionLayers />
 
       {/* 3. Archival Architecture Showcase (4 Real Pictures from Open Collections) */}
       <section className="py-28">
         <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-16">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white taste-enter">
-              Engineering infrastructure and threat telemetry.
+              The trick is older than the inbox.
             </h2>
-            <p className="text-base text-zinc-300 leading-relaxed taste-enter-d1">
-              PhishGuard connects local statistical classification models with institutional security feeds and distributed browser agents.
+            <p className="text-base sm:text-lg text-zinc-300 leading-relaxed taste-enter-d1">
+              Pay first, get the job later: the advance-fee con dates back to the 1890s. Computers only made it faster, so one message now reaches thousands of students at once.
             </p>
           </div>
 
@@ -355,9 +348,10 @@ export default function HomePage() {
                   priority={false}
                 />
               </div>
-              <p className="text-base text-zinc-300">
-                Academic network telemetry and server infrastructure monitoring inbound institutional mail flows.
+              <p className="text-base text-zinc-200">
+                A university data centre. Campus mail runs through rooms like this, scams included.
               </p>
+              <Credit href="https://commons.wikimedia.org/wiki/File:Virginia_Tech_-_data_center.jpg" by="Christopher Bowns" licence="CC BY-SA 2.0" />
             </div>
 
             {/* Photographic Artifact 2 */}
@@ -372,9 +366,10 @@ export default function HomePage() {
                   priority={false}
                 />
               </div>
-              <p className="text-base text-zinc-300">
-                Deterministic inference pipelines processing tokenized URL vectors and lexical indicators in sub-50ms windows.
+              <p className="text-base text-zinc-200">
+                The first spam email went out in 1978, to a few hundred people on ARPANET.
               </p>
+              <Credit href="https://commons.wikimedia.org/wiki/File:Mainframe_Computer.jpg" by="Pargon" licence="CC BY 2.0" />
             </div>
 
             {/* Photographic Artifact 3 */}
@@ -389,9 +384,10 @@ export default function HomePage() {
                   priority={false}
                 />
               </div>
-              <p className="text-base text-zinc-300">
-                Foundational computational parsing architectures adapted for modern recursive token extraction.
+              <p className="text-base text-zinc-200">
+                ORACLE at Oak Ridge, 1950s. Computers were built to calculate; the con artists came later.
               </p>
+              <Credit href="https://commons.wikimedia.org/wiki/File:ORACLE_computer_at_Oak_Ridge_National_Lab.jpg" by="US Atomic Energy Commission" licence="public domain" />
             </div>
 
             {/* Photographic Artifact 4 */}
@@ -406,9 +402,10 @@ export default function HomePage() {
                   priority={false}
                 />
               </div>
-              <p className="text-base text-zinc-300">
-                Structural system topology ensuring cryptographic separation between ingress channels and detection layers.
+              <p className="text-base text-zinc-200">
+                A GE-645 in 1968, built for time-sharing: many users on one machine, each behind a password.
               </p>
+              <Credit href="https://commons.wikimedia.org/wiki/File:GE-645-mainframe-1968.png" by="Dóeltenga" licence="CC BY-SA 4.0" />
             </div>
 
           </div>
@@ -420,10 +417,10 @@ export default function HomePage() {
         <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-8">
           <div className="space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white taste-enter">
-              Addressed threat scenarios.
+              Scams it catches.
             </h2>
             <p className="text-base text-zinc-300 taste-enter-d1">
-              Direct countermeasures against common academic attack patterns.
+              Four common scams aimed at students, and what stops each one.
             </p>
           </div>
 
@@ -432,35 +429,35 @@ export default function HomePage() {
             <table /* taste-skill-ignore: real table */ className="w-full text-left text-sm border border-white/10 rounded">
               <thead /* taste-skill-ignore: real table */ className="bg-[#15171a] text-zinc-200 font-semibold border-b border-white/10">
                 <tr>
-                  <th className="py-3.5 px-4">Threat vector</th>
-                  <th className="py-3.5 px-4">Deceptive pattern</th>
-                  <th className="py-3.5 px-4">PhishGuard defense</th>
-                  <th className="py-3.5 px-4">Protection channel</th>
+                  <th className="py-3.5 px-4">Scam</th>
+                  <th className="py-3.5 px-4">What it looks like</th>
+                  <th className="py-3.5 px-4">How PhishGuard catches it</th>
+                  <th className="py-3.5 px-4">Where</th>
                 </tr>
               </thead>
               <tbody /* taste-skill-ignore: real table */ className="divide-y divide-white/5 text-zinc-300">
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Fake internship offer</td>
                   <td className="py-4 px-4 text-zinc-400">Demanding UPI registration fees within 24 hours.</td>
-                  <td className="py-4 px-4 text-emerald-400">Trained offer classifier evaluating fee patterns</td>
+                  <td className="py-4 px-4 text-teal-400">Offer model flags fee demands and deadlines</td>
                   <td className="py-4 px-4 text-zinc-300">Email and WhatsApp</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">College domain spoofing</td>
                   <td className="py-4 px-4 text-zinc-400">Sending from placement@nmamit.in.attacker.com.</td>
-                  <td className="py-4 px-4 text-emerald-400">Exact-or-subdomain anchored validation</td>
-                  <td className="py-4 px-4 text-zinc-300">Gmail Shield</td>
+                  <td className="py-4 px-4 text-teal-400">Sender must match the college domain exactly</td>
+                  <td className="py-4 px-4 text-zinc-300">Gmail</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Credential harvesting link</td>
-                  <td className="py-4 px-4 text-zinc-400">Urgent portal verification links on free TLDs.</td>
-                  <td className="py-4 px-4 text-emerald-400">GradientBoosting model and DNR link guard</td>
+                  <td className="py-4 px-4 text-zinc-400">Urgent “verify your portal” links on cheap domains.</td>
+                  <td className="py-4 px-4 text-teal-400">Link model scores it; the extension blocks it</td>
                   <td className="py-4 px-4 text-zinc-300">Browser navigation</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Fraudulent PDF attachment</td>
                   <td className="py-4 px-4 text-zinc-400">Offer letters requiring upfront equipment payments.</td>
-                  <td className="py-4 px-4 text-emerald-400">PyMuPDF structural extractor and indicator scoring</td>
+                  <td className="py-4 px-4 text-teal-400">Document scanner reads the letter for payment asks</td>
                   <td className="py-4 px-4 text-zinc-300">Document scanner</td>
                 </tr>
               </tbody>
@@ -473,25 +470,25 @@ export default function HomePage() {
               {
                 title: 'Fake internship offer',
                 pattern: 'Demanding UPI registration fees within 24 hours.',
-                defense: 'Trained offer classifier evaluating fee patterns',
+                defense: 'Offer model flags fee demands and deadlines',
                 channel: 'Email and WhatsApp',
               },
               {
                 title: 'College domain spoofing',
                 pattern: 'Sending from placement@nmamit.in.attacker.com.',
-                defense: 'Exact-or-subdomain anchored validation',
-                channel: 'Gmail Shield',
+                defense: 'Sender must match the college domain exactly',
+                channel: 'Gmail',
               },
               {
                 title: 'Credential harvesting link',
-                pattern: 'Urgent portal verification links on free TLDs.',
-                defense: 'GradientBoosting model and DNR link guard',
+                pattern: 'Urgent “verify your portal” links on cheap domains.',
+                defense: 'Link model scores it; the extension blocks it',
                 channel: 'Browser navigation',
               },
               {
                 title: 'Fraudulent PDF attachment',
                 pattern: 'Offer letters requiring upfront equipment payments.',
-                defense: 'PyMuPDF structural extractor and indicator scoring',
+                defense: 'Document scanner reads the letter for payment asks',
                 channel: 'Document scanner',
               },
             ].map((item, idx) => (
@@ -501,7 +498,7 @@ export default function HomePage() {
                   <span className="text-sm text-zinc-400">{item.channel}</span>
                 </div>
                 <p className="text-zinc-400">{item.pattern}</p>
-                <p className="text-emerald-400 font-medium">{item.defense}</p>
+                <p className="text-teal-400 font-medium">{item.defense}</p>
               </div>
             ))}
           </div>
@@ -512,23 +509,23 @@ export default function HomePage() {
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">
           <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white taste-enter">
-            Start inspecting suspicious outreach now.
+            Got a message that feels off?
           </h2>
           <p className="text-base text-zinc-300 max-w-xl mx-auto leading-relaxed taste-enter-d1">
-            Analyze links and documents in the web workstation, or install the browser extension for real-time protection across messaging apps.
+            Check it in the scanner before you reply, pay or click. Or install the extension and let it check messages as they arrive.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2 taste-enter-d2">
             <Link
               href="/scanner"
               className="px-6 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white transition-colors"
             >
-              Launch inspection workstation
+              Open the scanner
             </Link>
             <Link
               href="/install"
               className="px-6 py-3 rounded bg-zinc-900 text-zinc-200 font-medium text-sm hover:bg-zinc-800 transition-colors"
             >
-              Extension deployment guide
+              Get the extension
             </Link>
           </div>
         </div>

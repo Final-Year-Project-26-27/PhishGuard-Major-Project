@@ -81,6 +81,7 @@ export default function EmailScannerPage() {
     }
     history.unshift(newScan)
     localStorage.setItem('emailScanHistory', JSON.stringify(history.slice(0, 10)))
+    setLocalHistory(history.slice(0, 10))
   }
 
   useEffect(() => {
@@ -185,7 +186,7 @@ export default function EmailScannerPage() {
       await saveToFirebase(textContent, senderDomain, apiResult)
     } catch (err) {
       console.error('Error scanning email:', err)
-      setError('Could not reach the email scan backend. Ensure the FastAPI service is active.')
+      setError("Couldn't reach the scanner. Try again in a moment.")
     } finally {
       setLoading(false)
     }
@@ -206,17 +207,17 @@ export default function EmailScannerPage() {
         snapshot.docs.forEach((doc) => batch.delete(doc.ref))
         await batch.commit()
         setFirebaseHistory([])
-        toast.success('Cloud scan history cleared.')
+        toast.success('Scan history cleared.')
       } catch (err) {
         console.error('Error clearing Firebase history:', err)
         localStorage.removeItem('emailScanHistory')
         setLocalHistory([])
-        toast.success('Local history cleared.')
+        toast.success('Scan history cleared.')
       }
     } else {
       localStorage.removeItem('emailScanHistory')
       setLocalHistory([])
-      toast.success('Local history cleared.')
+      toast.success('Scan history cleared.')
     }
   }
 
@@ -225,27 +226,27 @@ export default function EmailScannerPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Email Scam Detector
+              Check an email
             </h1>
             <span className="text-sm text-zinc-400">
-              Engine: Offer-Scam Heuristics & TF-IDF
+              Scored by a machine-learning model
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Analyzes outreach message bodies and sender domains, targeting deceptive internship fees, unverified placement offers, and student credential phishing.
+            Paste a recruiter email or internship offer. We look for the signs of a scam: fees before you join, pressure to act fast, and requests for your password or bank details.
           </p>
 
           {fromGmail && (
             <div className="p-2.5 rounded bg-blue-950/40 border border-blue-800/60 text-blue-300 text-sm inline-flex items-center gap-2">
               <Mail className="size-3.5" />
-              <span>Loaded directly from Gmail Shield extension interceptor.</span>
+              <span>Opened from the PhishGuard extension in Gmail.</span>
             </div>
           )}
         </div>
@@ -259,17 +260,17 @@ export default function EmailScannerPage() {
               <div className="flex items-center justify-between border-zinc-800/80 pb-3">
                 <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                   <Terminal className="size-3.5 text-zinc-400" />
-                  Message Parameters
+                  The message
                 </span>
                 <span className="text-sm text-zinc-400">
-                  POST /scan/email/
+                  Paste the full text
                 </span>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="block text-sm text-zinc-400">
-                    Sender Domain
+                    Sender’s email domain
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 select-none">
@@ -287,7 +288,7 @@ export default function EmailScannerPage() {
 
                 <div className="space-y-1.5">
                   <label className="block text-sm text-zinc-400">
-                    Email Body Content
+                    Email text
                   </label>
                   <textarea
                     rows={6}
@@ -307,12 +308,12 @@ export default function EmailScannerPage() {
                     {loading ? (
                       <>
                         <RefreshCw className="size-3.5 animate-spin" />
-                        <span>Evaluating Content...</span>
+                        <span>Checking...</span>
                       </>
                     ) : (
                       <>
                         <Shield className="size-3.5" />
-                        <span>Scan Message Content</span>
+                        <span>Check email</span>
                       </>
                     )}
                   </button>
@@ -321,7 +322,7 @@ export default function EmailScannerPage() {
                     onClick={() => { setTextContent(''); setSenderDomain(''); setResult(null); setError(null); }}
                     className="px-3 py-2 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
                   >
-                    Clear Form
+                    Clear
                   </button>
                 </div>
               </div>
@@ -342,24 +343,24 @@ export default function EmailScannerPage() {
                 <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Inference Verdict
+                      Result
                     </span>
                     <div className="flex items-center gap-2.5">
                       {result.prediction === 'Legit' ? (
-                        <CheckCircle className="size-5 text-emerald-400" />
+                        <CheckCircle className="size-5 text-teal-400" />
                       ) : (
                         <AlertTriangle className="size-5 text-red-400" />
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
-                        result.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'
+                        result.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'
                       }`}>
-                        {result.prediction === 'Legit' ? 'Legitimate Communication' : 'Deceptive Scam Pattern Detected'}
+                        {result.prediction === 'Legit' ? 'Looks genuine' : 'Likely a scam'}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-sm text-zinc-400 block">Certainty</span>
+                    <span className="text-sm text-zinc-400 block">Confidence</span>
                     <span className="text-sm font-bold text-zinc-100">
                       {(result.confidence * 100).toFixed(1)}%
                     </span>
@@ -370,7 +371,7 @@ export default function EmailScannerPage() {
                 {result.red_flags && result.red_flags.length > 0 && (
                   <div className="space-y-2">
                     <span className="text-sm text-red-400 font-semibold block">
-                      Triggered Scam Indicators
+                      Warning signs we found
                     </span>
                     <div className="space-y-1.5">
                       {result.red_flags.map((flag, idx) => (
@@ -387,12 +388,12 @@ export default function EmailScannerPage() {
                 <div className="p-4 rounded bg-[#0f1012] space-y-2">
                   <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
                     <Cpu className="size-3.5 text-zinc-400" />
-                    <span>Classification Explanation</span>
+                    <span>What this means</span>
                   </div>
                   <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {result.prediction === 'Legit'
-                      ? 'The text exhibits vocabulary consistent with verified corporate and academic communications. No registration fee demands or urgency pressure keywords were detected.'
-                      : 'High-confidence scam signals identified. Fraudulent internships frequently demand payment for training kits, background checks, or equipment before issuance of formal documentation.'}
+                      ? 'This reads like a normal company or college email. We found no fee demands or pressure to act fast.'
+                      : 'This looks like a scam. Fake internships often ask you to pay for a training kit, a background check or equipment before you get an offer letter. Real companies do not charge you to join.'}
                   </p>
                 </div>
 
@@ -402,7 +403,7 @@ export default function EmailScannerPage() {
                     className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
-                    <span>Copy Analysis</span>
+                    <span>Copy result</span>
                   </button>
                 </div>
 
@@ -417,7 +418,7 @@ export default function EmailScannerPage() {
             <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
               <span className="text-sm text-zinc-300 flex items-center gap-2">
                 <Shield className="size-3.5 text-zinc-400" />
-                Session Controls
+                Your history
               </span>
 
               <div className="space-y-2">
@@ -425,7 +426,7 @@ export default function EmailScannerPage() {
                   onClick={clearHistory}
                   className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
-                  <span>Purge Scan History</span>
+                  <span>Clear history</span>
                   <RefreshCw className="size-3.5 text-zinc-400" />
                 </button>
               </div>
@@ -439,7 +440,7 @@ export default function EmailScannerPage() {
                   Recent Scans
                 </span>
                 <span className="text-sm text-zinc-400">
-                  {user ? 'CLOUD' : 'LOCAL'}
+                  {user ? 'Saved to account' : 'This device'}
                 </span>
               </div>
 
@@ -463,7 +464,7 @@ export default function EmailScannerPage() {
                           {scan.text_content}
                         </p>
                         <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
-                          <span className={scan.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
+                          <span className={scan.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'}>
                             {scan.prediction}
                           </span>
                           <span>{(scan.confidence * 100).toFixed(0)}%</span>
@@ -471,7 +472,7 @@ export default function EmailScannerPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-base text-zinc-400 py-2">No recent cloud email scans.</p>
+                    <p className="text-base text-zinc-400 py-2">No scans yet.</p>
                   )
                 ) : (
                   localHistory.map((item) => (
@@ -491,7 +492,7 @@ export default function EmailScannerPage() {
                         {item.text_content}
                       </p>
                       <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
-                        <span className={item.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
+                        <span className={item.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>
                         <span>{(item.confidence * 100).toFixed(0)}%</span>

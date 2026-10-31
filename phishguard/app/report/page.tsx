@@ -28,9 +28,9 @@ export default function ReportPage() {
     const newErrors: Record<string, string> = {}
 
     if (!url.trim()) {
-      newErrors.url = 'Target URL or domain is required.'
+      newErrors.url = 'Add the link or website you want to report.'
     } else if (!isValidUrl(url.trim())) {
-      newErrors.url = 'Please provide a valid URL format (e.g., https://example.com).'
+      newErrors.url = 'Enter a full link, for example https://example.com.'
     }
 
     if (!scamType) {
@@ -38,17 +38,17 @@ export default function ReportPage() {
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Incident description is required.'
+      newErrors.description = 'Tell us what happened.'
     } else if (description.trim().length < 10) {
-      newErrors.description = 'Description must provide at least 10 characters of context.'
+      newErrors.description = 'Add a little more detail (at least 10 characters).'
     }
 
     if (email && !isValidEmail(email)) {
-      newErrors.email = 'Please provide a valid contact email.'
+      newErrors.email = 'Enter a valid email address.'
     }
 
     if (proofUrl && !isValidUrl(proofUrl)) {
-      newErrors.proofUrl = 'Evidence link must be a valid URL format.'
+      newErrors.proofUrl = 'Enter a full link, for example https://drive.google.com/...'
     }
 
     setErrors(newErrors)
@@ -58,12 +58,12 @@ export default function ReportPage() {
   const handleSubmit = async () => {
     const user = auth.currentUser
     if (!user) {
-      toast.error('Authentication required. Please sign in via the header to submit incident reports.')
+      toast.error('Sign in first. Use the button at the top of the page.')
       return
     }
 
     if (!validateForm()) {
-      toast.error('Validation failed. Please correct flagged fields.')
+      toast.error('Check the highlighted fields.')
       return
     }
 
@@ -88,7 +88,7 @@ export default function ReportPage() {
       setProofUrl('')
       setErrors({})
 
-      toast.success('Incident report submitted to community feed.')
+      toast.success('Thanks. Your report was sent for review.')
     } catch (error) {
       console.error(error)
       toast.error('Failed to submit report. Please try again.')
@@ -98,21 +98,21 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Report Security Threat
+              Report a scam
             </h1>
             <span className="text-sm text-zinc-400">
-              Intake: Firestore /reports collection (Status: Pending)
+              Every report is reviewed
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Submit malicious domains, deceptive internship outreach, or fraudulent college payment links for community protection and institutional verification.
+            Tell us about a fake internship offer, a phishing website or a payment link that tried to take your money. We review each report and add confirmed scams to the blocklist.
           </p>
         </div>
 
@@ -122,10 +122,10 @@ export default function ReportPage() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-3">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <Terminal className="size-3.5 text-zinc-400" />
-              Incident Parameters
+              What happened
             </span>
             <span className="text-sm text-zinc-400">
-              COMMUNITY FEED
+              Shared with students
             </span>
           </div>
 
@@ -134,7 +134,7 @@ export default function ReportPage() {
             {/* Target URL */}
             <div className="space-y-1.5">
               <label className="block text-sm text-zinc-400">
-                Deceptive URL or Domain *
+                Link or website *
               </label>
               <input
                 type="url"
@@ -151,29 +151,29 @@ export default function ReportPage() {
             {/* Scam Category */}
             <div className="space-y-1.5">
               <label className="block text-sm text-zinc-400">
-                Threat Classification *
+                Type of scam *
               </label>
               <select
                 value={scamType}
                 onChange={(e) => setScamType(e.target.value)}
                 className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:border-zinc-500 focus:outline-none"
               >
-                <option value="fake-job">Fake Internship / Job Offer (Fee Demand)</option>
-                <option value="phishing">Credential Phishing / Portal Spoofing</option>
-                <option value="financial">Financial Scam / UPI Advance Deposit</option>
-                <option value="malware">Malicious Document Attachment</option>
-                <option value="other">Other Academic Cyber Threat</option>
+                <option value="fake-job">Fake internship or job offer asking for a fee</option>
+                <option value="phishing">Fake login page asking for your password</option>
+                <option value="financial">Payment scam, such as a UPI deposit</option>
+                <option value="malware">Dangerous attachment or document</option>
+                <option value="other">Something else</option>
               </select>
             </div>
 
             {/* Description */}
             <div className="space-y-1.5">
               <label className="block text-sm text-zinc-400">
-                Context & Incident Description *
+                What happened? *
               </label>
               <textarea
                 rows={4}
-                placeholder="Describe how this outreach arrived (e.g. WhatsApp recruiter claiming to represent Google, demanding Rs 2500 training kit fee before interview)..."
+                placeholder="How did it reach you? (e.g. a WhatsApp recruiter claiming to represent Google, demanding Rs 2500 training kit fee before interview)..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className={`w-full p-3 rounded bg-zinc-950 border text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed transition-colors ${
@@ -187,7 +187,7 @@ export default function ReportPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="block text-sm text-zinc-400">
-                  Contact Email (Optional)
+                  Your email (optional)
                 </label>
                 <input
                   type="email"
@@ -203,7 +203,7 @@ export default function ReportPage() {
 
               <div className="space-y-1.5">
                 <label className="block text-sm text-zinc-400">
-                  Evidence / Screenshot Link (Optional)
+                  Link to a screenshot (optional)
                 </label>
                 <input
                   type="url"
@@ -221,7 +221,7 @@ export default function ReportPage() {
             {/* Submit Action */}
             <div className="pt-2 flex items-center justify-between border-zinc-800/80">
               <p className="text-base text-zinc-400">
-                Reports are audited before entry into dynamic DNR blocklists.
+                We check every report before adding it to the blocklist.
               </p>
 
               <button
@@ -232,12 +232,12 @@ export default function ReportPage() {
                 {isSubmitting ? (
                   <>
                     <RefreshCw className="size-3.5 animate-spin" />
-                    <span>Transmitting...</span>
+                    <span>Sending...</span>
                   </>
                 ) : (
                   <>
                     <Send className="size-3.5" />
-                    <span>Submit Threat Report</span>
+                    <span>Send report</span>
                   </>
                 )}
               </button>

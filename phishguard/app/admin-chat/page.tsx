@@ -112,10 +112,10 @@ export default function AdminChatPage() {
 
       setAnswer('')
       setSelectedQuestion(null)
-      toast.success('Response dispatched to student inquiry.')
+      toast.success('Answer sent to the student.')
     } catch (error) {
       console.error('Error submitting answer:', error)
-      toast.error('Failed to submit response.')
+      toast.error("Couldn't send your answer. Try again.")
     } finally {
       setIsLoading(false)
     }
@@ -131,26 +131,26 @@ export default function AdminChatPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-dvh bg-zinc-950 text-zinc-100 flex items-center justify-center text-sm text-zinc-400">
-        Authenticating Operator Token...
+      <div className="min-h-dvh text-zinc-100 flex items-center justify-center text-sm text-zinc-400">
+        Checking your account...
       </div>
     )
   }
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-dvh bg-zinc-950 text-zinc-100 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-dvh text-zinc-100 flex items-center justify-center p-4 font-sans">
         <div className="max-w-md w-full rounded-lg border border-red-900/60 bg-red-950/20 p-6 text-center space-y-4">
           <Lock className="size-8 text-red-400 mx-auto" />
-          <h1 className="text-lg font-bold text-red-200">Restricted Administration Surface</h1>
+          <h1 className="text-lg font-bold text-red-200">Admins only</h1>
           <p className="text-base text-zinc-400 leading-relaxed">
-            This operator workstation requires verified administrative UID privileges.
+            This page is only for the PhishGuard security team.
           </p>
           <button
             onClick={() => window.location.href = '/chat'}
             className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 transition-colors"
           >
-            Return to Advisory Feed
+            Back to questions
           </button>
         </div>
       </div>
@@ -158,39 +158,39 @@ export default function AdminChatPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Inquiry Resolution Console
+              Answer student questions
             </h1>
             <span className="text-sm text-zinc-400">
-              Admin UID Verified · Queue Active
+              Signed in as admin
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Review incoming student threat questions, provide verified advisory responses, and resolve active incident reports.
+            Read questions from students, check what they sent, and reply with clear advice on what to do next.
           </p>
         </div>
 
         {/* Queue Metrics */}
         <div className="grid grid-cols-3 gap-4">
           <div className="p-3.5 rounded bg-[#15171a] space-y-1">
-            <span className="text-sm text-zinc-400 block">Total Queries</span>
+            <span className="text-sm text-zinc-400 block">All questions</span>
             <p className="text-xl font-bold text-zinc-100">{questions.length}</p>
           </div>
           <div className="p-3.5 rounded bg-[#15171a] space-y-1">
-            <span className="text-sm text-amber-500 block">Pending Resolution</span>
+            <span className="text-sm text-amber-500 block">Waiting for an answer</span>
             <p className="text-xl font-bold text-amber-400">
               {questions.filter(q => q.status === 'unanswered').length}
             </p>
           </div>
           <div className="p-3.5 rounded bg-[#15171a] space-y-1">
-            <span className="text-sm text-emerald-500 block">Resolved</span>
-            <p className="text-xl font-bold text-emerald-400">
+            <span className="text-sm text-teal-500 block">Resolved</span>
+            <p className="text-xl font-bold text-teal-400">
               {questions.filter(q => q.status === 'answered').length}
             </p>
           </div>
@@ -205,7 +205,7 @@ export default function AdminChatPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
                 <input
-                  placeholder="Search inquiries or student name..."
+                  placeholder="Search questions or student names..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
@@ -216,7 +216,7 @@ export default function AdminChatPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="h-8 px-2 rounded bg-[#0f1012] text-sm text-zinc-300"
               >
-                <option value="all">All Queue</option>
+                <option value="all">All</option>
                 <option value="unanswered">Unanswered</option>
                 <option value="answered">Answered</option>
               </select>
@@ -235,7 +235,7 @@ export default function AdminChatPage() {
                 >
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-semibold text-zinc-200">{q.student?.name}</span>
-                    <span className={q.status === 'answered' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                    <span className={q.status === 'answered' ? 'text-teal-400 font-bold' : 'text-amber-400 font-bold'}>
                       {q.status.toUpperCase()}
                     </span>
                   </div>
@@ -250,17 +250,17 @@ export default function AdminChatPage() {
             <div className="flex items-center justify-between border-zinc-800 pb-2">
               <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                 <Terminal className="size-3.5 text-zinc-400" />
-                Response Dispatch
+                Your answer
               </span>
               <span className="text-sm text-zinc-400">
-                OFFICIAL VERDICT
+                Seen by the student
               </span>
             </div>
 
             {selectedQuestion ? (
               <div className="space-y-4">
                 <div className="p-3 rounded bg-[#0f1012] space-y-1">
-                  <span className="text-sm text-zinc-400 block">Selected Student Inquiry</span>
+                  <span className="text-sm text-zinc-400 block">Question</span>
                   <p className="text-base text-zinc-200 leading-relaxed font-sans">{selectedQuestion.content}</p>
                   <p className="text-base text-zinc-400 pt-1">
                     From: {selectedQuestion.student?.name} ({selectedQuestion.student?.email})
@@ -269,11 +269,11 @@ export default function AdminChatPage() {
 
                 <div className="space-y-2">
                   <label className="block text-sm text-zinc-400">
-                    Official Security Analysis
+                    Your answer
                   </label>
                   <textarea
                     rows={6}
-                    placeholder="Provide detailed security verification, guidance, or next steps for this student..."
+                    placeholder="Tell the student whether it's safe and what to do next..."
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none"
@@ -286,12 +286,12 @@ export default function AdminChatPage() {
                   className="w-full h-9 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40"
                 >
                   <Send className="size-3.5" />
-                  <span>{isLoading ? 'Publishing...' : 'Dispatch Verified Response'}</span>
+                  <span>{isLoading ? 'Sending...' : 'Send answer'}</span>
                 </button>
               </div>
             ) : (
               <div className="p-12 text-center text-zinc-400 text-sm">
-                Select an inquiry from the queue on the left to review details and draft an analysis response.
+                Pick a question from the list to read it and write an answer.
               </div>
             )}
           </div>

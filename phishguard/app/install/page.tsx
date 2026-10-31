@@ -31,54 +31,54 @@ export default function InstallPage() {
   const steps = [
     {
       icon: Download,
-      title: 'Download Extension Package',
-      description: 'Acquire the compiled Manifest V3 release bundle containing background service workers, content interceptors, and dynamic DNR rule definitions.',
+      title: 'Download the extension',
+      description: 'Download phishguard.zip. It holds everything the extension needs.',
       action: 'Download phishguard.zip below',
     },
     {
       icon: FileArchive,
-      title: 'Extract Archive to Local Disk',
-      description: 'Extract the contents of phishguard.zip into a permanent directory on your machine (e.g. C:\\Tools\\phishguard or ~/extensions/phishguard).',
-      action: 'Keep extracted folder intact',
+      title: 'Unzip it',
+      description: 'Unzip phishguard.zip into a folder you will keep, such as Documents\\phishguard. Chrome loads the extension from this folder, so don\'t delete or move it later.',
+      action: 'Keep the folder',
     },
     {
       icon: Chrome,
-      title: 'Open Extension Manager',
-      description: 'In Google Chrome, navigate to the extension management portal via the address bar.',
+      title: 'Open Chrome extensions',
+      description: 'In Google Chrome, type chrome://extensions in the address bar and press Enter.',
       action: 'chrome://extensions/',
     },
     {
       icon: Settings,
-      title: 'Toggle Developer Mode',
-      description: 'Switch on Developer Mode using the toggle switch located in the top-right corner of the Extensions dashboard.',
-      action: 'Enable top-right toggle',
+      title: 'Turn on Developer mode',
+      description: 'Turn on the Developer mode switch in the top-right corner of the Extensions page.',
+      action: 'Top-right switch',
     },
     {
       icon: FolderOpen,
-      title: 'Load Unpacked Extension',
-      description: 'Click "Load unpacked" in the top-left toolbar and select the directory extracted in step 2.',
-      action: 'Select extension folder',
+      title: 'Load the folder',
+      description: 'Click "Load unpacked" at the top left and choose the folder you unzipped in step 2.',
+      action: 'Choose the folder',
     },
   ]
 
   if (!mounted) return null
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-10">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Deploy Browser Extension
+              Install the extension
             </h1>
             <span className="text-sm text-zinc-400">
-              Manifest V3 · Chrome 110+
+              For Google Chrome
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Direct installation manual for the PhishGuard browser interceptor, providing automated protection across Gmail, WhatsApp Web, LinkedIn, and system navigation.
+            Add PhishGuard to Chrome in five steps. It checks messages in Gmail, WhatsApp Web and LinkedIn, and warns you before you open a dangerous link.
           </p>
         </div>
 
@@ -86,12 +86,12 @@ export default function InstallPage() {
         <div className="rounded-lg bg-[#15171a] p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-zinc-800 pb-4">
             <div className="space-y-1">
-              <span className="text-sm text-emerald-400 block">
-                Current Release
+              <span className="text-sm text-teal-400 block">
+                Download
               </span>
-              <h2 className="text-lg font-bold text-zinc-100">PhishGuard Extension Bundle v2.3</h2>
+              <h2 className="text-lg font-bold text-zinc-100">PhishGuard for Chrome</h2>
               <p className="text-base text-zinc-400">
-                Includes Gmail Shield, WhatsApp Web & LinkedIn pitch analyzers, and Declarative Net Request link interceptor.
+                Scans messages in Gmail, WhatsApp Web and LinkedIn, and blocks known phishing links before the page opens.
               </p>
             </div>
 
@@ -109,20 +109,20 @@ export default function InstallPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-zinc-400 pt-1">
             <div className="p-2.5 rounded bg-[#0f1012]">
-              <span className="text-sm text-zinc-400 block">Package Format</span>
-              <span className="text-zinc-200">ZIP Archive</span>
+              <span className="text-sm text-zinc-400 block">File</span>
+              <span className="text-zinc-200">ZIP</span>
             </div>
             <div className="p-2.5 rounded bg-[#0f1012]">
-              <span className="text-sm text-zinc-400 block">Manifest Spec</span>
-              <span className="text-zinc-200">Chrome MV3</span>
+              <span className="text-sm text-zinc-400 block">Browser</span>
+              <span className="text-zinc-200">Google Chrome</span>
             </div>
             <div className="p-2.5 rounded bg-[#0f1012]">
-              <span className="text-sm text-zinc-400 block">Threat Sync</span>
-              <span className="text-zinc-200">Firestore DNR</span>
+              <span className="text-sm text-zinc-400 block">Blocklist</span>
+              <span className="text-zinc-200">Updates on its own</span>
             </div>
             <div className="p-2.5 rounded bg-[#0f1012]">
-              <span className="text-sm text-zinc-400 block">Privacy</span>
-              <span className="text-zinc-200">Zero Query Logging</span>
+              <span className="text-sm text-zinc-400 block">Works on</span>
+              <span className="text-zinc-200">Gmail, WhatsApp, LinkedIn</span>
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function InstallPage() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-3">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <Terminal className="size-3.5 text-zinc-400" />
-              Installation Runbook
+              How to install
             </span>
             <span className="text-sm text-zinc-400">
               5 steps
@@ -165,7 +165,7 @@ export default function InstallPage() {
                         onClick={copyChromeUrl}
                         className="px-2.5 py-1.5 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                       >
-                        {copiedPath ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3 text-zinc-400" />}
+                        {copiedPath ? <Check className="size-3 text-teal-400" /> : <Copy className="size-3 text-zinc-400" />}
                         <span>Copy chrome://extensions</span>
                       </button>
                     ) : (
@@ -178,25 +178,6 @@ export default function InstallPage() {
               )
             })}
           </ol>
-        </div>
-
-        {/* Gemini Local Configuration Callout */}
-        <div className="rounded-lg bg-[#15171a] p-5 space-y-3 text-sm">
-          <div className="flex items-center justify-between border-zinc-800 pb-2">
-            <span className="text-zinc-300 font-semibold">
-              Optional: Gemini Threat Explanations
-            </span>
-            <span className="text-sm text-zinc-400">LOCAL CONFIGURATION</span>
-          </div>
-          <p className="text-zinc-400 text-base font-sans leading-relaxed">
-            By default, all heuristics, blocklist matching, and URL inspection operate locally via FastAPI. If you wish to enable generative threat summaries in the extension popup, create a local file inside the extracted folder:
-          </p>
-          <div className="p-3 rounded bg-[#0f1012] text-zinc-300 text-sm">
-            <code>extension-build/gemini-config.local.js</code>
-            <pre className="text-zinc-400 text-sm mt-2 text-wrap">
-              {`GEMINI_CONFIG.apiKey = "YOUR_GEMINI_API_KEY";`}
-            </pre>
-          </div>
         </div>
 
       </div>

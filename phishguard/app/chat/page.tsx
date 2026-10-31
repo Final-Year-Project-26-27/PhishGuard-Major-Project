@@ -54,11 +54,11 @@ export default function ChatPage() {
   }, [])
 
   const categories = [
-    { id: 'all', name: 'All Threads' },
-    { id: 'phishing', name: 'Phishing URLs' },
-    { id: 'scams', name: 'Internship Scams' },
-    { id: 'security', name: 'Account Defense' },
-    { id: 'technical', name: 'Technical Analysis' },
+    { id: 'all', name: 'All questions' },
+    { id: 'phishing', name: 'Phishing links' },
+    { id: 'scams', name: 'Internship scams' },
+    { id: 'security', name: 'Account safety' },
+    { id: 'technical', name: 'Other' },
   ]
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return
     if (!user) {
-      toast.error('Authentication required to dispatch security inquiries.')
+      toast.error('Sign in to ask a question.')
       return
     }
 
@@ -155,10 +155,10 @@ export default function ChatPage() {
 
       await addDoc(collection(db, 'questions'), questionData)
       setNewMessage('')
-      toast.success('Inquiry dispatched to security team queue.')
+      toast.success('Question sent to the security team.')
     } catch (error) {
       console.error('Error saving question:', error)
-      toast.error('Failed to post question.')
+      toast.error("Couldn't send your question. Try again.")
     } finally {
       setIsLoading(false)
     }
@@ -198,7 +198,7 @@ export default function ChatPage() {
     setReplyContent('')
     setReplyingTo(null)
     setIsLoading(false)
-    toast.success('Follow-up appended to thread.')
+    toast.success('Reply added.')
   }
 
   const handleLikeMessage = (messageId: string) => {
@@ -220,21 +220,21 @@ export default function ChatPage() {
   })
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Security Advisor Terminal
+              Ask the security team
             </h1>
             <span className="text-sm text-zinc-400">
-              Live Q&A Dispatch with Institutional Security Leads
+              Answered by people, not bots
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Direct consultative terminal for submitting unverified outreach, suspicious internship contracts, or domain spoofing queries to human security operators.
+            Not sure about an offer letter, a recruiter message or a website? Ask here and a member of the security team will reply.
           </p>
         </div>
 
@@ -245,7 +245,7 @@ export default function ChatPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Search advisor threads..."
+                placeholder="Search questions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
@@ -275,17 +275,17 @@ export default function ChatPage() {
           <div className="flex items-center justify-between border-zinc-800/80 pb-2">
             <span className="text-sm text-zinc-300 flex items-center gap-1.5">
               <Terminal className="size-3.5 text-zinc-400" />
-              Dispatch Security Inquiry
+              Ask a question
             </span>
             <span className="text-sm text-zinc-400">
-              {user ? 'AUTHENTICATED' : 'ANONYMOUS READ-ONLY'}
+              {user ? 'Signed in' : 'Sign in to ask'}
             </span>
           </div>
 
           <div className="space-y-3">
             <textarea
               rows={3}
-              placeholder={user ? "Ask a question about an offer letter, recruiter message, or suspicious campus email..." : "Sign in to post an inquiry to the security team..."}
+              placeholder={user ? "Ask a question about an offer letter, recruiter message, or suspicious campus email..." : "Sign in to ask the security team a question..."}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={!user || isLoading}
@@ -294,7 +294,7 @@ export default function ChatPage() {
 
             <div className="flex items-center justify-between">
               <p className="text-base text-zinc-400">
-                Responses are vetted by university security team leads.
+                Answers come from the security team.
               </p>
 
               <button
@@ -305,12 +305,12 @@ export default function ChatPage() {
                 {isLoading ? (
                   <>
                     <RefreshCw className="size-3.5 animate-spin" />
-                    <span>Transmitting...</span>
+                    <span>Sending...</span>
                   </>
                 ) : (
                   <>
                     <Send className="size-3.5" />
-                    <span>Transmit Inquiry</span>
+                    <span>Send question</span>
                   </>
                 )}
               </button>
@@ -322,10 +322,10 @@ export default function ChatPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between border-zinc-800 pb-2">
             <span className="text-sm text-zinc-400">
-              Active Inquiries ({filteredMessages.length})
+              Questions ({filteredMessages.length})
             </span>
             <span className="text-sm text-zinc-400">
-              REALTIME SYNCHRONIZATION
+              Updates live
             </span>
           </div>
 
@@ -362,7 +362,7 @@ export default function ChatPage() {
                         {msg.category}
                       </span>
                       {msg.isResolved && (
-                        <span className="text-sm px-2 py-0.5 rounded border border-emerald-800/60 bg-emerald-950/40 text-emerald-300 flex items-center gap-1 font-semibold">
+                        <span className="text-sm px-2 py-0.5 rounded border border-teal-800/60 bg-teal-950/40 text-teal-300 flex items-center gap-1 font-semibold">
                           <CheckCircle className="size-3" />
                           Answered
                         </span>
@@ -401,7 +401,7 @@ export default function ChatPage() {
                     <div className="pt-2 border-zinc-800 space-y-2">
                       <textarea
                         rows={2}
-                        placeholder="Provide supplemental information or follow-up..."
+                        placeholder="Add more detail or a follow-up..."
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                         className="w-full p-2.5 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none resize-none"
@@ -417,7 +417,7 @@ export default function ChatPage() {
                           onClick={() => handleSendReply(msg.id)}
                           className="px-3 py-1 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200"
                         >
-                          Append
+                          Reply
                         </button>
                       </div>
                     </div>
@@ -430,10 +430,10 @@ export default function ChatPage() {
                         <div key={reply.id} className="p-3 rounded bg-[#0f1012] space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <Shield className="size-3.5 text-emerald-400" />
+                              <Shield className="size-3.5 text-teal-400" />
                               <span className="text-sm font-bold text-zinc-200">{reply.sender.name}</span>
-                              <span className="text-sm px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-800 text-emerald-300">
-                                Verified Analyst
+                              <span className="text-sm px-1.5 py-0.2 rounded bg-teal-950 border border-teal-800 text-teal-300">
+                                Security team
                               </span>
                             </div>
                             <span className="text-sm text-zinc-400">
@@ -452,7 +452,7 @@ export default function ChatPage() {
               ))
             ) : (
               <div className="p-12 text-center text-zinc-400 text-sm bg-[#15171a] rounded-lg">
-                {user ? 'No active inquiries matching selected filters.' : 'Please sign in to load the live security team Q&A feed.'}
+                {user ? 'No questions match your search.' : 'Sign in to see questions and answers.'}
               </div>
             )}
           </div>

@@ -99,7 +99,7 @@ export default function DocScanPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || 'Failed to analyze document')
+        throw new Error(errorData.detail || "Couldn't check this document. Try again in a moment.")
       }
 
       const data: ScanResult = await response.json()
@@ -107,7 +107,7 @@ export default function DocScanPage() {
       saveToHistory(data)
     } catch (err) {
       console.error('Error scanning document:', err)
-      setError(err instanceof Error ? err.message : 'Failed to analyze document. Make sure the FastAPI backend is running.')
+      setError(err instanceof Error && !(err instanceof TypeError) ? err.message : "Couldn't reach the scanner. Try again in a moment.")
     } finally {
       setIsScanning(false)
     }
@@ -150,7 +150,7 @@ export default function DocScanPage() {
   const clearHistory = () => {
     localStorage.removeItem('docScanHistory')
     setScanHistory([])
-    toast.success('Document scan history cleared.')
+    toast.success('Scan history cleared.')
   }
 
   const hasIndicators = (indicators: ScanResult['indicators']) => {
@@ -162,21 +162,21 @@ export default function DocScanPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Document Scanner
+              Check a document
             </h1>
             <span className="text-sm text-zinc-400">
-              Parser: PyMuPDF · RandomForest 5018 Features
+              Scored by a machine-learning model
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Extracts document text and computes 22 structural indicators for fake internship offer letters, fee solicitations, and deceptive corporate impersonation.
+            Upload an offer letter or other document. We read the text and look for the signs of a fake offer: fees to pay, requests for passwords or bank details, pressure to act fast, and suspicious links.
           </p>
         </div>
 
@@ -190,10 +190,10 @@ export default function DocScanPage() {
               <div className="flex items-center justify-between border-zinc-800/80 pb-3">
                 <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                   <Terminal className="size-3.5 text-zinc-400" />
-                  Source File
+                  Your file
                 </span>
                 <span className="text-sm text-zinc-400">
-                  PDF · DOCX · TXT (MAX 5 MB)
+                  PDF, Word or text, up to 5 MB
                 </span>
               </div>
 
@@ -206,7 +206,7 @@ export default function DocScanPage() {
                   dragActive
                     ? 'border-zinc-400 bg-zinc-800/40'
                     : file
-                    ? 'border-emerald-800/60 bg-emerald-950/20'
+                    ? 'border-teal-800/60 bg-teal-950/20'
                     : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
                 }`}
               >
@@ -223,7 +223,7 @@ export default function DocScanPage() {
 
                 {file ? (
                   <div className="flex items-center justify-center gap-3">
-                    <File className="size-7 text-emerald-400" />
+                    <File className="size-7 text-teal-400" />
                     <div className="text-left">
                       <p className="text-base text-zinc-200 font-semibold">{file.name}</p>
                       <p className="text-base text-zinc-400">{(file.size / 1024).toFixed(1)} KB</p>
@@ -234,8 +234,8 @@ export default function DocScanPage() {
                     <div className="size-9 rounded bg-[#15171a] mx-auto flex items-center justify-center">
                       <FileText className="size-4 text-zinc-400" />
                     </div>
-                    <p className="text-base text-zinc-300 font-medium">Drag and drop file here, or click to browse</p>
-                    <p className="text-base text-zinc-400">Supported types: PDF, DOCX, TXT (up to 5 MB)</p>
+                    <p className="text-base text-zinc-300 font-medium">Drop a file here, or click to choose one</p>
+                    <p className="text-base text-zinc-400">PDF, Word (.docx) or text file, up to 5 MB. Scanned images without text can’t be read.</p>
                   </div>
                 )}
               </div>
@@ -249,12 +249,12 @@ export default function DocScanPage() {
                   {isScanning ? (
                     <>
                       <RefreshCw className="size-3.5 animate-spin" />
-                      <span>Parsing Document Structure...</span>
+                      <span>Reading document...</span>
                     </>
                   ) : (
                     <>
                       <FileCheck className="size-3.5" />
-                      <span>Extract & Analyze Document</span>
+                      <span>Check document</span>
                     </>
                   )}
                 </button>
@@ -284,18 +284,18 @@ export default function DocScanPage() {
                 <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Inference Verdict
+                      Result
                     </span>
                     <div className="flex items-center gap-2.5">
                       {result.prediction === 'Legitimate' ? (
-                        <CheckCircle className="size-5 text-emerald-400" />
+                        <CheckCircle className="size-5 text-teal-400" />
                       ) : (
                         <AlertTriangle className="size-5 text-red-400" />
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
-                        result.prediction === 'Legitimate' ? 'text-emerald-400' : 'text-red-400'
+                        result.prediction === 'Legitimate' ? 'text-teal-400' : 'text-red-400'
                       }`}>
-                        {result.prediction === 'Legitimate' ? 'Legitimate Document' : 'Fraudulent / Scam Document'}
+                        {result.prediction === 'Legitimate' ? 'Looks genuine' : 'Likely a scam document'}
                       </span>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export default function DocScanPage() {
                 {/* Score Grid */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
-                    <span className="text-sm text-zinc-400">Classification</span>
+                    <span className="text-sm text-zinc-400">Verdict</span>
                     <p className="text-base font-bold text-zinc-200">{result.prediction}</p>
                   </div>
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
@@ -321,7 +321,7 @@ export default function DocScanPage() {
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
                     <span className="text-sm text-zinc-400">Risk Level</span>
                     <span className={`inline-block text-sm font-bold ${
-                      result.risk_level === 'LOW' ? 'text-emerald-400' : result.risk_level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'
+                      result.risk_level === 'LOW' ? 'text-teal-400' : result.risk_level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'
                     }`}>
                       {result.risk_level}
                     </span>
@@ -337,7 +337,7 @@ export default function DocScanPage() {
                 {result.warnings && result.warnings.length > 0 && (
                   <div className="p-4 rounded bg-red-950/20 border border-red-900/40 space-y-2">
                     <span className="text-sm text-red-400 font-semibold block">
-                      Active Warnings
+                      Warnings
                     </span>
                     <ul className="text-sm text-red-300 space-y-1">
                       {result.warnings.map((w, idx) => (
@@ -354,12 +354,12 @@ export default function DocScanPage() {
                 {hasIndicators(result.indicators) && (
                   <div className="space-y-3">
                     <span className="text-sm text-zinc-400 font-semibold block">
-                      Lexical Indicator Matches
+                      Words that raised a flag
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       {result.indicators.money?.length > 0 && (
                         <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
-                          <span className="text-sm text-amber-400 block font-semibold">Money / Fee Terms</span>
+                          <span className="text-sm text-amber-400 block font-semibold">Money and fees</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.money.map((item, idx) => (
                               <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
@@ -369,7 +369,7 @@ export default function DocScanPage() {
                       )}
                       {result.indicators.credentials?.length > 0 && (
                         <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
-                          <span className="text-sm text-red-400 block font-semibold">Credential Demands</span>
+                          <span className="text-sm text-red-400 block font-semibold">Requests for passwords or details</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.credentials.map((item, idx) => (
                               <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
@@ -379,7 +379,7 @@ export default function DocScanPage() {
                       )}
                       {result.indicators.urgency?.length > 0 && (
                         <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
-                          <span className="text-sm text-amber-400 block font-semibold">Urgency Phrases</span>
+                          <span className="text-sm text-amber-400 block font-semibold">Pressure to act fast</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.urgency.map((item, idx) => (
                               <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
@@ -389,7 +389,7 @@ export default function DocScanPage() {
                       )}
                       {result.indicators.suspicious_urls?.length > 0 && (
                         <div className="p-3 rounded bg-[#0f1012] space-y-1.5 sm:col-span-2">
-                          <span className="text-sm text-red-400 block font-semibold">Suspicious Embedded URLs</span>
+                          <span className="text-sm text-red-400 block font-semibold">Suspicious links</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.suspicious_urls.map((item, idx) => (
                               <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-red-300 text-sm break-all">{item}</span>
@@ -405,10 +405,10 @@ export default function DocScanPage() {
                 <div className="space-y-2 border-zinc-800/80 pt-4">
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
                     <Cpu className="size-3.5 text-zinc-400" />
-                    <span>Extracted Text Preview</span>
+                    <span>Text we read from the file</span>
                   </div>
                   <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap text-sm text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 leading-relaxed">
-                    {result.extracted_text || 'No text extracted.'}
+                    {result.extracted_text || 'No text found.'}
                   </pre>
                 </div>
 
@@ -418,7 +418,7 @@ export default function DocScanPage() {
                     className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
-                    <span>Copy Document Verdict</span>
+                    <span>Copy result</span>
                   </button>
                 </div>
 
@@ -433,7 +433,7 @@ export default function DocScanPage() {
             <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
               <span className="text-sm text-zinc-300 flex items-center gap-2">
                 <Target className="size-3.5 text-zinc-400" />
-                Session Controls
+                Your history
               </span>
 
               <div className="space-y-2">
@@ -441,7 +441,7 @@ export default function DocScanPage() {
                   onClick={clearHistory}
                   className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
-                  <span>Clear History Log</span>
+                  <span>Clear history</span>
                   <Trash2 className="size-3.5 text-zinc-400" />
                 </button>
               </div>
@@ -470,7 +470,7 @@ export default function DocScanPage() {
                         {item.filename}
                       </p>
                       <div className="flex items-center justify-between text-sm text-zinc-400 pt-0.5">
-                        <span className={item.prediction === 'Legitimate' ? 'text-emerald-400' : 'text-red-400'}>
+                        <span className={item.prediction === 'Legitimate' ? 'text-teal-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>
                         <span>{item.risk_score}/100</span>

@@ -48,7 +48,7 @@
   --destructive: #ef4444;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #10b981;
+  --ring: #14b8a6;
 }
 
 @layer base {
@@ -72,6 +72,18 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Verdict chip in the detection-layers demo: pops in each time the verdict changes */
+@keyframes verdictIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

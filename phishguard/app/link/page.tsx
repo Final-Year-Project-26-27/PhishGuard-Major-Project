@@ -41,7 +41,6 @@ export default function LinkScannerPage() {
   const [link, setLink] = useState('')
   const [result, setResult] = useState<ScanResult | null>(null)
   const [isScanning, setIsScanning] = useState(false)
-  const [scanHistory, setScanHistory] = useState<string[]>([])
   const [user, setUser] = useState<FirebaseUser | null>(null)
   const [firebaseHistory, setFirebaseHistory] = useState<FirebaseLinkRecord[]>([])
   const [localHistory, setLocalHistory] = useState<FirebaseLinkRecord[]>([])
@@ -73,6 +72,7 @@ export default function LinkScannerPage() {
         }
         local.unshift(newScan)
         localStorage.setItem('linkScanHistory', JSON.stringify(local.slice(0, 10)))
+        setLocalHistory(local.slice(0, 10))
       }
     } else {
       const local = JSON.parse(localStorage.getItem('linkScanHistory') || '[]')
@@ -87,6 +87,7 @@ export default function LinkScannerPage() {
       }
       local.unshift(newScan)
       localStorage.setItem('linkScanHistory', JSON.stringify(local.slice(0, 10)))
+      setLocalHistory(local.slice(0, 10))
     }
   }
 
@@ -132,14 +133,6 @@ export default function LinkScannerPage() {
           setLocalHistory([])
         }
       }
-      const oldHistory = localStorage.getItem('scanHistory')
-      if (oldHistory && !history) {
-        try {
-          setScanHistory(JSON.parse(oldHistory) as string[])
-        } catch {
-          // ignore
-        }
-      }
     }
 
     return () => {
@@ -172,14 +165,9 @@ export default function LinkScannerPage() {
       setResult(apiResult)
       await saveToFirebase(link.trim(), apiResult)
 
-      if (!user) {
-        const newHistory = [link.trim(), ...scanHistory.slice(0, 4)]
-        setScanHistory(newHistory)
-        localStorage.setItem('scanHistory', JSON.stringify(newHistory))
-      }
     } catch (err) {
       console.error('Error scanning link:', err)
-      setError('Unable to reach the link scanning engine. Verify that the FastAPI backend is running.')
+      setError("Couldn't reach the scanner. Try again in a moment.")
     } finally {
       setIsScanning(false)
     }
@@ -193,10 +181,10 @@ export default function LinkScannerPage() {
   const handleAnonymousLogin = async () => {
     try {
       await signInAnonymously(auth)
-      toast.success('Anonymous cloud session activated.')
+      toast.success('Signed in. Your scans will be saved.')
     } catch (error) {
       console.error('Error signing in anonymously:', error)
-      toast.error('Could not activate anonymous session.')
+      toast.error("Couldn't sign you in. Try again.")
     }
   }
 
@@ -210,21 +198,19 @@ export default function LinkScannerPage() {
         snapshot.docs.forEach((doc) => batch.delete(doc.ref))
         await batch.commit()
         setFirebaseHistory([])
-        toast.success('Cloud scan history cleared.')
+        toast.success('Scan history cleared.')
       } catch (error) {
         console.error('Error clearing Firebase history:', error)
         localStorage.removeItem('linkScanHistory')
         localStorage.removeItem('scanHistory')
         setLocalHistory([])
-        setScanHistory([])
         toast.success('Local history cleared.')
       }
     } else {
-      setScanHistory([])
       localStorage.removeItem('scanHistory')
       localStorage.removeItem('linkScanHistory')
       setLocalHistory([])
-      toast.success('Local scan history cleared.')
+      toast.success('Scan history cleared.')
     }
   }
 
@@ -233,21 +219,21 @@ export default function LinkScannerPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header telemetry */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Link Scanner
+              Check a link
             </h1>
             <span className="text-sm text-zinc-400">
-              Model: GradientBoosting · TF-IDF Tokenizer
+              Scored by a machine-learning model
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Evaluates URL path entropy, deceptive subdomains, punycode spoofing, and dangerous top-level domains against trained threat vectors.
+            Paste a link before you click it. We look for the tricks scam sites use: look-alike spellings, fake subdomains such as google.verify-login.tk, and risky endings like .tk or .xyz.
           </p>
         </div>
 
@@ -261,10 +247,10 @@ export default function LinkScannerPage() {
               <div className="flex items-center justify-between border-zinc-800/80 pb-3">
                 <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                   <Terminal className="size-3.5 text-zinc-400" />
-                  Target URL
+                  Link to check
                 </span>
                 <span className="text-sm text-zinc-400">
-                  HTTP / HTTPS
+                  Starts with http or https
                 </span>
               </div>
 
@@ -292,12 +278,12 @@ export default function LinkScannerPage() {
                     {isScanning ? (
                       <>
                         <RefreshCw className="size-3.5 animate-spin" />
-                        <span>Tokenizing URL...</span>
+                        <span>Checking...</span>
                       </>
                     ) : (
                       <>
                         <Search className="size-3.5" />
-                        <span>Inspect Destination</span>
+                        <span>Check link</span>
                       </>
                     )}
                   </button>
@@ -328,27 +314,27 @@ export default function LinkScannerPage() {
                 <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Inference Classification
+                      Result
                     </span>
                     <div className="flex items-center gap-2.5">
                       {result.prediction === 'Legit' ? (
-                        <CheckCircle className="size-5 text-emerald-400" />
+                        <CheckCircle className="size-5 text-teal-400" />
                       ) : (
                         <AlertTriangle className="size-5 text-red-400" />
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
-                        result.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'
+                        result.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'
                       }`}>
-                        {result.prediction === 'Legit' ? 'Verified Clean Destination' : 'Phishing / Malicious Threat Detected'}
+                        {result.prediction === 'Legit' ? 'Looks safe' : 'Likely a phishing link'}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-sm text-zinc-400 block">Threat Level</span>
+                    <span className="text-sm text-zinc-400 block">Risk</span>
                     <span className={` text-sm font-bold px-2 py-0.5 rounded border ${
                       result.threat_level === 'Low'
-                        ? 'border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
+                        ? 'border-teal-800/60 bg-teal-950/40 text-teal-300'
                         : 'border-red-800/60 bg-red-950/40 text-red-300'
                     }`}>
                       {result.threat_level || 'Low'}
@@ -360,7 +346,7 @@ export default function LinkScannerPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Model Confidence
+                      Confidence
                     </span>
                     <p className="text-xl font-bold text-zinc-100">
                       {(result.confidence * 100).toFixed(1)}%
@@ -368,7 +354,7 @@ export default function LinkScannerPage() {
                   </div>
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Classification Label
+                      Verdict
                     </span>
                     <p className="text-xl font-bold text-zinc-100">
                       {result.prediction}
@@ -380,12 +366,12 @@ export default function LinkScannerPage() {
                 <div className="p-4 rounded bg-[#0f1012] space-y-2">
                   <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
                     <Cpu className="size-3.5 text-zinc-400" />
-                    <span>Analysis Summary</span>
+                    <span>What this means</span>
                   </div>
                   <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {result.prediction === 'Legit'
-                      ? 'The Gradient Boosting classifier did not detect deceptive subdomains, suspicious TLD markers, or statistical anomalies in the URL string tokens. Standard caution is still recommended for newly registered destinations.'
-                      : 'High-risk lexical signatures detected. The tokenized URL exhibits structural traits common to phishing campaigns, such as credential mimicry, unanchored subdomains, or blacklisted top-level domain extensions.'}
+                      ? 'We found no fake subdomains, risky domain endings or other common phishing tricks in this link. Still be careful with sites you have never heard of.'
+                      : 'This link looks like known phishing links, for example a fake login page, a brand name hidden in a subdomain, or a risky domain ending. Do not enter your password or pay anything on it.'}
                   </p>
                 </div>
 
@@ -396,7 +382,7 @@ export default function LinkScannerPage() {
                     className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
-                    <span>Copy Verdict</span>
+                    <span>Copy result</span>
                   </button>
 
                   <button
@@ -404,7 +390,7 @@ export default function LinkScannerPage() {
                     className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <ExternalLink className="size-3" />
-                    <span>Open Target (Isolated)</span>
+                    <span>Open link in new tab</span>
                   </button>
                 </div>
 
@@ -420,7 +406,7 @@ export default function LinkScannerPage() {
             <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
               <span className="text-sm text-zinc-300 flex items-center gap-2">
                 <Shield className="size-3.5 text-zinc-400" />
-                Session Controls
+                Your history
               </span>
 
               <div className="space-y-2">
@@ -429,7 +415,7 @@ export default function LinkScannerPage() {
                     onClick={handleAnonymousLogin}
                     className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                   >
-                    <span>Enable Cloud Sync</span>
+                    <span>Save scans to your account</span>
                     <Lock className="size-3.5 text-zinc-400" />
                   </button>
                 )}
@@ -438,7 +424,7 @@ export default function LinkScannerPage() {
                   onClick={clearHistory}
                   className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
-                  <span>Purge History Log</span>
+                  <span>Clear history</span>
                   <RefreshCw className="size-3.5 text-zinc-400" />
                 </button>
               </div>
@@ -452,7 +438,7 @@ export default function LinkScannerPage() {
                   Recent Scans
                 </span>
                 <span className="text-sm text-zinc-400">
-                  {user ? 'CLOUD' : 'LOCAL'}
+                  {user ? 'Saved to account' : 'This device'}
                 </span>
               </div>
 
@@ -469,7 +455,7 @@ export default function LinkScannerPage() {
                           {scan.url}
                         </p>
                         <div className="flex items-center justify-between text-sm text-zinc-400">
-                          <span className={scan.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
+                          <span className={scan.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'}>
                             {scan.prediction}
                           </span>
                           <span>{(scan.confidence * 100).toFixed(0)}%</span>
@@ -477,10 +463,12 @@ export default function LinkScannerPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-base text-zinc-400 py-2">No recent cloud scans.</p>
+                    <p className="text-base text-zinc-400 py-2">No scans yet.</p>
                   )
+                ) : localHistory.length === 0 ? (
+                  <p className="text-base text-zinc-400 py-2">No scans yet.</p>
                 ) : (
-                  (localHistory.length > 0 ? localHistory : scanHistory.map((u, i) => ({ id: String(i), url: u, prediction: 'Legit' as const, confidence: 0, timestamp: null, user_id: 'local' }))).map((item) => (
+                  localHistory.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => { setLink(item.url); setResult(null); }}
@@ -490,10 +478,10 @@ export default function LinkScannerPage() {
                         {item.url}
                       </p>
                       <div className="flex items-center justify-between text-sm text-zinc-400">
-                        <span className={item.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
+                        <span className={item.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>
-                        <span>{item.confidence > 0 ? `${(item.confidence * 100).toFixed(0)}%` : 'Cached'}</span>
+                        <span>{`${(item.confidence * 100).toFixed(0)}%`}</span>
                       </div>
                     </div>
                   ))

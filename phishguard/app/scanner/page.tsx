@@ -63,21 +63,21 @@ export default function ScannerPage() {
         if (bodyMatch) setEmailBody(bodyMatch[1].trim())
       }
       reader.readAsText(file)
-      toast.success('File loaded into analysis buffer.')
+      toast.success('File loaded.')
     }
   }
 
   const handleScan = async () => {
     if (scanMode === 'quick' && (!url && !email)) {
-      toast.warning('Enter at least a URL or sender email to analyze.')
+      toast.warning('Enter a link or a sender email to check.')
       return
     }
     if (scanMode === 'detailed' && (!emailFrom && !emailBody)) {
-      toast.warning('Provide sender address or message content.')
+      toast.warning("Add the sender's address or the message text.")
       return
     }
     if (scanMode === 'upload' && !uploadedFile && !emailBody) {
-      toast.warning('Select an email file or paste message body.')
+      toast.warning('Choose an email file or paste the message text.')
       return
     }
 
@@ -102,13 +102,13 @@ export default function ScannerPage() {
         }),
       })
 
-      if (!res.ok) throw new Error(`Scanner returned status ${res.status}`)
+      if (!res.ok) throw new Error("The scanner couldn't check this. Try again in a moment.")
 
       const data: UnifiedScanResponse = await res.json()
       setScanResult(data)
 
       const historyItem = {
-        title: targetUrl || sender || 'Correspondence Audit',
+        title: targetUrl || sender || 'Email check',
         score: data.risk_score,
         level: data.risk_level,
         timestamp: new Date().toLocaleTimeString(),
@@ -116,28 +116,28 @@ export default function ScannerPage() {
       setScanHistory(prev => [historyItem, ...prev.slice(0, 9)])
     } catch (err) {
       console.error('Unified scan failure:', err)
-      setScanError(err instanceof Error ? err.message : 'Unable to connect to the unified inference engine.')
+      setScanError(err instanceof Error && !(err instanceof TypeError) ? err.message : "Couldn't reach the scanner. Try again in a moment.")
     } finally {
       setIsScanning(false)
     }
   }
 
   return (
-    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Workstation Header */}
         <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              Security Inspection Workstation
+              Check a message and link
             </h1>
             <span className="text-sm text-zinc-400">
-              Aggregate: Offer Classifier · Link Engine · Structural Heuristics
+              Message and link checked together
             </span>
           </div>
           <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Multi-vector analysis correlating sender identity, URL destination tokens, and semantic outreach patterns into a unified threat index.
+            Check the sender, the message and any link in one go. Machine-learning models score the text and the link, and you get one risk score with the reasons behind it.
           </p>
         </div>
 
@@ -149,7 +149,7 @@ export default function ScannerPage() {
               scanMode === 'quick' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
-            Quick Intake (Link + Email)
+            Quick check
           </button>
           <button
             onClick={() => { setScanMode('detailed'); setScanResult(null); }}
@@ -157,7 +157,7 @@ export default function ScannerPage() {
               scanMode === 'detailed' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
-            Detailed Correspondence Audit
+            Full email
           </button>
           <button
             onClick={() => { setScanMode('upload'); setScanResult(null); }}
@@ -165,7 +165,7 @@ export default function ScannerPage() {
               scanMode === 'upload' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
-            File Ingestion
+            Upload a file
           </button>
         </div>
 
@@ -178,10 +178,10 @@ export default function ScannerPage() {
               <div className="flex items-center justify-between border-zinc-800/80 pb-3">
                 <span className="text-sm text-zinc-300 flex items-center gap-1.5">
                   <Terminal className="size-3.5 text-zinc-400" />
-                  Telemetry Inputs
+                  What to check
                 </span>
                 <span className="text-sm text-zinc-400">
-                  POST /scan/unified/
+                  Fill in what you have
                 </span>
               </div>
 
@@ -189,7 +189,7 @@ export default function ScannerPage() {
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <label className="block text-sm text-zinc-400">
-                      Sender Email / Address
+                      Sender’s email
                     </label>
                     <input
                       type="text"
@@ -202,7 +202,7 @@ export default function ScannerPage() {
 
                   <div className="space-y-1.5">
                     <label className="block text-sm text-zinc-400">
-                      Suspicious Destination URL
+                      Link
                     </label>
                     <input
                       type="url"
@@ -220,7 +220,7 @@ export default function ScannerPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="block text-sm text-zinc-400">
-                        From Address
+                        From
                       </label>
                       <input
                         type="text"
@@ -232,7 +232,7 @@ export default function ScannerPage() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="block text-sm text-zinc-400">
-                        Subject Line
+                        Subject
                       </label>
                       <input
                         type="text"
@@ -246,11 +246,11 @@ export default function ScannerPage() {
 
                   <div className="space-y-1.5">
                     <label className="block text-sm text-zinc-400">
-                      Full Message Content
+                      Message text
                     </label>
                     <textarea
                       rows={5}
-                      placeholder="Paste raw email body, headers, or message pitch..."
+                      placeholder="Paste the email or message..."
                       value={emailBody}
                       onChange={(e) => setEmailBody(e.target.value)}
                       className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed"
@@ -263,7 +263,7 @@ export default function ScannerPage() {
                 <div className="space-y-3">
                   <div /* taste-skill-ignore: file drop zone */ className="border border-dashed border-zinc-800 rounded-lg p-6 text-center space-y-2 bg-zinc-950/60">
                     <Upload className="size-6 text-zinc-400 mx-auto" />
-                    <p className="text-base text-zinc-300 font-medium">Select .eml or raw text message</p>
+                    <p className="text-base text-zinc-300 font-medium">Choose a saved email (.eml) or text file</p>
                     <input
                       type="file"
                       accept=".eml,.txt,.msg"
@@ -274,7 +274,7 @@ export default function ScannerPage() {
 
                   {emailBody && (
                     <div className="p-3 rounded bg-[#0f1012] space-y-1 text-sm">
-                      <span className="text-sm text-zinc-400">Parsed Preview</span>
+                      <span className="text-sm text-zinc-400">Preview</span>
                       <p className="text-zinc-300 line-clamp-2">{emailBody}</p>
                     </div>
                   )}
@@ -290,12 +290,12 @@ export default function ScannerPage() {
                   {isScanning ? (
                     <>
                       <RefreshCw className="size-3.5 animate-spin" />
-                      <span>Synthesizing Signals...</span>
+                      <span>Checking...</span>
                     </>
                   ) : (
                     <>
                       <Shield className="size-3.5" />
-                      <span>Run Unified Evaluation</span>
+                      <span>Check now</span>
                     </>
                   )}
                 </button>
@@ -334,11 +334,11 @@ export default function ScannerPage() {
                 <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
                     <span className="text-sm text-zinc-400">
-                      Unified Threat Index
+                      Result
                     </span>
                     <div className="flex items-center gap-2.5">
                       {scanResult.risk_level === 'LOW' ? (
-                        <CheckCircle className="size-5 text-emerald-400" />
+                        <CheckCircle className="size-5 text-teal-400" />
                       ) : scanResult.risk_level === 'MEDIUM' ? (
                         <AlertTriangle className="size-5 text-amber-400" />
                       ) : (
@@ -346,7 +346,7 @@ export default function ScannerPage() {
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
                         scanResult.risk_level === 'LOW'
-                          ? 'text-emerald-400'
+                          ? 'text-teal-400'
                           : scanResult.risk_level === 'MEDIUM'
                           ? 'text-amber-400'
                           : 'text-red-400'
@@ -367,16 +367,16 @@ export default function ScannerPage() {
                 {/* Sub-Signals Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
-                    <span className="text-sm text-zinc-400 block">Recommended Action</span>
+                    <span className="text-sm text-zinc-400 block">What to do</span>
                     <span className="text-sm font-bold text-zinc-200 px-2 py-0.5 rounded bg-[#15171a] inline-block">
                       {scanResult.recommendation}
                     </span>
                   </div>
 
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
-                    <span className="text-sm text-zinc-400 block">Trace Token</span>
+                    <span className="text-sm text-zinc-400 block">Scan ID</span>
                     <span className="text-sm text-zinc-400 truncate block">
-                      {scanResult.event_id || 'LOCAL-DIRECT'}
+                      {scanResult.event_id || 'Not available'}
                     </span>
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export default function ScannerPage() {
                 {scanResult.explanations && scanResult.explanations.length > 0 && (
                   <div className="space-y-2">
                     <span className="text-sm text-zinc-400 font-semibold block">
-                      Synthesized Threat Factors
+                      Why we think so
                     </span>
                     <ul className="space-y-1 text-sm">
                       {scanResult.explanations.map((exp, i) => (
@@ -410,10 +410,10 @@ export default function ScannerPage() {
               <div className="flex items-center justify-between border-zinc-800/80 pb-3">
                 <span className="text-sm text-zinc-300 flex items-center gap-2">
                   <Clock className="size-3.5 text-zinc-400" />
-                  Intake Log
+                  Recent checks
                 </span>
                 <span className="text-sm text-zinc-400">
-                  {scanHistory.length} EVENTS
+                  {scanHistory.length} this visit
                 </span>
               </div>
 
@@ -426,7 +426,7 @@ export default function ScannerPage() {
                     >
                       <p className="text-zinc-200 truncate font-semibold">{item.title}</p>
                       <div className="flex items-center justify-between text-sm text-zinc-400">
-                        <span className={item.level === 'LOW' ? 'text-emerald-400' : item.level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'}>
+                        <span className={item.level === 'LOW' ? 'text-teal-400' : item.level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'}>
                           {item.level} ({item.score}/100)
                         </span>
                         <span>{item.timestamp}</span>
@@ -434,7 +434,7 @@ export default function ScannerPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-base text-zinc-400 py-2">No scans executed in this workstation session.</p>
+                  <p className="text-base text-zinc-400 py-2">No checks yet.</p>
                 )}
               </div>
             </div>
