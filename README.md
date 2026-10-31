@@ -85,6 +85,7 @@ pip install -r requirements.txt
 python -m train.train_email_model
 python -m train.train_link_model
 python -m train.train_doc_model
+python -m train.train_offer_model
 
 # Start API server
 python -m uvicorn app.main:app --reload
@@ -94,6 +95,11 @@ python -m uvicorn app.main:app --reload
 - **Frontend**: http://localhost:3000
 - **API Documentation**: http://localhost:8000/docs
 - **Document Scanner**: http://localhost:8000/scan/doc
+
+### 5️⃣ **Optional services**
+- **Chrome extension**: load `phishguard/extension-build/` as an unpacked extension (Gmail, WhatsApp Web, LinkedIn and a link guard). For Gemini features, create `extension-build/gemini-config.local.js` with `GEMINI_CONFIG.apiKey = "your-key";` (gitignored).
+- **Gmail pipeline** (`email/`): `pip install -r requirements.txt`, then `uvicorn main:app --port 8080`. Needs Google OAuth credentials, a Pub/Sub topic, VirusTotal and Supabase keys. See `email/README.md`.
+- **WhatsApp bot** (`whatsapp-bot/`): `npm install`, then `node server.js`. Needs Twilio credentials and `PUBLIC_WEBHOOK_URL`.
 
 ---
 
@@ -253,6 +259,23 @@ Content-Type: multipart/form-data
 file: document.pdf
 user_id: student123
 ```
+
+### **Job / Internship Offer Scanner**
+```http
+POST /scan/offer/
+Content-Type: application/json
+
+{ "message": "Pay Rs 2999 registration fee to confirm your internship..." }
+```
+
+### **Unified Risk Scan** (used by the extension)
+```http
+POST /scan/unified/
+Content-Type: application/json
+
+{ "email_text": "...", "sender_domain": "example.com", "url": "https://example.com", "trusted_domains": [] }
+```
+Also: `POST /scan/unified/url-intel`, `/scan/unified/compose-guard`, `/scan/unified/feedback`.
 
 ---
 

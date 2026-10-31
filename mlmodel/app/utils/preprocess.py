@@ -15,3 +15,12 @@ def preprocess_url(url: str) -> str:
     url = re.sub(r"https?://", "", url)
     url = re.sub(r"[^a-zA-Z0-9./]", "", url)
     return url
+
+
+def clean_email_text(text: str) -> str:
+    """Text cleaning for email_model.pkl - must match clean_text in train/train_email_model.py"""
+    text = str(text).lower()
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"[^a-zA-Z\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text

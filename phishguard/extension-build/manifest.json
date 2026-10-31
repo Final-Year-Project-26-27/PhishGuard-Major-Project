@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "PhishGuard - Link & Email Protection",
-  "version": "2.3",
+  "name": "PhishGuard",
+  "version": "1.0.9",
   "description": "Comprehensive protection against phishing websites and scam emails with AI-powered detection",
   "action": {
     "default_icon": "icon.png",
@@ -14,17 +14,35 @@
   },
   "permissions": [
     "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
+    "<all_urls>",
     "https://mail.google.com/*",
-    "https://firestore.googleapis.com/*"
+    "https://web.whatsapp.com/*",
+    "https://linkedin.com/*",
+    "https://www.linkedin.com/*",
+    "https://firestore.googleapis.com/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content-link-guard.js"
+      ],
+      "run_at": "document_start"
+    },
     {
       "matches": [
         "https://mail.google.com/*"
@@ -34,6 +52,26 @@
       ],
       "run_at": "document_end",
       "all_frames": true
+    },
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "content-whatsapp.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://linkedin.com/messaging/*",
+        "https://www.linkedin.com/messaging/*",
+        "https://*.linkedin.com/messaging/*"
+      ],
+      "js": [
+        "content-linkedin.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "declarative_net_request": {
@@ -44,5 +82,19 @@
         "path": "rules.json"
       }
     ]
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html",
+        "blocked.css",
+        "blocked.js",
+        "icon.png"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
 }

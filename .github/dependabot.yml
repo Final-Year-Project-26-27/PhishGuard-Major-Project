@@ -9,5 +9,17 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      # .pkl models are pickled with 1.7.1; bump only together with a retrain
+      # .pkl models are pickled with 1.8.0; bump only together with a retrain
       - dependency-name: "scikit-learn"
+  - package-ecosystem: "pip"
+    directory: "/email"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/email/frontend"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/whatsapp-bot"
+    schedule:
+      interval: "weekly"

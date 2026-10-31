@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhishGuard Blocked a Risky Link</title>
+    <link rel="stylesheet" href="blocked.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <p class="badge">PhishGuard Shield</p>
+        <h1>This link was blocked for your safety</h1>
+        <p class="subtitle" id="summaryText">We detected a high phishing risk signal.</p>
+
+        <div class="score-row">
+          <span>Risk Score</span>
+          <strong id="riskScore">0%</strong>
+        </div>
+        <div class="score-track">
+          <div class="score-fill" id="scoreFill"></div>
+        </div>
+
+        <div class="meta">
+          <p><span>Risk Level:</span> <strong id="riskLevel">HIGH</strong></p>
+          <p><span>URL:</span> <code id="blockedUrl">-</code></p>
+        </div>
+
+        <h2>Why this was blocked</h2>
+        <ul id="reasonList" class="reason-list"></ul>
+
+        <div class="actions">
+          <button id="goBackBtn" class="btn neutral">Go Back</button>
+          <button id="reportBtn" class="btn outline">Report as Correct Block</button>
+          <button id="proceedBtn" class="btn danger">Proceed Anyway</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="blocked.js"></script>
+  </body>
+</html>
