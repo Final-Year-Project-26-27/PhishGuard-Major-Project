@@ -10,7 +10,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#08090a] text-zinc-300 text-sm font-sans pt-16 pb-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
+      <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 
           {/* Identity & Scope */}
@@ -114,7 +114,7 @@ export default function Footer() {
         </div>
 
         {/* Archival Photography Credits (Tasteskill floor) */}
-        <div className="pt-6 text-sm text-zinc-400 leading-relaxed">
+        <div className="pt-6 text-sm text-zinc-400 leading-relaxed max-w-3xl">
           <p>
             Archival imagery: &ldquo;Virginia Tech - data center&rdquo; by Christopher Bowns, CC BY-SA 2.0; &ldquo;ORACLE computer at Oak Ridge National Lab&rdquo; by US Atomic Energy Commission, public domain; &ldquo;Mainframe Computer&rdquo; by Pargon, CC BY 2.0; &ldquo;GE-645-mainframe-1968&rdquo; by Dóeltenga, CC BY-SA 4.0, via Wikimedia Commons.
           </p>

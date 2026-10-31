@@ -7,7 +7,6 @@ import {
   Terminal,
   Send,
   RefreshCw,
-  ShieldAlert,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -107,39 +106,33 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <ShieldAlert className="size-3.5 text-zinc-400" />
-            <span>Community Intake</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Incident Dispatcher</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Report Security Threat
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Intake: Firestore /reports collection (Status: Pending)
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Submit malicious domains, deceptive internship outreach, or fraudulent college payment links for community protection and institutional verification.
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+        <div className="rounded-lg bg-[#15171a] p-6 space-y-6">
 
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <Terminal className="size-3.5 text-zinc-500" />
+          <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+            <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+              <Terminal className="size-3.5 text-zinc-400" />
               Incident Parameters
             </span>
-            <span className="text-[11px] font-mono text-zinc-500">
+            <span className="text-sm text-zinc-400">
               COMMUNITY FEED
             </span>
           </div>
@@ -148,7 +141,7 @@ export default function ReportPage() {
 
             {/* Target URL */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+              <label className="block text-sm text-zinc-400">
                 Deceptive URL or Domain *
               </label>
               <input
@@ -156,22 +149,22 @@ export default function ReportPage() {
                 placeholder="https://internship-offer-deposit.tk/verify"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className={`w-full h-9 px-3 rounded bg-zinc-950 border text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none transition-colors ${
+                className={`w-full h-9 px-3 rounded bg-zinc-950 border text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none transition-colors ${
                   errors.url ? 'border-red-800 focus:border-red-600' : 'border-zinc-800 focus:border-zinc-500'
                 }`}
               />
-              {errors.url && <p className="text-[11px] font-mono text-red-400">{errors.url}</p>}
+              {errors.url && <p className="text-base text-red-400">{errors.url}</p>}
             </div>
 
             {/* Scam Category */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+              <label className="block text-sm text-zinc-400">
                 Threat Classification *
               </label>
               <select
                 value={scamType}
                 onChange={(e) => setScamType(e.target.value)}
-                className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 focus:border-zinc-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:border-zinc-500 focus:outline-none"
               >
                 <option value="fake-job">Fake Internship / Job Offer (Fee Demand)</option>
                 <option value="phishing">Credential Phishing / Portal Spoofing</option>
@@ -183,7 +176,7 @@ export default function ReportPage() {
 
             {/* Description */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+              <label className="block text-sm text-zinc-400">
                 Context & Incident Description *
               </label>
               <textarea
@@ -191,17 +184,17 @@ export default function ReportPage() {
                 placeholder="Describe how this outreach arrived (e.g. WhatsApp recruiter claiming to represent Google, demanding Rs 2500 training kit fee before interview)..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className={`w-full p-3 rounded bg-zinc-950 border text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed transition-colors ${
+                className={`w-full p-3 rounded bg-zinc-950 border text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed transition-colors ${
                   errors.description ? 'border-red-800 focus:border-red-600' : 'border-zinc-800 focus:border-zinc-500'
                 }`}
               />
-              {errors.description && <p className="text-[11px] font-mono text-red-400">{errors.description}</p>}
+              {errors.description && <p className="text-base text-red-400">{errors.description}</p>}
             </div>
 
             {/* Reporter Email & Proof URL */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                <label className="block text-sm text-zinc-400">
                   Contact Email (Optional)
                 </label>
                 <input
@@ -209,15 +202,15 @@ export default function ReportPage() {
                   placeholder="student@university.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full h-9 px-3 rounded bg-zinc-950 border text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none ${
+                  className={`w-full h-9 px-3 rounded bg-zinc-950 border text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none ${
                     errors.email ? 'border-red-800' : 'border-zinc-800 focus:border-zinc-500'
                   }`}
                 />
-                {errors.email && <p className="text-[11px] font-mono text-red-400">{errors.email}</p>}
+                {errors.email && <p className="text-base text-red-400">{errors.email}</p>}
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                <label className="block text-sm text-zinc-400">
                   Evidence / Screenshot Link (Optional)
                 </label>
                 <input
@@ -225,24 +218,24 @@ export default function ReportPage() {
                   placeholder="https://drive.google.com/..."
                   value={proofUrl}
                   onChange={(e) => setProofUrl(e.target.value)}
-                  className={`w-full h-9 px-3 rounded bg-zinc-950 border text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none ${
+                  className={`w-full h-9 px-3 rounded bg-zinc-950 border text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none ${
                     errors.proofUrl ? 'border-red-800' : 'border-zinc-800 focus:border-zinc-500'
                   }`}
                 />
-                {errors.proofUrl && <p className="text-[11px] font-mono text-red-400">{errors.proofUrl}</p>}
+                {errors.proofUrl && <p className="text-base text-red-400">{errors.proofUrl}</p>}
               </div>
             </div>
 
             {/* Submit Action */}
-            <div className="pt-2 flex items-center justify-between border-t border-zinc-800/80">
-              <p className="text-[11px] font-mono text-zinc-500">
+            <div className="pt-2 flex items-center justify-between border-zinc-800/80">
+              <p className="text-base text-zinc-400">
                 Reports are audited before entry into dynamic DNR blocklists.
               </p>
 
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 active:scale-[0.98] transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

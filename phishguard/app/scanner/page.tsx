@@ -10,7 +10,6 @@ import {
   Terminal,
   Upload,
   Clock,
-  Layers,
   RefreshCw,
 } from 'lucide-react'
 import { API_URL } from '@/lib/utils'
@@ -124,52 +123,46 @@ export default function ScannerPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Workstation Header */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <Layers className="size-3.5 text-zinc-400" />
-            <span>Inspection Console</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Unified Workstation</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Security Inspection Workstation
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Aggregate: Offer Classifier · Link Engine · Structural Heuristics
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Multi-vector analysis correlating sender identity, URL destination tokens, and semantic outreach patterns into a unified threat index.
           </p>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="flex border-b border-zinc-800 font-mono text-xs">
+        <div className="flex border-zinc-800 text-sm">
           <button
             onClick={() => { setScanMode('quick'); setScanResult(null); }}
-            className={`px-4 py-2.5 border-b-2 font-medium transition-colors ${
-              scanMode === 'quick' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            className={`px-4 py-2.5 font-medium transition-colors ${
+              scanMode === 'quick' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
             Quick Intake (Link + Email)
           </button>
           <button
             onClick={() => { setScanMode('detailed'); setScanResult(null); }}
-            className={`px-4 py-2.5 border-b-2 font-medium transition-colors ${
-              scanMode === 'detailed' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            className={`px-4 py-2.5 font-medium transition-colors ${
+              scanMode === 'detailed' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
             Detailed Correspondence Audit
           </button>
           <button
             onClick={() => { setScanMode('upload'); setScanResult(null); }}
-            className={`px-4 py-2.5 border-b-2 font-medium transition-colors ${
-              scanMode === 'upload' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            className={`px-4 py-2.5 font-medium transition-colors ${
+              scanMode === 'upload' ? 'border-zinc-200 text-zinc-100 font-semibold' : 'border-transparent text-zinc-400 hover:text-zinc-300'
             }`}
           >
             File Ingestion
@@ -181,13 +174,13 @@ export default function ScannerPage() {
           {/* Main Input Form */}
           <div className="lg:col-span-8 space-y-6">
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                  <Terminal className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                  <Terminal className="size-3.5 text-zinc-400" />
                   Telemetry Inputs
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   POST /scan/unified/
                 </span>
               </div>
@@ -195,7 +188,7 @@ export default function ScannerPage() {
               {scanMode === 'quick' && (
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                    <label className="block text-sm text-zinc-400">
                       Sender Email / Address
                     </label>
                     <input
@@ -203,12 +196,12 @@ export default function ScannerPage() {
                       placeholder="recruiter@internship-partner.xyz"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                      className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                    <label className="block text-sm text-zinc-400">
                       Suspicious Destination URL
                     </label>
                     <input
@@ -216,7 +209,7 @@ export default function ScannerPage() {
                       placeholder="https://t.co/verification-form"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                      className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -226,7 +219,7 @@ export default function ScannerPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                      <label className="block text-sm text-zinc-400">
                         From Address
                       </label>
                       <input
@@ -234,11 +227,11 @@ export default function ScannerPage() {
                         placeholder="placement-alert@nmamit-verify.in"
                         value={emailFrom}
                         onChange={(e) => setEmailFrom(e.target.value)}
-                        className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                        className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                      <label className="block text-sm text-zinc-400">
                         Subject Line
                       </label>
                       <input
@@ -246,13 +239,13 @@ export default function ScannerPage() {
                         placeholder="Urgent: Complete Internship Deposit"
                         value={emailSubject}
                         onChange={(e) => setEmailSubject(e.target.value)}
-                        className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                        className="w-full h-9 px-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                    <label className="block text-sm text-zinc-400">
                       Full Message Content
                     </label>
                     <textarea
@@ -260,7 +253,7 @@ export default function ScannerPage() {
                       placeholder="Paste raw email body, headers, or message pitch..."
                       value={emailBody}
                       onChange={(e) => setEmailBody(e.target.value)}
-                      className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed"
+                      className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed"
                     />
                   </div>
                 </div>
@@ -268,20 +261,20 @@ export default function ScannerPage() {
 
               {scanMode === 'upload' && (
                 <div className="space-y-3">
-                  <div className="border border-dashed border-zinc-800 rounded-lg p-6 text-center space-y-2 bg-zinc-950/60">
-                    <Upload className="size-6 text-zinc-500 mx-auto" />
-                    <p className="text-xs text-zinc-300 font-medium">Select .eml or raw text message</p>
+                  <div /* taste-skill-ignore: file drop zone */ className="border border-dashed border-zinc-800 rounded-lg p-6 text-center space-y-2 bg-zinc-950/60">
+                    <Upload className="size-6 text-zinc-400 mx-auto" />
+                    <p className="text-base text-zinc-300 font-medium">Select .eml or raw text message</p>
                     <input
                       type="file"
                       accept=".eml,.txt,.msg"
                       onChange={handleFileUpload}
-                      className="text-xs font-mono text-zinc-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-zinc-700 file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700"
+                      className="text-sm text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-zinc-700 file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700"
                     />
                   </div>
 
                   {emailBody && (
-                    <div className="p-3 rounded bg-zinc-950 border border-zinc-800 space-y-1 font-mono text-xs">
-                      <span className="text-[10px] text-zinc-500 uppercase">Parsed Preview</span>
+                    <div className="p-3 rounded bg-[#0f1012] space-y-1 text-sm">
+                      <span className="text-sm text-zinc-400">Parsed Preview</span>
                       <p className="text-zinc-300 line-clamp-2">{emailBody}</p>
                     </div>
                   )}
@@ -292,7 +285,7 @@ export default function ScannerPage() {
                 <button
                   onClick={handleScan}
                   disabled={isScanning}
-                  className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 active:scale-[0.98] transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {isScanning ? (
                     <>
@@ -318,7 +311,7 @@ export default function ScannerPage() {
                     setScanResult(null)
                     setScanError(null)
                   }}
-                  className="px-3 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs transition-colors"
+                  className="px-3 py-2 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
                 >
                   Reset
                 </button>
@@ -328,7 +321,7 @@ export default function ScannerPage() {
 
             {/* Error Message */}
             {scanError && (
-              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono flex items-start gap-2.5">
+              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-start gap-2.5">
                 <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{scanError}</span>
               </div>
@@ -336,11 +329,11 @@ export default function ScannerPage() {
 
             {/* Unified Result Panel */}
             {scanResult && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+              <div className="rounded-lg bg-[#15171a] p-6 space-y-6">
 
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+                    <span className="text-sm text-zinc-400">
                       Unified Threat Index
                     </span>
                     <div className="flex items-center gap-2.5">
@@ -364,25 +357,25 @@ export default function ScannerPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono text-[10px] uppercase text-zinc-500 block">Overall Score</span>
-                    <span className="font-mono text-xl font-bold text-zinc-100">
-                      {scanResult.risk_score}<span className="text-zinc-500 text-xs">/100</span>
+                    <span className="text-sm text-zinc-400 block">Overall Score</span>
+                    <span className="text-xl font-bold text-zinc-100">
+                      {scanResult.risk_score}<span className="text-zinc-400 text-sm">/100</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Sub-Signals Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1 font-mono">
-                    <span className="text-[10px] uppercase text-zinc-500 block">Recommended Action</span>
-                    <span className="text-xs font-bold text-zinc-200 uppercase px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 inline-block">
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400 block">Recommended Action</span>
+                    <span className="text-sm font-bold text-zinc-200 px-2 py-0.5 rounded bg-[#15171a] inline-block">
                       {scanResult.recommendation}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1 font-mono">
-                    <span className="text-[10px] uppercase text-zinc-500 block">Trace Token</span>
-                    <span className="text-xs text-zinc-400 truncate block">
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400 block">Trace Token</span>
+                    <span className="text-sm text-zinc-400 truncate block">
                       {scanResult.event_id || 'LOCAL-DIRECT'}
                     </span>
                   </div>
@@ -391,13 +384,13 @@ export default function ScannerPage() {
                 {/* Reasoning Explanations */}
                 {scanResult.explanations && scanResult.explanations.length > 0 && (
                   <div className="space-y-2">
-                    <span className="font-mono text-xs text-zinc-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-sm text-zinc-400 font-semibold block">
                       Synthesized Threat Factors
                     </span>
-                    <ul className="space-y-1 font-mono text-xs">
+                    <ul className="space-y-1 text-sm">
                       {scanResult.explanations.map((exp, i) => (
-                        <li key={i} className="p-2 rounded bg-zinc-950 border border-zinc-800/80 text-zinc-300 flex items-start gap-2">
-                          <span className="text-zinc-500">•</span>
+                        <li key={i} className="p-2 rounded bg-[#0f1012] text-zinc-300 flex items-start gap-2">
+                          <span className="text-zinc-400">•</span>
                           <span>{exp}</span>
                         </li>
                       ))}
@@ -413,13 +406,13 @@ export default function ScannerPage() {
           {/* Right History Column */}
           <div className="lg:col-span-4 space-y-6">
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                  <Clock className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-2">
+                  <Clock className="size-3.5 text-zinc-400" />
                   Intake Log
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   {scanHistory.length} EVENTS
                 </span>
               </div>
@@ -429,10 +422,10 @@ export default function ScannerPage() {
                   scanHistory.map((item, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 font-mono text-xs space-y-1"
+                      className="p-2.5 rounded bg-[#0f1012] text-sm space-y-1"
                     >
                       <p className="text-zinc-200 truncate font-semibold">{item.title}</p>
-                      <div className="flex items-center justify-between text-[10px] text-zinc-500">
+                      <div className="flex items-center justify-between text-sm text-zinc-400">
                         <span className={item.level === 'LOW' ? 'text-emerald-400' : item.level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'}>
                           {item.level} ({item.score}/100)
                         </span>
@@ -441,7 +434,7 @@ export default function ScannerPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-zinc-500 font-mono py-2">No scans executed in this workstation session.</p>
+                  <p className="text-base text-zinc-400 py-2">No scans executed in this workstation session.</p>
                 )}
               </div>
             </div>

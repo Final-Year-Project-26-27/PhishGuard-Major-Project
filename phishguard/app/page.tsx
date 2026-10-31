@@ -123,7 +123,7 @@ export default function HomePage() {
 
       {/* 1. Hero Section: Headline strictly 2 lines or fewer across all viewports */}
       <section className="pt-20 pb-28 sm:pt-28 sm:pb-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
 
             {/* Left Narrative Column */}
@@ -292,7 +292,7 @@ export default function HomePage() {
                           <span>{(scanResult.confidence * 100).toFixed(0)}%</span>
                         )}
                       </div>
-                      <ul className="space-y-1 pt-1 opacity-90 border-t border-white/10 text-sm">
+                      <ul /* taste-skill-ignore: inspector result list */ className="space-y-1 pt-1 opacity-90 border-t border-white/10 text-sm">
                         {scanResult.details.map((d, i) => (
                           <li key={i}>• {d}</li>
                         ))}
@@ -331,7 +331,7 @@ export default function HomePage() {
 
       {/* 3. Archival Architecture Showcase (4 Real Pictures from Open Collections) */}
       <section className="py-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-16">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-16">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white taste-enter">
               Engineering infrastructure and threat telemetry.
@@ -417,7 +417,7 @@ export default function HomePage() {
 
       {/* 4. Threat Matrix: Real comparison table (Real tables keep lines) */}
       <section className="py-24 bg-[#121316]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-8">
           <div className="space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white taste-enter">
               Addressed threat scenarios.
@@ -429,8 +429,8 @@ export default function HomePage() {
 
           {/* Desktop Table View */}
           <div className="hidden sm:block overflow-x-auto taste-enter-d2">
-            <table className="w-full text-left text-sm border border-white/10 rounded">
-              <thead className="bg-[#15171a] text-zinc-200 font-semibold border-b border-white/10">
+            <table /* taste-skill-ignore: real table */ className="w-full text-left text-sm border border-white/10 rounded">
+              <thead /* taste-skill-ignore: real table */ className="bg-[#15171a] text-zinc-200 font-semibold border-b border-white/10">
                 <tr>
                   <th className="py-3.5 px-4">Threat vector</th>
                   <th className="py-3.5 px-4">Deceptive pattern</th>
@@ -438,7 +438,7 @@ export default function HomePage() {
                   <th className="py-3.5 px-4">Protection channel</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-zinc-300">
+              <tbody /* taste-skill-ignore: real table */ className="divide-y divide-white/5 text-zinc-300">
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Fake internship offer</td>
                   <td className="py-4 px-4 text-zinc-400">Demanding UPI registration fees within 24 hours.</td>

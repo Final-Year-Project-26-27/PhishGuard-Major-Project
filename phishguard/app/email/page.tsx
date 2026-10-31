@@ -225,31 +225,25 @@ export default function EmailScannerPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <Mail className="size-3.5 text-zinc-400" />
-            <span>Telemetry Module</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Email Scam Classifier</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Email Scam Detector
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Engine: Offer-Scam Heuristics & TF-IDF
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Analyzes outreach message bodies and sender domains, targeting deceptive internship fees, unverified placement offers, and student credential phishing.
           </p>
 
           {fromGmail && (
-            <div className="p-2.5 rounded bg-blue-950/40 border border-blue-800/60 text-blue-300 text-xs font-mono inline-flex items-center gap-2">
+            <div className="p-2.5 rounded bg-blue-950/40 border border-blue-800/60 text-blue-300 text-sm inline-flex items-center gap-2">
               <Mail className="size-3.5" />
               <span>Loaded directly from Gmail Shield extension interceptor.</span>
             </div>
@@ -261,24 +255,24 @@ export default function EmailScannerPage() {
           {/* Main Form Console */}
           <div className="lg:col-span-8 space-y-6">
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                  <Terminal className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                  <Terminal className="size-3.5 text-zinc-400" />
                   Message Parameters
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   POST /scan/email/
                 </span>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                  <label className="block text-sm text-zinc-400">
                     Sender Domain
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-zinc-500 select-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 select-none">
                       @
                     </span>
                     <input
@@ -286,13 +280,13 @@ export default function EmailScannerPage() {
                       placeholder="company-recruiter.com"
                       value={senderDomain}
                       onChange={(e) => setSenderDomain(e.target.value)}
-                      className="w-full h-9 pl-7 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition-colors"
+                      className="w-full h-9 pl-7 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                  <label className="block text-sm text-zinc-400">
                     Email Body Content
                   </label>
                   <textarea
@@ -300,7 +294,7 @@ export default function EmailScannerPage() {
                     placeholder="Paste the suspicious recruiter email, internship notice, or message content..."
                     value={textContent}
                     onChange={(e) => setTextContent(e.target.value)}
-                    className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed transition-colors"
+                    className="w-full p-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed transition-colors"
                   />
                 </div>
 
@@ -308,7 +302,7 @@ export default function EmailScannerPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={loading || !textContent.trim() || !senderDomain.trim()}
-                    className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50"
+                    className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 active:scale-[0.98] transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {loading ? (
                       <>
@@ -325,7 +319,7 @@ export default function EmailScannerPage() {
 
                   <button
                     onClick={() => { setTextContent(''); setSenderDomain(''); setResult(null); setError(null); }}
-                    className="px-3 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs transition-colors"
+                    className="px-3 py-2 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
                   >
                     Clear Form
                   </button>
@@ -335,7 +329,7 @@ export default function EmailScannerPage() {
 
             {/* Error Banner */}
             {error && (
-              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono flex items-start gap-2.5">
+              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-start gap-2.5">
                 <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{error}</span>
               </div>
@@ -343,11 +337,11 @@ export default function EmailScannerPage() {
 
             {/* Result Panel */}
             {result && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+              <div className="rounded-lg bg-[#15171a] p-6 space-y-6">
 
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+                    <span className="text-sm text-zinc-400">
                       Inference Verdict
                     </span>
                     <div className="flex items-center gap-2.5">
@@ -365,8 +359,8 @@ export default function EmailScannerPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono text-[10px] uppercase text-zinc-500 block">Certainty</span>
-                    <span className="font-mono text-sm font-bold text-zinc-100">
+                    <span className="text-sm text-zinc-400 block">Certainty</span>
+                    <span className="text-sm font-bold text-zinc-100">
                       {(result.confidence * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -375,12 +369,12 @@ export default function EmailScannerPage() {
                 {/* Red Flags Readout */}
                 {result.red_flags && result.red_flags.length > 0 && (
                   <div className="space-y-2">
-                    <span className="font-mono text-xs text-red-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-sm text-red-400 font-semibold block">
                       Triggered Scam Indicators
                     </span>
                     <div className="space-y-1.5">
                       {result.red_flags.map((flag, idx) => (
-                        <div key={idx} className="p-2 rounded bg-red-950/30 border border-red-900/50 text-red-200 text-xs font-mono flex items-center gap-2">
+                        <div key={idx} className="p-2 rounded bg-red-950/30 border border-red-900/50 text-red-200 text-sm flex items-center gap-2">
                           <span className="size-1.5 rounded-full bg-red-400" />
                           <span>{flag}</span>
                         </div>
@@ -390,12 +384,12 @@ export default function EmailScannerPage() {
                 )}
 
                 {/* Technical Interpretation */}
-                <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-2 font-mono text-xs text-zinc-300 font-medium">
+                <div className="p-4 rounded bg-[#0f1012] space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
                     <Cpu className="size-3.5 text-zinc-400" />
                     <span>Classification Explanation</span>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {result.prediction === 'Legit'
                       ? 'The text exhibits vocabulary consistent with verified corporate and academic communications. No registration fee demands or urgency pressure keywords were detected.'
                       : 'High-confidence scam signals identified. Fraudulent internships frequently demand payment for training kits, background checks, or equipment before issuance of formal documentation.'}
@@ -405,7 +399,7 @@ export default function EmailScannerPage() {
                 <div className="pt-2 flex items-center gap-3">
                   <button
                     onClick={() => copyToClipboard(`Sender: @${senderDomain}\nVerdict: ${result.prediction}\nConfidence: ${(result.confidence * 100).toFixed(1)}%\nFlags: ${result.red_flags?.join(', ') || 'None'}`)}
-                    className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
                     <span>Copy Analysis</span>
@@ -420,31 +414,31 @@ export default function EmailScannerPage() {
           {/* Right Telemetry Column */}
           <div className="lg:col-span-4 space-y-6">
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                <Shield className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <span className="text-sm text-zinc-300 flex items-center gap-2">
+                <Shield className="size-3.5 text-zinc-400" />
                 Session Controls
               </span>
 
               <div className="space-y-2">
                 <button
                   onClick={clearHistory}
-                  className="w-full text-left px-3 py-2 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 text-xs font-mono transition-colors flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
                   <span>Purge Scan History</span>
-                  <RefreshCw className="size-3.5 text-zinc-500" />
+                  <RefreshCw className="size-3.5 text-zinc-400" />
                 </button>
               </div>
             </div>
 
             {/* Recent Scans */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                  <Clock className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-2">
+                  <Clock className="size-3.5 text-zinc-400" />
                   Recent Scans
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   {user ? 'CLOUD' : 'LOCAL'}
                 </span>
               </div>
@@ -460,15 +454,15 @@ export default function EmailScannerPage() {
                           setSenderDomain(scan.sender_domain);
                           setResult(null);
                         }}
-                        className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
+                        className="p-2.5 rounded bg-[#0f1012] hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
                       >
-                        <p className="font-mono text-xs text-zinc-300 truncate">
+                        <p className="text-base text-zinc-300 truncate">
                           @{scan.sender_domain || 'unknown'}
                         </p>
-                        <p className="text-[11px] text-zinc-500 line-clamp-1 font-sans">
+                        <p className="text-base text-zinc-400 line-clamp-1 font-sans">
                           {scan.text_content}
                         </p>
-                        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-1">
+                        <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
                           <span className={scan.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
                             {scan.prediction}
                           </span>
@@ -477,7 +471,7 @@ export default function EmailScannerPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-zinc-500 font-mono py-2">No recent cloud email scans.</p>
+                    <p className="text-base text-zinc-400 py-2">No recent cloud email scans.</p>
                   )
                 ) : (
                   localHistory.map((item) => (
@@ -488,15 +482,15 @@ export default function EmailScannerPage() {
                         setSenderDomain(item.sender_domain);
                         setResult(null);
                       }}
-                      className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
+                      className="p-2.5 rounded bg-[#0f1012] hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
                     >
-                      <p className="font-mono text-xs text-zinc-300 truncate">
+                      <p className="text-base text-zinc-300 truncate">
                         @{item.sender_domain || 'unknown'}
                       </p>
-                      <p className="text-[11px] text-zinc-500 line-clamp-1 font-sans">
+                      <p className="text-base text-zinc-400 line-clamp-1 font-sans">
                         {item.text_content}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-1">
+                      <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
                         <span className={item.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>

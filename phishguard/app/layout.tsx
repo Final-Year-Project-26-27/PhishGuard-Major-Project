@@ -7,6 +7,9 @@ import Footer from '../components/Footer';
 import { Toaster } from 'sonner';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
+import { Archivo } from 'next/font/google';
+
+const archivo = Archivo({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-archivo' });
 
 const GA_TRACKING_ID = 'G-DCRZEV2SJE';
 
@@ -29,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className={`dark scroll-smooth ${archivo.variable}`}>
       <head>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
@@ -50,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased min-h-screen flex flex-col selection:bg-zinc-700 selection:text-zinc-100">
+      <body className="bg-background text-foreground antialiased min-h-dvh flex flex-col selection:bg-zinc-700 selection:text-zinc-100">
         <Navbar />
         <Toaster
           position="top-right"

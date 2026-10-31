@@ -74,7 +74,8 @@ export default function Navbar() {
     }
   }
 
-  const isActive = (path: string) => pathname === path
+  // trailingSlash: true in next.config means the pathname arrives as "/link/"
+  const isActive = (path: string) => pathname === path || pathname === `${path}/`
 
   const navItems = [
     { href: '/link', label: 'Link Scan', icon: Search },
@@ -89,7 +90,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-[#121316]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[75rem] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo / Identity */}
@@ -107,20 +108,18 @@ export default function Navbar() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
-                const Icon = item.icon
                 const active = isActive(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors ${
+                    className={`whitespace-nowrap px-2.5 py-1.5 rounded text-sm transition-colors ${
                       active
                         ? 'bg-zinc-800 text-white font-medium'
                         : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
                     }`}
                   >
-                    <Icon className="size-4 opacity-70" />
-                    <span>{item.label}</span>
+                    {item.label}
                   </Link>
                 )
               })}
@@ -145,17 +144,17 @@ export default function Navbar() {
                       unoptimized
                     />
                   </div>
-                  <span className="hidden md:inline-block text-xs text-zinc-300 max-w-[140px] truncate">
+                  <span className="hidden md:inline-block text-sm text-zinc-300 max-w-[140px] truncate">
                     {user.displayName || user.email}
                   </span>
                   <ChevronDown className="size-3.5 text-zinc-400" />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-md py-1 z-50 text-sm">
-                    <div className="px-4 py-3 border-b border-zinc-800">
+                  <div /* taste-skill-ignore: menu overlay */ className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-md py-1 z-50 text-sm">
+                    <div /* taste-skill-ignore: menu overlay divider */ className="px-4 py-3 border-b border-zinc-800">
                       <p className="font-medium text-zinc-200 truncate">{user.displayName || 'Security Operator'}</p>
-                      <p className="text-zinc-400 text-xs truncate mt-0.5">{user.email}</p>
+                      <p className="text-zinc-400 text-sm truncate mt-0.5">{user.email}</p>
                     </div>
                     <Link
                       href="/settings"
@@ -176,7 +175,7 @@ export default function Navbar() {
                     <button
                       onClick={logout}
                       disabled={isLoading}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors border-t border-zinc-800 text-left"
+                      /* taste-skill-ignore: menu overlay divider */ className="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors border-t border-zinc-800 text-left"
                     >
                       <LogOut className="size-4" />
                       <span>{isLoading ? 'Signing out...' : 'Sign out'}</span>
@@ -204,8 +203,8 @@ export default function Navbar() {
                     <span className="sr-only">Toggle navigation</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="bg-[#0c0d0e] border-l border-zinc-800 text-zinc-200 w-72 p-5">
-                  <SheetHeader className="text-left pb-4 border-b border-zinc-800">
+                <SheetContent /* taste-skill-ignore: drawer edge */ side="right" className="bg-[#0c0d0e] border-l border-zinc-800 text-zinc-200 w-72 p-5">
+                  <SheetHeader /* taste-skill-ignore: drawer header */ className="text-left pb-4 border-b border-zinc-800">
                     <SheetTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
                       <Shield className="size-4 text-emerald-400" />
                       PhishGuard Navigation

@@ -233,26 +233,20 @@ export default function LinkScannerPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <Search className="size-3.5 text-zinc-400" />
-            <span>Telemetry Module</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">URL Threat Inspector</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Link Scanner
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Model: GradientBoosting · TF-IDF Tokenizer
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Evaluates URL path entropy, deceptive subdomains, punycode spoofing, and dangerous top-level domains against trained threat vectors.
           </p>
         </div>
@@ -263,20 +257,20 @@ export default function LinkScannerPage() {
           <div className="lg:col-span-8 space-y-6">
 
             {/* Input Card */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                  <Terminal className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                  <Terminal className="size-3.5 text-zinc-400" />
                   Target URL
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   HTTP / HTTPS
                 </span>
               </div>
 
               <div className="space-y-3">
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-zinc-500 select-none">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 select-none">
                     &gt;
                   </span>
                   <input
@@ -285,7 +279,7 @@ export default function LinkScannerPage() {
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                    className="w-full h-10 pl-7 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition-colors"
+                    className="w-full h-10 pl-7 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -293,7 +287,7 @@ export default function LinkScannerPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={isScanning || !link.trim()}
-                    className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50"
+                    className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 active:scale-[0.98] transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {isScanning ? (
                       <>
@@ -310,7 +304,7 @@ export default function LinkScannerPage() {
 
                   <button
                     onClick={() => { setLink(''); setResult(null); setError(null); }}
-                    className="px-3 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs transition-colors"
+                    className="px-3 py-2 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
                   >
                     Clear
                   </button>
@@ -320,7 +314,7 @@ export default function LinkScannerPage() {
 
             {/* Error Banner */}
             {error && (
-              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono flex items-start gap-2.5">
+              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-start gap-2.5">
                 <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{error}</span>
               </div>
@@ -328,12 +322,12 @@ export default function LinkScannerPage() {
 
             {/* Scan Results Display */}
             {result && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+              <div className="rounded-lg bg-[#15171a] p-6 space-y-6">
 
                 {/* Status Bar */}
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+                    <span className="text-sm text-zinc-400">
                       Inference Classification
                     </span>
                     <div className="flex items-center gap-2.5">
@@ -351,8 +345,8 @@ export default function LinkScannerPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono text-[10px] uppercase text-zinc-500 block">Threat Level</span>
-                    <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded border uppercase ${
+                    <span className="text-sm text-zinc-400 block">Threat Level</span>
+                    <span className={` text-sm font-bold px-2 py-0.5 rounded border ${
                       result.threat_level === 'Low'
                         ? 'border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
                         : 'border-red-800/60 bg-red-950/40 text-red-300'
@@ -364,31 +358,31 @@ export default function LinkScannerPage() {
 
                 {/* Score Breakdown */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400">
                       Model Confidence
                     </span>
-                    <p className="font-mono text-xl font-bold text-zinc-100">
+                    <p className="text-xl font-bold text-zinc-100">
                       {(result.confidence * 100).toFixed(1)}%
                     </p>
                   </div>
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400">
                       Classification Label
                     </span>
-                    <p className="font-mono text-xl font-bold text-zinc-100">
+                    <p className="text-xl font-bold text-zinc-100">
                       {result.prediction}
                     </p>
                   </div>
                 </div>
 
                 {/* Technical Interpretation */}
-                <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-2 font-mono text-xs text-zinc-300 font-medium">
+                <div className="p-4 rounded bg-[#0f1012] space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
                     <Cpu className="size-3.5 text-zinc-400" />
                     <span>Analysis Summary</span>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {result.prediction === 'Legit'
                       ? 'The Gradient Boosting classifier did not detect deceptive subdomains, suspicious TLD markers, or statistical anomalies in the URL string tokens. Standard caution is still recommended for newly registered destinations.'
                       : 'High-risk lexical signatures detected. The tokenized URL exhibits structural traits common to phishing campaigns, such as credential mimicry, unanchored subdomains, or blacklisted top-level domain extensions.'}
@@ -399,7 +393,7 @@ export default function LinkScannerPage() {
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => copyToClipboard(`URL: ${link}\nVerdict: ${result.prediction}\nConfidence: ${(result.confidence * 100).toFixed(1)}%`)}
-                    className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
                     <span>Copy Verdict</span>
@@ -407,7 +401,7 @@ export default function LinkScannerPage() {
 
                   <button
                     onClick={() => window.open(link, '_blank')}
-                    className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <ExternalLink className="size-3" />
                     <span>Open Target (Isolated)</span>
@@ -423,9 +417,9 @@ export default function LinkScannerPage() {
           <div className="lg:col-span-4 space-y-6">
 
             {/* Session Actions */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                <Shield className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <span className="text-sm text-zinc-300 flex items-center gap-2">
+                <Shield className="size-3.5 text-zinc-400" />
                 Session Controls
               </span>
 
@@ -433,31 +427,31 @@ export default function LinkScannerPage() {
                 {!user && (
                   <button
                     onClick={handleAnonymousLogin}
-                    className="w-full text-left px-3 py-2 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 text-xs font-mono transition-colors flex items-center justify-between"
+                    className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                   >
                     <span>Enable Cloud Sync</span>
-                    <Lock className="size-3.5 text-zinc-500" />
+                    <Lock className="size-3.5 text-zinc-400" />
                   </button>
                 )}
 
                 <button
                   onClick={clearHistory}
-                  className="w-full text-left px-3 py-2 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 text-xs font-mono transition-colors flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
                   <span>Purge History Log</span>
-                  <RefreshCw className="size-3.5 text-zinc-500" />
+                  <RefreshCw className="size-3.5 text-zinc-400" />
                 </button>
               </div>
             </div>
 
             {/* Recent Scans */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                  <Clock className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-2">
+                  <Clock className="size-3.5 text-zinc-400" />
                   Recent Scans
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   {user ? 'CLOUD' : 'LOCAL'}
                 </span>
               </div>
@@ -469,12 +463,12 @@ export default function LinkScannerPage() {
                       <div
                         key={scan.id}
                         onClick={() => { setLink(scan.url); setResult(null); }}
-                        className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
+                        className="p-2.5 rounded bg-[#0f1012] hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
                       >
-                        <p className="font-mono text-xs text-zinc-300 truncate" title={scan.url}>
+                        <p className="text-base text-zinc-300 truncate" title={scan.url}>
                           {scan.url}
                         </p>
-                        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                        <div className="flex items-center justify-between text-sm text-zinc-400">
                           <span className={scan.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
                             {scan.prediction}
                           </span>
@@ -483,19 +477,19 @@ export default function LinkScannerPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-zinc-500 font-mono py-2">No recent cloud scans.</p>
+                    <p className="text-base text-zinc-400 py-2">No recent cloud scans.</p>
                   )
                 ) : (
                   (localHistory.length > 0 ? localHistory : scanHistory.map((u, i) => ({ id: String(i), url: u, prediction: 'Legit' as const, confidence: 0, timestamp: null, user_id: 'local' }))).map((item) => (
                     <div
                       key={item.id}
                       onClick={() => { setLink(item.url); setResult(null); }}
-                      className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
+                      className="p-2.5 rounded bg-[#0f1012] hover:border-zinc-700 cursor-pointer transition-colors space-y-1"
                     >
-                      <p className="font-mono text-xs text-zinc-300 truncate" title={item.url}>
+                      <p className="text-base text-zinc-300 truncate" title={item.url}>
                         {item.url}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                      <div className="flex items-center justify-between text-sm text-zinc-400">
                         <span className={item.prediction === 'Legit' ? 'text-emerald-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>

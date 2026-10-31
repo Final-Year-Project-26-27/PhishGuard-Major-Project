@@ -17,10 +17,10 @@ export default function HeroSection({
   showCTA = true,
 }: HeroSectionProps) {
   return (
-    <section className="relative py-16 md:py-24 border-b border-zinc-800 bg-zinc-950 text-zinc-100 font-sans">
+    <section className="relative py-16 md:py-24 border-zinc-800 bg-zinc-950 text-zinc-100 font-sans">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center">
 
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 font-mono text-[11px] uppercase tracking-wider mx-auto">
+        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 text-sm mx-auto">
           <Shield className="size-3 text-zinc-300" />
           <span>{subtitle}</span>
         </div>
@@ -37,7 +37,7 @@ export default function HeroSection({
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               href="/scanner"
-              className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 transition-colors inline-flex items-center gap-2"
+              className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 transition-colors inline-flex items-center gap-2"
             >
               <Layers className="size-3.5" />
               <span>Launch Workstation</span>
@@ -46,7 +46,7 @@ export default function HeroSection({
 
             <Link
               href="/install"
-              className="px-4 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium text-xs hover:bg-zinc-800 hover:text-white transition-colors inline-flex items-center gap-2"
+              className="px-4 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium text-sm hover:bg-zinc-800 hover:text-white transition-colors inline-flex items-center gap-2"
             >
               <Download className="size-3.5" />
               <span>Deploy Extension</span>

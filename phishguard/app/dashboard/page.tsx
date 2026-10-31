@@ -6,7 +6,6 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import {
   Search,
   Download,
-  Activity,
   BarChart3,
   PieChart,
   RefreshCw,
@@ -32,6 +31,13 @@ ChartJS.register(
   Legend,
   ArcElement
 )
+
+// Canvas text can't read CSS variables, so hand Chart.js the resolved page font
+if (typeof document !== 'undefined') {
+  ChartJS.defaults.font.family = getComputedStyle(document.body).fontFamily
+  ChartJS.defaults.font.size = 13
+  ChartJS.defaults.color = '#a1a1aa'
+}
 
 interface Report {
   id: string
@@ -172,7 +178,7 @@ export default function DashboardPage() {
           '#10b981', // emerald
           '#38bdf8', // sky
           '#a1a1aa', // zinc
-          '#6366f1', // indigo
+          '#f472b6', // pink
         ],
         borderColor: '#121215',
         borderWidth: 2,
@@ -196,11 +202,11 @@ export default function DashboardPage() {
     },
     scales: {
       x: {
-        ticks: { color: '#71717a', font: { family: 'monospace', size: 10 } },
+        ticks: { color: '#a1a1aa' },
         grid: { display: false },
       },
       y: {
-        ticks: { color: '#71717a', font: { family: 'monospace', size: 10 } },
+        ticks: { color: '#a1a1aa' },
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
       },
     },
@@ -214,7 +220,6 @@ export default function DashboardPage() {
         position: 'bottom' as const,
         labels: {
           color: '#a1a1aa',
-          font: { family: 'monospace', size: 10 },
           padding: 12,
         },
       },
@@ -234,7 +239,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto py-24 px-4 text-center">
-        <div className="inline-flex items-center gap-2 font-mono text-xs text-zinc-500">
+        <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
           <RefreshCw className="size-4 animate-spin" />
           <span>Synchronizing Telemetry Feed...</span>
         </div>
@@ -243,59 +248,53 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header Telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <Activity className="size-3.5 text-zinc-400" />
-            <span>Institutional Telemetry</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Incident Feed</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Security Telemetry Dashboard
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Aggregated Community Reports & Classification Trends
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Real-time catalog of user-submitted scam reports, active malicious domains, and fraudulent recruiter contacts across the academic network.
           </p>
         </div>
 
         {/* 4 Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Total Reports</span>
-            <p className="font-mono text-2xl font-bold text-zinc-100">{analytics.totalReports}</p>
+          <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
+            <span className="text-sm text-zinc-400">Total Reports</span>
+            <p className="text-2xl font-bold text-zinc-100">{analytics.totalReports}</p>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Intake (7 Days)</span>
-            <p className="font-mono text-2xl font-bold text-zinc-100">{analytics.recentReports}</p>
+          <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
+            <span className="text-sm text-zinc-400">Intake (7 Days)</span>
+            <p className="text-2xl font-bold text-zinc-100">{analytics.recentReports}</p>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Top Threat Vector</span>
-            <p className="font-mono text-base font-bold text-amber-400 truncate">{analytics.topScamType}</p>
+          <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
+            <span className="text-sm text-zinc-400">Top Threat Vector</span>
+            <p className="text-base font-bold text-amber-400 truncate">{analytics.topScamType}</p>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-1">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Threat Diversity</span>
-            <p className="font-mono text-2xl font-bold text-zinc-100">{Object.keys(analytics.scamTypeCounts).length}</p>
+          <div className="rounded-lg bg-[#15171a] p-4 space-y-1">
+            <span className="text-sm text-zinc-400">Threat Diversity</span>
+            <p className="text-2xl font-bold text-zinc-100">{Object.keys(analytics.scamTypeCounts).length}</p>
           </div>
         </div>
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                <BarChart3 className="size-3.5 text-zinc-500" />
+          <div className="lg:col-span-7 rounded-lg bg-[#15171a] p-5 space-y-4">
+            <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+              <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                <BarChart3 className="size-3.5 text-zinc-400" />
                 Incident Distribution by Category
               </span>
             </div>
@@ -304,10 +303,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                <PieChart className="size-3.5 text-zinc-500" />
+          <div className="lg:col-span-5 rounded-lg bg-[#15171a] p-5 space-y-4">
+            <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+              <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                <PieChart className="size-3.5 text-zinc-400" />
                 Category Breakdown
               </span>
             </div>
@@ -318,22 +317,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Search, Filter & Export Toolbar */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+        <div className="rounded-lg bg-[#15171a] p-4 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
               <input
                 type="text"
                 placeholder="Search by URL, reporter, or content..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                className="w-full h-8 pl-8 pr-3 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
               />
             </div>
 
             <button
               onClick={exportToCSV}
-              className="w-full sm:w-auto px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full sm:w-auto px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center justify-center gap-1.5 transition-colors"
             >
               <Download className="size-3" />
               <span>Export CSV</span>
@@ -346,10 +345,10 @@ export default function DashboardPage() {
               <button
                 key={type}
                 onClick={() => setSelectedFilter(type || 'all')}
-                className={`px-2.5 py-1 rounded text-xs font-mono uppercase transition-colors ${
+                className={`px-2.5 py-1 rounded text-sm transition-colors ${
                   selectedFilter === type
                     ? 'bg-zinc-100 text-zinc-950 font-semibold'
-                    : 'bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                    : 'bg-[#0f1012] text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 {type}
@@ -359,41 +358,41 @@ export default function DashboardPage() {
         </div>
 
         {/* Reports Feed */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 overflow-hidden shadow-sm">
-          <div className="p-4 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
-            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300">
+        <div className="rounded-lg bg-[#15171a] overflow-hidden">
+          <div className="p-4 bg-zinc-950 border-zinc-800 flex items-center justify-between">
+            <span className="text-sm text-zinc-300">
               Verified Intake Stream ({filteredReports.length})
             </span>
-            <span className="font-mono text-[10px] text-zinc-500">
+            <span className="text-sm text-zinc-400">
               AUTO-SYNC FIRESTORE
             </span>
           </div>
 
-          <div className="divide-y divide-zinc-800/80">
+          <div className="divide-zinc-800/80">
             {filteredReports.length > 0 ? (
               filteredReports.map((report) => (
                 <div key={report.id} className="p-4 sm:p-5 hover:bg-zinc-900/40 transition-colors space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-red-900/50 bg-red-950/30 text-red-300">
+                      <span className="text-sm font-bold px-2 py-0.5 rounded border border-red-900/50 bg-red-950/30 text-red-300">
                         {report.scamType || 'UNCLASSIFIED'}
                       </span>
-                      <span className="font-mono text-xs text-zinc-300 font-semibold truncate max-w-md">
+                      <span className="text-sm text-zinc-300 font-semibold truncate max-w-md">
                         {report.url}
                       </span>
                     </div>
-                    <span className="font-mono text-[11px] text-zinc-500">
+                    <span className="text-sm text-zinc-400">
                       {report.createdAt?.toDate ? report.createdAt.toDate().toLocaleString() : 'Recent'}
                     </span>
                   </div>
 
                   {report.description && (
-                    <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                    <p className="text-base text-zinc-400 leading-relaxed font-sans">
                       {report.description}
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                  <div className="flex items-center justify-between text-sm text-zinc-400 pt-1">
                     <span>Reporter: {report.reporterEmail || 'Anonymous Student'}</span>
                     <button
                       onClick={() => window.open(report.url, '_blank')}
@@ -406,7 +405,7 @@ export default function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="p-12 text-center text-zinc-500 font-mono text-xs">
+              <div className="p-12 text-center text-zinc-400 text-sm">
                 No matching telemetry reports found for current query parameters.
               </div>
             )}

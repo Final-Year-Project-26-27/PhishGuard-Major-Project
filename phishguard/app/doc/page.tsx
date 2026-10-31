@@ -162,26 +162,20 @@ export default function DocScanPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <FileText className="size-3.5 text-zinc-400" />
-            <span>Telemetry Module</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Document Analyzer</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Document Scanner
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Parser: PyMuPDF · RandomForest 5018 Features
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Extracts document text and computes 22 structural indicators for fake internship offer letters, fee solicitations, and deceptive corporate impersonation.
           </p>
         </div>
@@ -192,13 +186,13 @@ export default function DocScanPage() {
           <div className="lg:col-span-8 space-y-6">
 
             {/* Upload Box */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                  <Terminal className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+                  <Terminal className="size-3.5 text-zinc-400" />
                   Source File
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   PDF · DOCX · TXT (MAX 5 MB)
                 </span>
               </div>
@@ -208,7 +202,7 @@ export default function DocScanPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                /* taste-skill-ignore: file drop zone */ className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   dragActive
                     ? 'border-zinc-400 bg-zinc-800/40'
                     : file
@@ -230,18 +224,18 @@ export default function DocScanPage() {
                 {file ? (
                   <div className="flex items-center justify-center gap-3">
                     <File className="size-7 text-emerald-400" />
-                    <div className="text-left font-mono">
-                      <p className="text-xs text-zinc-200 font-semibold">{file.name}</p>
-                      <p className="text-[11px] text-zinc-500">{(file.size / 1024).toFixed(1)} KB</p>
+                    <div className="text-left">
+                      <p className="text-base text-zinc-200 font-semibold">{file.name}</p>
+                      <p className="text-base text-zinc-400">{(file.size / 1024).toFixed(1)} KB</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="size-9 rounded border border-zinc-800 bg-zinc-900 mx-auto flex items-center justify-center">
+                    <div className="size-9 rounded bg-[#15171a] mx-auto flex items-center justify-center">
                       <FileText className="size-4 text-zinc-400" />
                     </div>
-                    <p className="text-xs text-zinc-300 font-medium">Drag and drop file here, or click to browse</p>
-                    <p className="text-[11px] font-mono text-zinc-500">Supported types: PDF, DOCX, TXT (up to 5 MB)</p>
+                    <p className="text-base text-zinc-300 font-medium">Drag and drop file here, or click to browse</p>
+                    <p className="text-base text-zinc-400">Supported types: PDF, DOCX, TXT (up to 5 MB)</p>
                   </div>
                 )}
               </div>
@@ -250,7 +244,7 @@ export default function DocScanPage() {
                 <button
                   onClick={handleUpload}
                   disabled={isScanning || !file}
-                  className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200 active:scale-[0.98] transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {isScanning ? (
                     <>
@@ -267,7 +261,7 @@ export default function DocScanPage() {
 
                 <button
                   onClick={() => { setFile(null); setResult(null); setError(null); }}
-                  className="px-3 py-2 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs transition-colors"
+                  className="px-3 py-2 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
                 >
                   Clear
                 </button>
@@ -276,7 +270,7 @@ export default function DocScanPage() {
 
             {/* Error Banner */}
             {error && (
-              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-xs font-mono flex items-start gap-2.5">
+              <div className="p-3.5 rounded bg-red-950/40 border border-red-800/60 text-red-300 text-sm flex items-start gap-2.5">
                 <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{error}</span>
               </div>
@@ -284,12 +278,12 @@ export default function DocScanPage() {
 
             {/* Result Display */}
             {result && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 space-y-6 shadow-sm">
+              <div className="rounded-lg bg-[#15171a] p-6 space-y-6">
 
                 {/* Header Verdict */}
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center justify-between border-zinc-800 pb-4">
                   <div className="space-y-1">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
+                    <span className="text-sm text-zinc-400">
                       Inference Verdict
                     </span>
                     <div className="flex items-center gap-2.5">
@@ -307,26 +301,26 @@ export default function DocScanPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono text-[10px] uppercase text-zinc-500 block">Risk Score</span>
-                    <span className="font-mono text-base font-bold text-zinc-100">
-                      {result.risk_score}<span className="text-zinc-500 text-xs">/100</span>
+                    <span className="text-sm text-zinc-400 block">Risk Score</span>
+                    <span className="text-base font-bold text-zinc-100">
+                      {result.risk_score}<span className="text-zinc-400 text-sm">/100</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Score Grid */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">Classification</span>
-                    <p className="font-mono text-xs font-bold text-zinc-200">{result.prediction}</p>
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400">Classification</span>
+                    <p className="text-base font-bold text-zinc-200">{result.prediction}</p>
                   </div>
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">Confidence</span>
-                    <p className="font-mono text-xs font-bold text-zinc-200">{(result.confidence * 100).toFixed(1)}%</p>
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400">Confidence</span>
+                    <p className="text-base font-bold text-zinc-200">{(result.confidence * 100).toFixed(1)}%</p>
                   </div>
-                  <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">Risk Level</span>
-                    <span className={`inline-block font-mono text-xs font-bold uppercase ${
+                  <div className="p-3 rounded bg-[#0f1012] space-y-1">
+                    <span className="text-sm text-zinc-400">Risk Level</span>
+                    <span className={`inline-block text-sm font-bold ${
                       result.risk_level === 'LOW' ? 'text-emerald-400' : result.risk_level === 'MEDIUM' ? 'text-amber-400' : 'text-red-400'
                     }`}>
                       {result.risk_level}
@@ -335,17 +329,17 @@ export default function DocScanPage() {
                 </div>
 
                 {/* Verdict Summary */}
-                <div className="p-3.5 rounded bg-zinc-950 border border-zinc-800/80 text-xs text-zinc-300 font-sans">
+                <div className="p-3.5 rounded bg-[#0f1012] text-sm text-zinc-300 font-sans">
                   {result.verdict}
                 </div>
 
                 {/* Warnings List */}
                 {result.warnings && result.warnings.length > 0 && (
                   <div className="p-4 rounded bg-red-950/20 border border-red-900/40 space-y-2">
-                    <span className="font-mono text-xs text-red-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-sm text-red-400 font-semibold block">
                       Active Warnings
                     </span>
-                    <ul className="text-xs text-red-300 font-mono space-y-1">
+                    <ul className="text-sm text-red-300 space-y-1">
                       {result.warnings.map((w, idx) => (
                         <li key={idx} className="flex items-start gap-2">
                           <span>•</span>
@@ -359,46 +353,46 @@ export default function DocScanPage() {
                 {/* Detected Indicators */}
                 {hasIndicators(result.indicators) && (
                   <div className="space-y-3">
-                    <span className="font-mono text-xs text-zinc-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-sm text-zinc-400 font-semibold block">
                       Lexical Indicator Matches
                     </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       {result.indicators.money?.length > 0 && (
-                        <div className="p-3 rounded border border-zinc-800 bg-zinc-950/80 space-y-1.5">
-                          <span className="text-[10px] uppercase text-amber-400 block font-semibold">Money / Fee Terms</span>
+                        <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
+                          <span className="text-sm text-amber-400 block font-semibold">Money / Fee Terms</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.money.map((item, idx) => (
-                              <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px]">{item}</span>
+                              <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
                             ))}
                           </div>
                         </div>
                       )}
                       {result.indicators.credentials?.length > 0 && (
-                        <div className="p-3 rounded border border-zinc-800 bg-zinc-950/80 space-y-1.5">
-                          <span className="text-[10px] uppercase text-red-400 block font-semibold">Credential Demands</span>
+                        <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
+                          <span className="text-sm text-red-400 block font-semibold">Credential Demands</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.credentials.map((item, idx) => (
-                              <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px]">{item}</span>
+                              <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
                             ))}
                           </div>
                         </div>
                       )}
                       {result.indicators.urgency?.length > 0 && (
-                        <div className="p-3 rounded border border-zinc-800 bg-zinc-950/80 space-y-1.5">
-                          <span className="text-[10px] uppercase text-amber-400 block font-semibold">Urgency Phrases</span>
+                        <div className="p-3 rounded bg-[#0f1012] space-y-1.5">
+                          <span className="text-sm text-amber-400 block font-semibold">Urgency Phrases</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.urgency.map((item, idx) => (
-                              <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px]">{item}</span>
+                              <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-zinc-300 text-sm">{item}</span>
                             ))}
                           </div>
                         </div>
                       )}
                       {result.indicators.suspicious_urls?.length > 0 && (
-                        <div className="p-3 rounded border border-zinc-800 bg-zinc-950/80 space-y-1.5 sm:col-span-2">
-                          <span className="text-[10px] uppercase text-red-400 block font-semibold">Suspicious Embedded URLs</span>
+                        <div className="p-3 rounded bg-[#0f1012] space-y-1.5 sm:col-span-2">
+                          <span className="text-sm text-red-400 block font-semibold">Suspicious Embedded URLs</span>
                           <div className="flex flex-wrap gap-1">
                             {result.indicators.suspicious_urls.map((item, idx) => (
-                              <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-red-300 text-[11px] break-all">{item}</span>
+                              <span key={idx} className="px-1.5 py-0.5 rounded bg-[#15171a] text-red-300 text-sm break-all">{item}</span>
                             ))}
                           </div>
                         </div>
@@ -408,12 +402,12 @@ export default function DocScanPage() {
                 )}
 
                 {/* Extracted Text Preview */}
-                <div className="space-y-2 border-t border-zinc-800/80 pt-4">
-                  <div className="flex items-center gap-2 font-mono text-xs text-zinc-400">
-                    <Cpu className="size-3.5 text-zinc-500" />
+                <div className="space-y-2 border-zinc-800/80 pt-4">
+                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                    <Cpu className="size-3.5 text-zinc-400" />
                     <span>Extracted Text Preview</span>
                   </div>
-                  <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap font-mono text-[11px] text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 leading-relaxed">
+                  <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap text-sm text-zinc-400 bg-zinc-950 p-3 rounded border border-zinc-800 leading-relaxed">
                     {result.extracted_text || 'No text extracted.'}
                   </pre>
                 </div>
@@ -421,7 +415,7 @@ export default function DocScanPage() {
                 <div className="pt-2 flex items-center gap-3">
                   <button
                     onClick={() => copyToClipboard(`File: ${result.filename}\nVerdict: ${result.prediction}\nRisk Score: ${result.risk_score}/100`)}
-                    className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-mono inline-flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 rounded bg-[#15171a] hover:bg-zinc-800 text-zinc-300 text-sm inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Copy className="size-3" />
                     <span>Copy Document Verdict</span>
@@ -436,31 +430,31 @@ export default function DocScanPage() {
           {/* Right Column: History */}
           <div className="lg:col-span-4 space-y-6">
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                <Target className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <span className="text-sm text-zinc-300 flex items-center gap-2">
+                <Target className="size-3.5 text-zinc-400" />
                 Session Controls
               </span>
 
               <div className="space-y-2">
                 <button
                   onClick={clearHistory}
-                  className="w-full text-left px-3 py-2 rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 text-xs font-mono transition-colors flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded bg-[#0f1012] hover:bg-zinc-800 text-zinc-300 text-sm transition-colors flex items-center justify-between"
                 >
                   <span>Clear History Log</span>
-                  <Trash2 className="size-3.5 text-zinc-500" />
+                  <Trash2 className="size-3.5 text-zinc-400" />
                 </button>
               </div>
             </div>
 
             {/* Document Scan History */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                  <Clock className="size-3.5 text-zinc-500" />
+            <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+              <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+                <span className="text-sm text-zinc-300 flex items-center gap-2">
+                  <Clock className="size-3.5 text-zinc-400" />
                   Past Document Audits
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-sm text-zinc-400">
                   LOCAL
                 </span>
               </div>
@@ -470,12 +464,12 @@ export default function DocScanPage() {
                   scanHistory.map((item) => (
                     <div
                       key={item.id}
-                      className="p-2.5 rounded border border-zinc-800/80 bg-zinc-950 space-y-1 font-mono text-xs"
+                      className="p-2.5 rounded bg-[#0f1012] space-y-1 text-sm"
                     >
                       <p className="text-zinc-200 truncate font-semibold" title={item.filename}>
                         {item.filename}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5">
+                      <div className="flex items-center justify-between text-sm text-zinc-400 pt-0.5">
                         <span className={item.prediction === 'Legitimate' ? 'text-emerald-400' : 'text-red-400'}>
                           {item.prediction}
                         </span>
@@ -484,7 +478,7 @@ export default function DocScanPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-zinc-500 font-mono py-2">No recent document scans.</p>
+                  <p className="text-base text-zinc-400 py-2">No recent document scans.</p>
                 )}
               </div>
             </div>

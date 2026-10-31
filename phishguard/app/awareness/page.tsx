@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import React from 'react'
+import { toast } from 'sonner'
 import {
-  BookOpen,
   Shield,
   Brain,
   FileText,
@@ -158,7 +158,7 @@ export default function AwarenessHub() {
           title: 'Targeted Spear Phishing Recognition',
           content: 'Spear phishing campaigns harvest public student profile data from LinkedIn and campus directories to craft personalized, high-credibility messages claiming to represent reputable tech recruiters.',
           keyPoints: [
-            'Attackers leverage scraped resume details to bypass initial skepticism',
+            'Attackers use scraped resume details to bypass initial skepticism',
             'Recruiters will not conduct hiring exclusively through WhatsApp or Telegram',
             'Formal offers must arrive with verifiable corporate email signatures',
             'Use PhishGuard Link Inspector to verify all application portals'
@@ -221,7 +221,7 @@ export default function AwarenessHub() {
     },
     {
       id: 'social-engineering',
-      title: 'Social Engineering & Psychological Leverage',
+      title: 'Social Engineering & Psychological Pressure',
       description: 'Deconstructing urgency, authority bias, and FOMO tactics deployed in academic scams.',
       category: 'social',
       difficulty: 'intermediate',
@@ -353,24 +353,24 @@ export default function AwarenessHub() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-dvh bg-zinc-950 text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
 
       {/* Lesson Modal */}
       {selectedLesson && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+          <div /* taste-skill-ignore: modal dialog */ className="bg-[#15171a] rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
 
             {/* Modal Header */}
-            <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
+            <div className="p-5 border-zinc-800 flex items-center justify-between">
               <div>
-                <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-wider block">
+                <span className="text-sm text-zinc-400 block">
                   MODULE {selectedLesson.id.toUpperCase()} · STEP {currentPage} OF 2
                 </span>
                 <h2 className="text-base font-bold text-zinc-100 mt-0.5">{selectedLesson.title}</h2>
               </div>
               <button
                 onClick={closeLessonViewer}
-                className="px-2.5 py-1 rounded border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 text-xs font-mono"
+                className="px-2.5 py-1 rounded bg-[#0f1012] text-zinc-400 hover:text-zinc-200 text-sm"
               >
                 Exit
               </button>
@@ -380,21 +380,21 @@ export default function AwarenessHub() {
             <div className="p-6 space-y-6 flex-1">
               {currentPage === 1 && (
                 <div className="space-y-5">
-                  <h3 className="text-sm font-semibold text-zinc-200 font-mono">
+                  <h3 className="text-sm font-semibold text-zinc-200">
                     {selectedLesson.content.page1.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                  <p className="text-base sm:text-base text-zinc-300 leading-relaxed font-sans">
                     {selectedLesson.content.page1.content}
                   </p>
 
-                  <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 block font-semibold">
+                  <div className="p-4 rounded bg-[#0f1012] space-y-2">
+                    <span className="text-sm text-zinc-400 block font-semibold">
                       Key Analysis Points
                     </span>
-                    <ul className="text-xs text-zinc-300 space-y-2">
+                    <ul className="text-sm text-zinc-300 space-y-2">
                       {selectedLesson.content.page1.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400 font-mono">•</span>
+                          <span className="text-emerald-400">•</span>
                           <span>{point}</span>
                         </li>
                       ))}
@@ -405,21 +405,21 @@ export default function AwarenessHub() {
 
               {currentPage === 2 && (
                 <div className="space-y-5">
-                  <h3 className="text-sm font-semibold text-zinc-200 font-mono">
+                  <h3 className="text-sm font-semibold text-zinc-200">
                     {selectedLesson.content.page2.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                  <p className="text-base sm:text-base text-zinc-300 leading-relaxed font-sans">
                     {selectedLesson.content.page2.content}
                   </p>
 
-                  <div className="p-4 rounded bg-zinc-950 border border-zinc-800/80 space-y-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 block font-semibold">
+                  <div className="p-4 rounded bg-[#0f1012] space-y-2">
+                    <span className="text-sm text-zinc-400 block font-semibold">
                       Defensive Indicators
                     </span>
-                    <ul className="text-xs text-zinc-300 space-y-2">
+                    <ul className="text-sm text-zinc-300 space-y-2">
                       {selectedLesson.content.page2.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400 font-mono">•</span>
+                          <span className="text-emerald-400">•</span>
                           <span>{point}</span>
                         </li>
                       ))}
@@ -428,11 +428,11 @@ export default function AwarenessHub() {
 
                   {/* Knowledge Check */}
                   {selectedLesson.content.page2.quiz && (
-                    <div className="p-4 rounded border border-zinc-800 bg-zinc-950/80 space-y-3 font-mono text-xs">
-                      <span className="text-[10px] uppercase text-amber-400 block font-semibold">
+                    <div className="p-4 rounded bg-[#0f1012] space-y-3 text-sm">
+                      <span className="text-sm text-amber-400 block font-semibold">
                         Checkpoint Question
                       </span>
-                      <p className="text-zinc-200 font-sans text-xs">
+                      <p className="text-zinc-200 font-sans text-base">
                         {selectedLesson.content.page2.quiz.question}
                       </p>
                       <div className="space-y-1.5 pt-1">
@@ -440,7 +440,7 @@ export default function AwarenessHub() {
                           <button
                             key={idx}
                             onClick={() => setSelectedAnswer(idx)}
-                            className={`w-full text-left p-2.5 rounded border text-xs transition-colors flex items-center justify-between ${
+                            className={`w-full text-left p-2.5 rounded border text-sm transition-colors flex items-center justify-between ${
                               selectedAnswer === idx
                                 ? idx === selectedLesson.content.page2.quiz?.correct
                                   ? 'border-emerald-800/80 bg-emerald-950/40 text-emerald-300'
@@ -450,7 +450,7 @@ export default function AwarenessHub() {
                           >
                             <span>{opt}</span>
                             {selectedAnswer === idx && (
-                              <span className="font-mono text-[10px] font-bold">
+                              <span className="text-sm font-bold">
                                 {idx === selectedLesson.content.page2.quiz?.correct ? 'CORRECT' : 'INCORRECT'}
                               </span>
                             )}
@@ -464,11 +464,11 @@ export default function AwarenessHub() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-zinc-800 flex items-center justify-between bg-zinc-950">
+            <div className="p-4 border-zinc-800 flex items-center justify-between bg-zinc-950">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-xs font-mono disabled:opacity-40"
+                className="px-3 py-1.5 rounded bg-[#15171a] text-zinc-400 hover:text-zinc-200 text-sm disabled:opacity-40"
               >
                 Previous
               </button>
@@ -476,14 +476,14 @@ export default function AwarenessHub() {
               {currentPage === 1 ? (
                 <button
                   onClick={() => setCurrentPage(2)}
-                  className="px-3 py-1.5 rounded bg-zinc-100 text-zinc-950 font-medium text-xs font-mono hover:bg-zinc-200"
+                  className="px-3 py-1.5 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-zinc-200"
                 >
                   Proceed to Checkpoint
                 </button>
               ) : (
                 <button
                   onClick={finishLesson}
-                  className="px-3 py-1.5 rounded bg-emerald-500 text-zinc-950 font-medium text-xs font-mono hover:bg-emerald-400"
+                  className="px-3 py-1.5 rounded bg-emerald-500 text-zinc-950 font-medium text-sm hover:bg-emerald-400"
                 >
                   Complete Module (+{selectedLesson.points} XP)
                 </button>
@@ -497,57 +497,51 @@ export default function AwarenessHub() {
       <div className="max-w-6xl mx-auto space-y-10">
 
         {/* Header Telemetry */}
-        <div className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] text-zinc-400 uppercase tracking-wider">
-            <BookOpen className="size-3.5 text-zinc-400" />
-            <span>Educational Operations</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-200">Defense Training Hub</span>
-          </div>
+        <div className="space-y-3 border-zinc-800 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Security Awareness Academy
             </h1>
-            <span className="font-mono text-xs text-zinc-500">
+            <span className="text-sm text-zinc-400">
               Interactive Incident Simulation & Heuristic Training
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
             Curated interactive modules training students to dissect recruiter deception, malicious headers, and social engineering vectors.
           </p>
         </div>
 
         {/* Progress Tracker Card */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <Award className="size-3.5 text-zinc-500" />
+        <div className="rounded-lg bg-[#15171a] p-5 space-y-4">
+          <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+            <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+              <Award className="size-3.5 text-zinc-400" />
               Operator Progress
             </span>
             <button
               onClick={resetProgress}
-              className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 flex items-center gap-1"
+              className="text-sm text-zinc-400 hover:text-zinc-300 flex items-center gap-1"
             >
               <RotateCcw className="size-3" />
               <span>Reset</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono">
-            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-              <span className="text-[10px] uppercase text-zinc-500 block">Operator Rank</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-3 rounded bg-[#0f1012] space-y-1">
+              <span className="text-sm text-zinc-400 block">Operator Rank</span>
               <p className="text-base font-bold text-zinc-100">Level {userProgress.level}</p>
             </div>
-            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-              <span className="text-[10px] uppercase text-zinc-500 block">Total Experience</span>
+            <div className="p-3 rounded bg-[#0f1012] space-y-1">
+              <span className="text-sm text-zinc-400 block">Total Experience</span>
               <p className="text-base font-bold text-zinc-100">{userProgress.points} XP</p>
             </div>
-            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-              <span className="text-[10px] uppercase text-zinc-500 block">Modules Cleared</span>
+            <div className="p-3 rounded bg-[#0f1012] space-y-1">
+              <span className="text-sm text-zinc-400 block">Modules Cleared</span>
               <p className="text-base font-bold text-emerald-400">{userProgress.completedLessons.length} / {lessons.length}</p>
             </div>
-            <div className="p-3 rounded border border-zinc-800 bg-zinc-950/60 space-y-1">
-              <span className="text-[10px] uppercase text-zinc-500 block">Badges Awarded</span>
+            <div className="p-3 rounded bg-[#0f1012] space-y-1">
+              <span className="text-sm text-zinc-400 block">Badges Awarded</span>
               <p className="text-base font-bold text-zinc-100">{userProgress.badges.length}</p>
             </div>
           </div>
@@ -555,20 +549,20 @@ export default function AwarenessHub() {
 
         {/* Course Modules Grid */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <Terminal className="size-3.5 text-zinc-500" />
+          <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+            <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+              <Terminal className="size-3.5 text-zinc-400" />
               Available Training Modules
             </span>
-            <div className="flex items-center gap-1.5 font-mono text-xs">
+            <div className="flex items-center gap-1.5 text-sm">
               {(['all', 'phishing', 'mobile', 'social'] as const).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2 py-0.5 rounded text-[11px] uppercase transition-colors ${
+                  className={`px-2 py-0.5 rounded text-sm transition-colors ${
                     selectedCategory === cat
                       ? 'bg-zinc-100 text-zinc-950 font-semibold'
-                      : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                      : 'bg-[#15171a] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   {cat}
@@ -592,34 +586,34 @@ export default function AwarenessHub() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="size-8 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                      <div className="size-8 rounded bg-[#0f1012] flex items-center justify-center">
                         <Icon className="size-4 text-zinc-300" />
                       </div>
                       <div>
-                        <span className="font-mono text-[10px] uppercase text-zinc-500 block">
+                        <span className="text-sm text-zinc-400 block">
                           {lesson.difficulty} · {lesson.duration}
                         </span>
-                        <h3 className="text-xs sm:text-sm font-semibold text-zinc-200">{lesson.title}</h3>
+                        <h3 className="text-sm font-semibold text-zinc-200">{lesson.title}</h3>
                       </div>
                     </div>
 
-                    <span className="font-mono text-xs text-zinc-400 font-medium">
+                    <span className="text-sm text-zinc-400 font-medium">
                       +{lesson.points} XP
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {lesson.description}
                   </p>
 
-                  <div className="pt-2 flex items-center justify-between border-t border-zinc-800/60">
-                    <span className="font-mono text-[11px] text-zinc-500">
+                  <div className="pt-2 flex items-center justify-between border-zinc-800/60">
+                    <span className="text-sm text-zinc-400">
                       {isCompleted ? 'Status: Completed' : 'Status: Ready'}
                     </span>
 
                     <button
                       onClick={() => startLesson(lesson)}
-                      className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                         isCompleted
                           ? 'border border-emerald-800/60 bg-emerald-950/40 text-emerald-300'
                           : 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200'
@@ -636,12 +630,12 @@ export default function AwarenessHub() {
 
         {/* Intelligence Briefings Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-            <span className="font-mono text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <FileText className="size-3.5 text-zinc-500" />
+          <div className="flex items-center justify-between border-zinc-800/80 pb-3">
+            <span className="text-sm text-zinc-300 flex items-center gap-1.5">
+              <FileText className="size-3.5 text-zinc-400" />
               Technical Analysis Briefings
             </span>
-            <span className="text-[11px] font-mono text-zinc-500">
+            <span className="text-sm text-zinc-400">
               DOCUMENTATION
             </span>
           </div>
@@ -650,14 +644,14 @@ export default function AwarenessHub() {
             {articles.map((art) => (
               <div
                 key={art.id}
-                className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 space-y-2 hover:border-zinc-700 transition-colors"
+                className="rounded-lg bg-[#15171a] p-5 space-y-2 hover:border-zinc-700 transition-colors"
               >
-                <div className="flex items-center justify-between font-mono text-[11px]">
-                  <span className="text-zinc-500 uppercase">{art.category}</span>
-                  <span className="text-zinc-500">{art.readTime}</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-zinc-400">{art.category}</span>
+                  <span className="text-zinc-400">{art.readTime}</span>
                 </div>
-                <h4 className="text-xs sm:text-sm font-semibold text-zinc-200">{art.title}</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed font-sans">{art.excerpt}</p>
+                <h4 className="text-sm font-semibold text-zinc-200">{art.title}</h4>
+                <p className="text-base text-zinc-400 leading-relaxed font-sans">{art.excerpt}</p>
               </div>
             ))}
           </div>
