@@ -10,3 +10,8 @@ phishguard/extension-build/_metadata/
 
 # Local extension config with a real Gemini key (see extension-build/gemini-config.js)
 phishguard/extension-build/gemini-config.local.js
+
+# Taste-skill inspection artifacts and search caches
+.taste-skill/
+phishguard/.taste-skill/
+/assets/

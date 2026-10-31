@@ -88,30 +88,24 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="sticky top-0 z-50 bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+    <header className="sticky top-0 z-50 bg-[#121316]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16">
 
           {/* Logo / Identity */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2.5 group py-1 text-zinc-100 hover:text-white transition-colors"
+              className="flex items-center gap-2.5 text-zinc-100 hover:text-white transition-colors"
             >
-              <div className="size-8 rounded border border-zinc-700 bg-zinc-900 flex items-center justify-center transition-colors group-hover:border-zinc-500">
-                <Shield className="size-4 text-zinc-100" />
+              <div className="size-8 rounded bg-zinc-800 flex items-center justify-center">
+                <Shield className="size-4 text-emerald-400" />
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-semibold text-sm tracking-tight font-sans">PhishGuard</span>
-                <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] text-zinc-500 tracking-wider uppercase border border-zinc-800 px-1.5 py-0.5 rounded bg-zinc-900/60">
-                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  ACTIVE
-                </span>
-              </div>
+              <span className="font-semibold text-base tracking-tight text-white">PhishGuard</span>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
@@ -119,29 +113,29 @@ export default function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors ${
                       active
-                        ? 'bg-zinc-800/80 text-zinc-100 border border-zinc-700/60'
-                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                        ? 'bg-zinc-800 text-white font-medium'
+                        : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
                     }`}
                   >
-                    <Icon className="size-3.5 opacity-70" />
+                    <Icon className="size-4 opacity-70" />
                     <span>{item.label}</span>
                   </Link>
                 )
               })}
-            </div>
+            </nav>
           </div>
 
           {/* Right Action Menu */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 px-2 py-1 rounded border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/60 hover:border-zinc-700 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 transition-colors"
                 >
-                  <div className="size-6 rounded overflow-hidden border border-zinc-700 bg-zinc-800">
+                  <div className="size-6 rounded overflow-hidden bg-zinc-800">
                     <Image
                       src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email || 'User')}&background=18181b&color=f4f4f5`}
                       alt={user.displayName || 'Profile'}
@@ -151,40 +145,40 @@ export default function Navbar() {
                       unoptimized
                     />
                   </div>
-                  <span className="hidden md:inline-block text-xs font-medium text-zinc-300 max-w-[120px] truncate">
+                  <span className="hidden md:inline-block text-xs text-zinc-300 max-w-[140px] truncate">
                     {user.displayName || user.email}
                   </span>
-                  <ChevronDown className="size-3 text-zinc-500" />
+                  <ChevronDown className="size-3.5 text-zinc-400" />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl py-1 z-50 text-xs font-sans">
-                    <div className="px-3 py-2 border-b border-zinc-800">
+                  <div className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-md py-1 z-50 text-sm">
+                    <div className="px-4 py-3 border-b border-zinc-800">
                       <p className="font-medium text-zinc-200 truncate">{user.displayName || 'Security Operator'}</p>
-                      <p className="text-zinc-500 font-mono text-[11px] truncate mt-0.5">{user.email}</p>
+                      <p className="text-zinc-400 text-xs truncate mt-0.5">{user.email}</p>
                     </div>
                     <Link
                       href="/settings"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
                     >
-                      <Settings className="size-3.5 text-zinc-400" />
+                      <Settings className="size-4 text-zinc-400" />
                       <span>Security Settings</span>
                     </Link>
                     <Link
                       href="/chat"
                       onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
                     >
-                      <MessageSquare className="size-3.5 text-zinc-400" />
+                      <MessageSquare className="size-4 text-zinc-400" />
                       <span>Advisor Terminal</span>
                     </Link>
                     <button
                       onClick={logout}
                       disabled={isLoading}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors border-t border-zinc-800"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors border-t border-zinc-800 text-left"
                     >
-                      <LogOut className="size-3.5" />
+                      <LogOut className="size-4" />
                       <span>{isLoading ? 'Signing out...' : 'Sign out'}</span>
                     </button>
                   </div>
@@ -195,7 +189,7 @@ export default function Navbar() {
                 onClick={login}
                 disabled={isLoading}
                 size="sm"
-                className="h-8 px-3 rounded text-xs font-medium bg-zinc-100 text-zinc-950 hover:bg-zinc-200 active:scale-[0.98] transition-all"
+                className="h-9 px-4 rounded text-sm font-medium bg-zinc-100 text-zinc-950 hover:bg-white transition-colors"
               >
                 {isLoading ? 'Connecting...' : 'Sign In'}
               </Button>
@@ -205,23 +199,23 @@ export default function Navbar() {
             <div className="lg:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8 rounded border border-zinc-800 text-zinc-400 hover:text-zinc-100">
-                    <Menu className="size-4" />
+                  <Button variant="ghost" size="icon" className="size-9 rounded bg-zinc-900 text-zinc-300 hover:text-white">
+                    <Menu className="size-5" />
                     <span className="sr-only">Toggle navigation</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="bg-zinc-950 border-l border-zinc-800 text-zinc-200 w-72 p-4">
+                <SheetContent side="right" className="bg-[#0c0d0e] border-l border-zinc-800 text-zinc-200 w-72 p-5">
                   <SheetHeader className="text-left pb-4 border-b border-zinc-800">
-                    <SheetTitle className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                      <Shield className="size-4" />
-                      Navigation Console
+                    <SheetTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                      <Shield className="size-4 text-emerald-400" />
+                      PhishGuard Navigation
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex flex-col gap-1 py-4">
                     <Link
                       href="/"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`px-3 py-2 rounded text-xs font-medium ${isActive('/') ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'}`}
+                      className={`px-3 py-2 rounded text-sm ${isActive('/') ? 'bg-zinc-800 text-white font-medium' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'}`}
                     >
                       Home
                     </Link>
@@ -230,11 +224,11 @@ export default function Navbar() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-medium ${
-                          isActive(item.href) ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm ${
+                          isActive(item.href) ? 'bg-zinc-800 text-white font-medium' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
                         }`}
                       >
-                        <item.icon className="size-3.5 opacity-70" />
+                        <item.icon className="size-4 opacity-70" />
                         <span>{item.label}</span>
                       </Link>
                     ))}
@@ -246,6 +240,6 @@ export default function Navbar() {
 
         </div>
       </div>
-    </nav>
+    </header>
   )
 }

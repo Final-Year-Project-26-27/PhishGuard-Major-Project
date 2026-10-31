@@ -4,6 +4,9 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   output: "export", // 👈 Required for static export (Chrome extension compatibility)
   trailingSlash: true, // 👈 Ensures exported URLs work properly
+  images: {
+    unoptimized: true,
+  },
   typescript: {
     ignoreBuildErrors: true, // Optional: Ignores TS errors during build
   },
