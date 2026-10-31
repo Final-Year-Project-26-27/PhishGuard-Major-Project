@@ -11,6 +11,10 @@ import {
 } from 'lucide-react'
 import { API_URL } from '@/lib/utils'
 import DetectionLayers from '@/components/DetectionLayers'
+import ScamMarquee from '@/components/ScamMarquee'
+import ScamStats from '@/components/ScamStats'
+import OurStory from '@/components/OurStory'
+import InboxBeforeAfter from '@/components/InboxBeforeAfter'
 
 function Credit({ href, by, licence }: { href: string; by: string; licence: string }) {
   return (
@@ -151,7 +155,7 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-4 pt-4 taste-enter-d2">
                 <Link
                   href="/scanner"
-                  className="group px-5 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-[15px] hover:bg-white active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
+                  className="group px-5 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-base hover:bg-white active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
                 >
                   <span>Open the scanner</span>
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -159,7 +163,7 @@ export default function HomePage() {
 
                 <Link
                   href="/install"
-                  className="px-5 py-3 rounded bg-zinc-800 text-zinc-100 font-medium text-[15px] hover:bg-zinc-700 active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
+                  className="px-5 py-3 rounded bg-zinc-800 text-zinc-100 font-medium text-base hover:bg-zinc-700 active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
                 >
                   <Download className="size-4" />
                   <span>Get the extension</span>
@@ -299,28 +303,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 2. Features Statement Section */}
-      <section className="py-24">
-        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-6">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight taste-enter">
-            Scams reach you where you already talk.
-          </h2>
-          <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-2xl taste-enter-d1">
-            Fake offers land in Gmail, WhatsApp and LinkedIn, often naming your own college. The PhishGuard extension checks them where they arrive. For anything else, paste the link, email or offer letter into the scanner.
-          </p>
-          <div className="pt-2 taste-enter-d2">
-            <Link
-              href="/install"
-              className="group text-teal-300 font-semibold hover:text-teal-200 text-base inline-flex items-center gap-1.5"
-            >
-              <span>Install the extension in two minutes</span>
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ScamMarquee />
+
+      <ScamStats />
+
+      <OurStory />
 
       <DetectionLayers />
+
+      <InboxBeforeAfter />
 
       {/* 3. Archival Architecture Showcase (4 Real Pictures from Open Collections) */}
       <section className="py-28">

@@ -45,7 +45,7 @@ export default function Footer() {
     <footer className="pt-24 pb-8">
       <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-12">
         <section aria-labelledby="contact-devs" className="space-y-5">
-          <h2 id="contact-devs" className="text-xl font-semibold text-white">
+          <h2 id="contact-devs" className="text-lg font-semibold text-white">
             Contact the developers
           </h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
@@ -55,7 +55,7 @@ export default function Footer() {
                   href={dev.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 mr-1 text-[15px] font-medium text-zinc-100 hover:text-teal-300 transition-colors"
+                  className="group inline-flex items-center gap-2 mr-1 text-base font-medium text-zinc-100 hover:text-teal-300 transition-colors"
                 >
                   {dev.name}
                   <Linkedin className="size-[18px] text-[#0a66c2] transition-transform group-hover:-translate-y-0.5" aria-label="LinkedIn" />
@@ -67,7 +67,7 @@ export default function Footer() {
           </ul>
         </section>
 
-        <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-baseline text-sm sm:text-[15px]">
+        <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-baseline text-sm sm:text-base">
           <p className="text-zinc-400">Scam defense for students.</p>
           <nav className="flex flex-wrap gap-x-6 gap-y-1">
             {links.map((l) => (

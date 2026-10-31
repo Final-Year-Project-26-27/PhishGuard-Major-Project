@@ -82,7 +82,7 @@ export default function DetectionLayers() {
                     TN
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[15px] font-semibold text-white truncate">TechNova Placement Cell</p>
+                    <p className="text-base font-semibold text-white truncate">TechNova Placement Cell</p>
                     <p className="text-sm text-zinc-400">WhatsApp · 9:41 AM</p>
                   </div>
                 </div>
@@ -94,7 +94,7 @@ export default function DetectionLayers() {
                 </span>
               </div>
 
-              <p className="rounded-lg rounded-tl-none bg-[#232529] p-4 text-[15px] leading-relaxed text-zinc-100">
+              <p className="rounded-lg rounded-tl-none bg-[#232529] p-4 text-base leading-relaxed text-zinc-100">
                 Congratulations! You are shortlisted for the Web Development Internship.{' '}
                 <Flag on={active >= 0}>Pay ₹1,999 registration fee via UPI</Flag>{' '}
                 <Flag on={active >= 0}>within 24 hours</Flag> to confirm your seat:{' '}
@@ -127,7 +127,7 @@ export default function DetectionLayers() {
                 }`}
               >
                 <div className="overflow-hidden">
-                  <p className="rounded-lg bg-[#232529] p-4 text-[15px] leading-relaxed text-zinc-200">
+                  <p className="rounded-lg bg-[#232529] p-4 text-base leading-relaxed text-zinc-200">
                     <span className="font-semibold text-white">Why this is a scam: </span>
                     real employers never charge you to join. The 24-hour deadline is there to rush you before you check,
                     and the link isn’t on TechNova’s own website.
@@ -141,7 +141,7 @@ export default function DetectionLayers() {
                 }`}
               >
                 <div className="overflow-hidden">
-                  <div className="flex items-center gap-3 rounded-lg bg-red-950/70 p-4 text-[15px] text-red-100">
+                  <div className="flex items-center gap-3 rounded-lg bg-red-950/70 p-4 text-base text-red-100">
                     <ShieldBan className="size-5 shrink-0 text-red-300" />
                     <span>PhishGuard stopped technova-careers.xyz from opening.</span>
                   </div>

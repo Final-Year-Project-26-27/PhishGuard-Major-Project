@@ -75,6 +75,65 @@
   }
 }
 
+/* Globe label pinned to the "home" marker; cobe exposes the anchor. Hidden where anchors aren't supported. */
+@supports (anchor-name: --a) {
+  .globe-home-label {
+    display: block;
+    position: absolute;
+    position-anchor: --cobe-home;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% -10px;
+    opacity: var(--cobe-visible-home, 0);
+    transition: opacity 0.3s;
+  }
+}
+
+/* Scam-line marquee: two copies of the list, slid by exactly one copy's width */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 60s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Inbox pile: each card drops in, holds, then clears so the pile can rebuild */
+@keyframes pileIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px) rotate(var(--r));
+  }
+  6%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--r));
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translateY(12px) rotate(var(--r));
+  }
+}
+
+.pile-card {
+  transform: rotate(var(--r));
+  animation: pileIn 10s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .pile-card {
+    animation: none;
+  }
+}
+
 /* Verdict chip in the detection-layers demo: pops in each time the verdict changes */
 @keyframes verdictIn {
   from {

@@ -25,7 +25,7 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
                     href={href}
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}
-                    className={`group flex items-center gap-3 px-3 py-2 rounded text-[15px] transition-colors ${
+                    className={`group flex items-center gap-3 px-3 py-2 rounded text-base transition-colors ${
                       active ? 'bg-zinc-800 text-white font-medium' : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
                     }`}
                   >

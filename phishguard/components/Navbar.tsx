@@ -23,7 +23,7 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className="px-3 py-1.5 rounded text-[15px] text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors"
+              className="px-3 py-1.5 rounded text-base text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors"
             >
               {l.label}
             </Link>
