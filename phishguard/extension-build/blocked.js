@@ -69,7 +69,7 @@
 
   const proceedBtn = document.getElementById('proceedBtn');
   if (proceedBtn) {
-    proceedBtn.addEventListener('click', () => {
+    proceedBtn.addEventListener('click', async () => {
       sendFeedback({
         event_id: eventId,
         platform: 'browser',
@@ -81,9 +81,10 @@
         return;
       }
 
-      const next = new URL(blockedUrl);
-      next.searchParams.set('phishguard_bypass', '1');
-      window.location.assign(next.toString());
+      // One-time pass for this exact URL, valid for a minute; the link guard removes it on use
+      const url = new URL(blockedUrl).href;
+      await chrome.storage.local.set({ phishguardBypass: { url, expires: Date.now() + 60_000 } });
+      window.location.assign(url);
     });
   }
 })();

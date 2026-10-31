@@ -22,7 +22,7 @@ import logging.config
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, HTMLResponse
 import html
@@ -375,6 +375,66 @@ async def report_scam(request: Request):
       </body>
     </html>
     """
+
+# ── Dashboard admin endpoints ─────────────────────────────────────────────────
+# The dashboard used to write to Supabase straight from the browser with the public key, so
+# anyone holding that key could approve or delete entries. These run server-side behind
+# DASHBOARD_TOKEN instead. Plain `def` so the blocking Supabase calls use the threadpool.
+
+def _admin_db(token: str | None):
+    if not _token_ok(token, DASHBOARD_TOKEN):
+        raise HTTPException(status_code=401, detail="Invalid dashboard token")
+    client = get_supabase_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="Supabase is not configured")
+    return client
+
+
+@app.get("/api/admin/pending")
+def admin_pending(x_dashboard_token: str | None = Header(default=None)):
+    db = _admin_db(x_dashboard_token)
+    return db.table("pending_reports").select("*").order("reported_at", desc=True).execute().data
+
+
+@app.post("/api/admin/pending/{report_id}/approve")
+def admin_approve(report_id: int, x_dashboard_token: str | None = Header(default=None)):
+    db = _admin_db(x_dashboard_token)
+    # Use the stored report, never values sent by the browser
+    rows = db.table("pending_reports").select("*").eq("id", report_id).execute().data
+    if not rows:
+        raise HTTPException(status_code=404, detail="Report not found")
+    report = rows[0]
+    if report.get("url"):
+        db.table("scam_urls").insert({"url": report["url"]}).execute()
+    if report.get("domain"):
+        db.table("suspicious_domains").insert({"domain": report["domain"]}).execute()
+    db.table("pending_reports").delete().eq("id", report_id).execute()
+    return {"ok": True}
+
+
+@app.delete("/api/admin/pending/{report_id}")
+def admin_reject(report_id: int, x_dashboard_token: str | None = Header(default=None)):
+    _admin_db(x_dashboard_token).table("pending_reports").delete().eq("id", report_id).execute()
+    return {"ok": True}
+
+
+@app.get("/api/admin/blocklist")
+def admin_blocklist(x_dashboard_token: str | None = Header(default=None)):
+    db = _admin_db(x_dashboard_token)
+    return {
+        "urls": db.table("scam_urls").select("*").order("reported_at", desc=True).execute().data,
+        "domains": db.table("suspicious_domains").select("*").order("reported_at", desc=True).execute().data,
+    }
+
+
+@app.delete("/api/admin/blocklist/{kind}/{item_id}")
+def admin_blocklist_delete(kind: str, item_id: int, x_dashboard_token: str | None = Header(default=None)):
+    table = {"urls": "scam_urls", "domains": "suspicious_domains"}.get(kind)
+    if table is None:
+        raise HTTPException(status_code=404, detail="Unknown list")
+    _admin_db(x_dashboard_token).table(table).delete().eq("id", item_id).execute()
+    return {"ok": True}
+
 
 # ── Dashboard SSE Endpoint ────────────────────────────────────────────────────
 @app.get("/api/stream")

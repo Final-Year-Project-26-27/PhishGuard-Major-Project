@@ -194,7 +194,11 @@ def parse_email(raw_mime: str, message_id: str, thread_id: str = "") -> EmailCon
         return ctx
 
     # ── Headers ───────────────────────────────────────────────────────────────
-    ctx.headers = {k.lower(): v for k, v in msg.items()}
+    # Keep the first (topmost) copy of each header: receiving servers prepend theirs, so later
+    # duplicates such as a second Authentication-Results can be planted by the sender
+    ctx.headers = {}
+    for k, v in msg.items():
+        ctx.headers.setdefault(k.lower(), v)
 
     ctx.subject = _decode_header_value(msg.get("Subject", ""))
     ctx.sender = _decode_header_value(msg.get("From", ""))

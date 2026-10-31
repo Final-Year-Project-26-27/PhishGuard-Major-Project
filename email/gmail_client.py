@@ -64,7 +64,9 @@ def get_gmail_service():
             creds = flow.run_local_server(port=0)
 
         # ── Step 3: Persist the (new/refreshed) token for next run ───────────
-        with open(GOOGLE_TOKEN_PATH, "w") as token_file:
+        # Owner-only permissions: this file grants access to the mailbox
+        fd = os.open(GOOGLE_TOKEN_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as token_file:
             token_file.write(creds.to_json())
         logger.info("OAuth token saved to %s", GOOGLE_TOKEN_PATH)
 

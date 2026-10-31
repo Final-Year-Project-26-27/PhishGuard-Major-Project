@@ -8,9 +8,8 @@ google-auth-oauthlib
 python-dotenv
 
 # ── Phase 2 (security pipeline) ───────────────────────────────────────────────
-dnspython           # SPF TXT record lookups in l1_authentication.py
 beautifulsoup4      # HTML stripping in email_parser.py
-scikit-learn        # TF-IDF + LogisticRegression in l2_nlp.py
+scikit-learn==1.8.0 # TF-IDF + LogisticRegression in l2_nlp.py; must match the version models/*.pkl were saved with
 joblib              # Model serialization (save/load .pkl)
 requests            # data/download_dataset.py
 supabase            # Custom college database queries

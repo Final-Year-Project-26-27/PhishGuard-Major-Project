@@ -7,17 +7,15 @@ Gmail includes all auth results in the 'Authentication-Results' header when
 it receives inbound mail. We parse that header rather than performing live DNS
 queries, since Gmail has already done the verification on the receiving MTA.
 
-Fallback: if Authentication-Results is absent (unusual), dnspython queries
-the sender domain's SPF TXT record directly.
+Only Gmail's own header is trusted (authserv-id mx.google.com). If it is missing, every
+result counts as "none"; there is no DNS fallback, because finding an SPF record says nothing
+about whether this message came from an allowed server.
 
 Maximum contribution: 4 points (L1_CAP in scoring.py).
 """
 
 import re
 import logging
-
-import dns.resolver
-import dns.exception
 
 from pipeline.email_parser import EmailContext
 
@@ -40,6 +38,8 @@ _FREE_DOMAINS = frozenset({
 
 # ── Auth-Results parser ───────────────────────────────────────────────────────
 _AUTH_RE = re.compile(r'(spf|dkim|dmarc)=(\S+)', re.IGNORECASE)
+# The receiving server that writes the Authentication-Results we trust
+_TRUSTED_AUTHSERV_ID = "mx.google.com"
 
 
 def _parse_auth_results(headers: dict) -> dict[str, str]:
@@ -52,42 +52,25 @@ def _parse_auth_results(headers: dict) -> dict[str, str]:
     """
     auth_header = headers.get("authentication-results", "")
     results = {"spf": "none", "dkim": "none", "dmarc": "none"}
+    if auth_header.split(";", 1)[0].strip().lower() != _TRUSTED_AUTHSERV_ID:
+        return results
+    seen: set[str] = set()
     for key, val in _AUTH_RE.findall(auth_header):
-        results[key.lower()] = val.lower()
+        key = key.lower()
+        if key not in seen:  # first result per method; later ones may be injected text
+            seen.add(key)
+            results[key] = val.lower().rstrip(";")
     return results
-
-
-def _spf_dns_fallback(sender_domain: str) -> str:
-    """
-    Fallback SPF check: look up the TXT record for sender_domain and check
-    whether a v=spf1 record exists at all. Returns 'pass' if found, 'none' if not.
-    This is a coarse check — it cannot validate the sending IP.
-    """
-    if not sender_domain:
-        return "none"
-    try:
-        answers = dns.resolver.resolve(sender_domain, "TXT", lifetime=5)
-        for rdata in answers:
-            txt = b"".join(rdata.strings).decode("utf-8", errors="ignore")
-            if "v=spf1" in txt:
-                return "pass"  # Record exists — we can't check the IP
-        return "none"
-    except (dns.exception.DNSException, Exception):
-        return "none"
 
 
 def _check_spf(auth: dict, sender_domain: str, headers: dict) -> tuple[int, str | None]:
     """
-    Score SPF result. Prefer parsed Authentication-Results; fall back to DNS.
+    Score the SPF result from Gmail's Authentication-Results.
 
     Returns:
         (score_delta, reason_string | None)
     """
     result = auth.get("spf", "none")
-
-    # If Gmail didn't report SPF, try DNS ourselves
-    if result == "none" and sender_domain:
-        result = _spf_dns_fallback(sender_domain)
 
     if result == "fail":
         return 3, f"L1:spf_fail (sender_domain={sender_domain})"

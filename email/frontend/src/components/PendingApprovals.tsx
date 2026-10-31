@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, X, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { adminFetch } from '../api';
 
 interface PendingReport {
   id: number;
@@ -13,49 +13,27 @@ export const PendingApprovals = () => {
   const [reports, setReports] = useState<PendingReport[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchReports = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('pending_reports')
-      .select('*')
-      .order('reported_at', { ascending: false });
-    
-    if (data) setReports(data);
-    setLoading(false);
-  };
+  // `loading` starts true; later refreshes update the list in place
+  const fetchReports = () =>
+    adminFetch<PendingReport[]>('/api/admin/pending')
+      .then(setReports)
+      .catch((error) => console.error('Failed to load pending reports:', error))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     fetchReports();
-    
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('pending_reports_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pending_reports' }, () => {
-        fetchReports();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // New reports arrive from students' warning emails; check every 15 s
+    const timer = setInterval(fetchReports, 15_000);
+    return () => clearInterval(timer);
   }, []);
 
   const approveReport = async (report: PendingReport) => {
-    // Insert into active tables
-    if (report.url) {
-      await supabase.from('scam_urls').insert({ url: report.url });
-    }
-    if (report.domain) {
-      await supabase.from('suspicious_domains').insert({ domain: report.domain });
-    }
-    
-    // Remove from pending
-    await supabase.from('pending_reports').delete().eq('id', report.id);
+    await adminFetch(`/api/admin/pending/${report.id}/approve`, { method: 'POST' });
     fetchReports();
   };
 
   const rejectReport = async (id: number) => {
-    await supabase.from('pending_reports').delete().eq('id', id);
+    await adminFetch(`/api/admin/pending/${id}`, { method: 'DELETE' });
     fetchReports();
   };
 
@@ -92,14 +70,14 @@ export const PendingApprovals = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={() => approveReport(report)}
               className="bg-phish-clean/10 hover:bg-phish-clean/20 text-phish-clean p-2 rounded-lg transition-colors"
               title="Approve & Add to Database"
             >
               <Check className="w-5 h-5" />
             </button>
-            <button 
+            <button
               onClick={() => rejectReport(report.id)}
               className="bg-muted hover:bg-muted/80 text-muted-foreground p-2 rounded-lg transition-colors"
               title="Reject & Discard"

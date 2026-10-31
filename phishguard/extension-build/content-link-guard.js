@@ -1,20 +1,17 @@
 // PhishGuard Global Link Guard
 
-(function initPhishGuardLinkGuard() {
+(async function initPhishGuardLinkGuard() {
   const currentUrl = window.location.href;
 
   if (!/^https?:\/\//i.test(currentUrl)) {
     return;
   }
 
-  if (currentUrl.includes('phishguard_bypass=1')) {
-    try {
-      const clean = new URL(currentUrl);
-      clean.searchParams.delete('phishguard_bypass');
-      history.replaceState(null, '', clean.toString());
-    } catch (_error) {
-      // No-op
-    }
+  // "Proceed anyway" on the blocked page grants a one-time pass for this exact URL. It lives in
+  // extension storage, so a link can't skip the check by carrying a magic query parameter.
+  const { phishguardBypass } = await chrome.storage.local.get('phishguardBypass');
+  if (phishguardBypass && phishguardBypass.url === currentUrl && phishguardBypass.expires > Date.now()) {
+    await chrome.storage.local.remove('phishguardBypass');
     return;
   }
 
@@ -45,7 +42,8 @@
     {
       action: 'scanUrlIntel',
       payload: {
-        url: currentUrl,
+        // Only origin + path: query strings and fragments often carry tokens or personal data
+        url: `${window.location.origin}${window.location.pathname}`,
         trusted_domains: trustedDomains,
       },
     },

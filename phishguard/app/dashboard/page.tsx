@@ -459,6 +459,8 @@ export default function DashboardPage() {
                     {/* Image Preview */}
                     {report.imageUrl && (
                       <div className="lg:w-48 flex-shrink-0">
+                        {/* Plain <img>: user-supplied external URL, and next/image optimisation isn't available in the static export */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={report.imageUrl}
                           alt="Reported screenshot"

@@ -26,5 +26,5 @@ Thumbs.db
 
 uv.lock
 
-models/
+# models/ holds the L2 NLP classifier; it is committed (rebuild with python models/train_classifier.py)
 data/emails.csv

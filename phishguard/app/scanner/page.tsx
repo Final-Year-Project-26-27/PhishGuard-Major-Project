@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { 
   Mail, 
@@ -11,7 +11,6 @@ import {
   XCircle, 
   Zap,
   Eye,
-  ExternalLink,
   History,
   TrendingUp,
   Lock,
@@ -54,13 +53,6 @@ interface ScanResult {
     sentimentScore: number
   }
   recommendations: string[]
-}
-
-interface EmailDocument {
-  from: string
-  subject: string
-  body: string
-  attachments?: string[]
 }
 
 export default function ScannerPage() {
@@ -131,7 +123,7 @@ export default function ScannerPage() {
     }
   }
 
-  const analyzeEmailContent = (subject: string, body: string, from: string) => {
+  const analyzeEmailContent = (subject: string, body: string) => {
     const urgencyWords = ['urgent', 'immediate', 'asap', 'expires', 'limited time', 'act now', 'hurry']
     const threatWords = ['suspend', 'terminate', 'block', 'freeze', 'legal action', 'consequences']
     const personalInfoWords = ['ssn', 'social security', 'password', 'pin', 'account number', 'credit card']
@@ -252,7 +244,6 @@ export default function ScannerPage() {
       } else {
         // For detailed and upload modes
         const currentEmail = scanMode === 'upload' ? emailFrom : email || emailFrom
-        const currentUrl = url || 'No URL provided'
         
         urlAnalysis = url ? analyzeUrl(url) : {
           isSuspicious: false,
@@ -263,7 +254,7 @@ export default function ScannerPage() {
         }
         
         emailAnalysis = analyzeEmail(currentEmail)
-        contentAnalysis = analyzeEmailContent(emailSubject, emailBody, currentEmail)
+        contentAnalysis = analyzeEmailContent(emailSubject, emailBody)
       }
 
       // Calculate overall risk score (0-100)
@@ -339,7 +330,7 @@ export default function ScannerPage() {
         toast.success('✅ SAFE: No immediate threats detected')
       }
 
-    } catch (error) {
+    } catch {
       toast.error('❌ Scan failed. Please try again.')
     } finally {
       setIsScanning(false)

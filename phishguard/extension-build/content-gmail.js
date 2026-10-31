@@ -117,6 +117,9 @@ let lastAnalyzedEmail = null;
 let warningBanner = null;
 let bypassComposeGuardOnce = false;
 
+// Matches the domain itself or a real subdomain. 'fakenmamit.in' is not 'nmamit.in'.
+const isDomainOrSubdomain = (domain, d) => domain === d || domain.endsWith('.' + d);
+
 // The sender, reasons and keywords come from the email itself, so escape them before they go into innerHTML
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -321,8 +324,8 @@ async function analyzeEmailContent() {
   const ALWAYS_SAFE_DOMAINS = ['nmamit.in', 'nitte.edu.in'];
   const ALWAYS_SAFE_EMAILS = ['placement@nmamit.in']; // Explicitly safe sender
 
-  const isFromCollegeDomain = senderDomain && ALWAYS_SAFE_DOMAINS.some(d => senderDomain.toLowerCase().endsWith(d.toLowerCase()));
-  const isSafeEmail = senderEmail && ALWAYS_SAFE_EMAILS.some(e => senderEmail.toLowerCase().includes(e.toLowerCase()));
+  const isFromCollegeDomain = senderDomain && ALWAYS_SAFE_DOMAINS.some(d => isDomainOrSubdomain(senderDomain.toLowerCase(), d));
+  const isSafeEmail = senderEmail && ALWAYS_SAFE_EMAILS.includes(senderEmail.toLowerCase());
 
   if (isFromCollegeDomain || isSafeEmail) {
     console.log('🛡️ PhishGuard: Email from legitimate college source - SUPPRESSING BANNER:', senderEmail || senderDomain);
@@ -380,7 +383,7 @@ async function analyzeEmailContent() {
       analysis.reasons.push('ShikshaVertex/SkillVertex scam domain detected');
     }
 
-    if (LEGITIMATE_DOMAINS.some(d => senderDomain.endsWith(d))) {
+    if (LEGITIMATE_DOMAINS.some(d => isDomainOrSubdomain(senderDomain.toLowerCase(), d))) {
       analysis.isLegitimate = true;
       analysis.riskScore = Math.max(0, analysis.riskScore - 30);
     }

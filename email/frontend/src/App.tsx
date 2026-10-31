@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Shield, ShieldAlert, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Server, Activity } from 'lucide-react';
 import { cn } from './lib/utils';
+import { API_BASE, DASHBOARD_TOKEN } from './api';
 import { PendingApprovals } from './components/PendingApprovals';
 import { ActiveDatabase } from './components/ActiveDatabase';
 
@@ -132,7 +133,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'feed' | 'pending' | 'database'>('feed');
 
   useEffect(() => {
-    const sse = new EventSource(`http://127.0.0.1:8080/api/stream?token=${encodeURIComponent(import.meta.env.VITE_DASHBOARD_TOKEN ?? '')}`);
+    const sse = new EventSource(`${API_BASE}/api/stream?token=${encodeURIComponent(DASHBOARD_TOKEN)}`);
     
     sse.onopen = () => setConnected(true);
     sse.onerror = () => setConnected(false);

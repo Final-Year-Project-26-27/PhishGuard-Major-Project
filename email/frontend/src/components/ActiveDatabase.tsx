@@ -1,16 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2, Database } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { adminFetch } from '../api';
+
+type BlockedUrl = { id: number; url: string };
+type BlockedDomain = { id: number; domain: string };
 
 export const ActiveDatabase = () => {
-  const [urls, setUrls] = useState<any[]>([]);
-  const [domains, setDomains] = useState<any[]>([]);
+  const [urls, setUrls] = useState<BlockedUrl[]>([]);
+  const [domains, setDomains] = useState<BlockedDomain[]>([]);
 
   const fetchData = async () => {
-    const { data: uData } = await supabase.from('scam_urls').select('*').order('reported_at', { ascending: false });
-    const { data: dData } = await supabase.from('suspicious_domains').select('*').order('reported_at', { ascending: false });
-    if (uData) setUrls(uData);
-    if (dData) setDomains(dData);
+    return adminFetch<{ urls: BlockedUrl[]; domains: BlockedDomain[] }>('/api/admin/blocklist')
+      .then((data) => {
+        setUrls(data.urls);
+        setDomains(data.domains);
+      })
+      .catch((error) => console.error('Failed to load blocklist:', error));
   };
 
   useEffect(() => {
@@ -18,12 +23,12 @@ export const ActiveDatabase = () => {
   }, []);
 
   const deleteUrl = async (id: number) => {
-    await supabase.from('scam_urls').delete().eq('id', id);
+    await adminFetch(`/api/admin/blocklist/urls/${id}`, { method: 'DELETE' });
     fetchData();
   };
 
   const deleteDomain = async (id: number) => {
-    await supabase.from('suspicious_domains').delete().eq('id', id);
+    await adminFetch(`/api/admin/blocklist/domains/${id}`, { method: 'DELETE' });
     fetchData();
   };
 
