@@ -39,7 +39,7 @@ export default function ScamStats() {
           <dl className="space-y-9">
             {STATS.map((s, i) => (
               <div key={s.figure} className={`grid grid-cols-[6.5rem_1fr] gap-5 items-start taste-enter-d${i + 1}`}>
-                <dt className="text-5xl font-bold tracking-tight text-teal-300">{s.figure}</dt>
+                <dt className="text-5xl font-bold tracking-tight text-red-400">{s.figure}</dt>
                 <dd className="space-y-1.5 pt-2">
                   <p className="text-lg text-zinc-100 leading-snug">{s.text}</p>
                   <a

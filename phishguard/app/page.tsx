@@ -2,11 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   Shield,
-  Download,
-  ArrowRight,
   RefreshCw,
 } from 'lucide-react'
 import { API_URL } from '@/lib/utils'
@@ -15,18 +12,6 @@ import ScamMarquee from '@/components/ScamMarquee'
 import ScamStats from '@/components/ScamStats'
 import OurStory from '@/components/OurStory'
 import InboxBeforeAfter from '@/components/InboxBeforeAfter'
-
-function Credit({ href, by, licence }: { href: string; by: string; licence: string }) {
-  return (
-    <p className="text-sm text-zinc-400">
-      Photo:{' '}
-      <a href={href} target="_blank" rel="noopener noreferrer" className="underline decoration-zinc-600 hover:text-zinc-200">
-        {by}
-      </a>
-      , {licence}, via Wikimedia Commons
-    </p>
-  )
-}
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'url' | 'email' | 'offer'>('url')
@@ -137,168 +122,137 @@ export default function HomePage() {
   return (
     <div className="relative min-h-[100dvh] bg-[#0c0d0e] text-zinc-100 font-sans">
 
-      {/* 1. Hero Section: Headline strictly 2 lines or fewer across all viewports */}
-      <section className="pt-20 pb-28 sm:pt-28 sm:pb-32">
-        <div className="max-w-[75rem] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+      {/* Hero: the checker is the first thing, like a search box. The one centred moment on the page. */}
+      <section className="pt-20 pb-24 sm:pt-28 sm:pb-28">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 text-center">
+          <h1 className="text-5xl sm:text-7xl lg:text-[6.5rem] font-bold tracking-[-0.04em] text-white leading-[0.98] taste-enter">
+            Is this offer real?
+          </h1>
+          <p className="mt-6 text-lg sm:text-xl text-zinc-300 leading-relaxed max-w-2xl mx-auto taste-enter-d1">
+            Paste the link, the email or the job offer. PhishGuard checks it for the scams students fall for and tells you why.
+          </p>
 
-            {/* Left Narrative Column */}
-            <div className="lg:col-span-7 space-y-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.08] taste-enter">
-                Student phishing and scam defense.
-              </h1>
-
-              <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-xl taste-enter-d1">
-                PhishGuard catches fake internship offers, registration-fee scams and phishing links in Gmail, WhatsApp, LinkedIn and your browser.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 pt-4 taste-enter-d2">
-                <Link
-                  href="/scanner"
-                  className="group px-5 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-base hover:bg-white active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
-                >
-                  <span>Open the scanner</span>
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-
-                <Link
-                  href="/install"
-                  className="px-5 py-3 rounded bg-zinc-800 text-zinc-100 font-medium text-base hover:bg-zinc-700 active:scale-[0.98] transition-[background-color,transform] inline-flex items-center gap-2"
-                >
-                  <Download className="size-4" />
-                  <span>Get the extension</span>
-                </Link>
+          <div className="mt-12 max-w-3xl mx-auto text-left taste-enter-d2" data-ui="quick-scanner">
+            <div className="rounded-xl bg-[#15171a] p-3 sm:p-4 space-y-3">
+              <div className="flex gap-1.5" role="tablist" aria-label="What are you checking?">
+                {(
+                  [
+                    ['url', 'Link'],
+                    ['email', 'Email'],
+                    ['offer', 'Job offer'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={activeTab === key}
+                    onClick={() => {
+                      setActiveTab(key)
+                      setScanResult(null)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-base transition-colors ${
+                      activeTab === key ? 'bg-zinc-100 text-zinc-950 font-medium' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+
+              {activeTab === 'url' && (
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleQuickScan()}
+                  placeholder="https://internship-confirm.tk/verify"
+                  aria-label="Link to check"
+                  className="w-full h-14 px-4 rounded-lg bg-[#0c0d0e] border border-white/10 text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-teal-400"
+                />
+              )}
+
+              {activeTab === 'email' && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={senderDomain}
+                    onChange={(e) => setSenderDomain(e.target.value)}
+                    placeholder="Sender’s domain, e.g. company-recruiter.org"
+                    aria-label="Sender's domain"
+                    className="w-full h-12 px-4 rounded-lg bg-[#0c0d0e] border border-white/10 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-teal-400"
+                  />
+                  <textarea
+                    rows={4}
+                    value={emailText}
+                    onChange={(e) => setEmailText(e.target.value)}
+                    placeholder="Paste the email here…"
+                    aria-label="Email text"
+                    className="w-full p-4 rounded-lg bg-[#0c0d0e] border border-white/10 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-teal-400 resize-none"
+                  />
+                </div>
+              )}
+
+              {activeTab === 'offer' && (
+                <textarea
+                  rows={4}
+                  value={offerText}
+                  onChange={(e) => setOfferText(e.target.value)}
+                  placeholder="Congratulations! You are shortlisted for the web internship. Deposit Rs 1999 registration fee via UPI…"
+                  aria-label="Job offer text"
+                  className="w-full p-4 rounded-lg bg-[#0c0d0e] border border-white/10 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-teal-400 resize-none"
+                />
+              )}
+
+              <button
+                onClick={handleQuickScan}
+                disabled={isScanning}
+                className="w-full h-14 rounded-lg bg-teal-400 text-zinc-950 font-semibold text-lg hover:bg-teal-300 active:scale-[0.99] transition-[background-color,transform] flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {isScanning ? (
+                  <>
+                    <RefreshCw className="size-5 animate-spin" />
+                    <span>Checking…</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield className="size-5" />
+                    <span>Check for scams</span>
+                  </>
+                )}
+              </button>
+
+              {scanError && <div className="p-4 rounded-lg bg-red-950/60 text-red-200 text-base">{scanError}</div>}
+
+              {scanResult && (
+                <div
+                  aria-live="polite"
+                  className={`p-4 rounded-lg text-base space-y-2 ${
+                    scanResult.status === 'safe'
+                      ? 'bg-teal-950/60 text-teal-100'
+                      : scanResult.status === 'warning'
+                      ? 'bg-amber-950/50 text-amber-100'
+                      : 'bg-red-950/60 text-red-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-semibold text-lg">
+                    <span>{scanResult.headline}</span>
+                    {scanResult.confidence > 0 && <span>{(scanResult.confidence * 100).toFixed(0)}%</span>}
+                  </div>
+                  <ul className="space-y-1 opacity-90">
+                    {scanResult.details.map((d, i) => (
+                      <li key={i}>• {d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-
-            {/* Right: Working Product Fragment (data-ui keeps real borders and controls) */}
-            <div className="lg:col-span-5 w-full taste-enter-d2" data-ui="quick-scanner">
-              <div className="rounded bg-[#15171a] p-5 space-y-4">
-
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold text-white">Check something now</p>
-                  <p className="text-sm text-zinc-400">Paste a link, an email or a job offer. Nothing is saved.</p>
-                </div>
-
-                {/* Intake Selector */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { setActiveTab('url'); setScanResult(null); }}
-                    className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                      activeTab === 'url' ? 'bg-zinc-100 text-zinc-950 font-medium' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Link check
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('email'); setScanResult(null); }}
-                    className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                      activeTab === 'email' ? 'bg-zinc-100 text-zinc-950 font-medium' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Email body
-                  </button>
-                  <button
-                    onClick={() => { setActiveTab('offer'); setScanResult(null); }}
-                    className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                      activeTab === 'offer' ? 'bg-zinc-100 text-zinc-950 font-medium' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Offer pitch
-                  </button>
-                </div>
-
-                {/* Input Fields */}
-                <div className="space-y-3 pt-1">
-                  {activeTab === 'url' && (
-                    <input
-                      type="url"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder="https://internship-confirm.tk/verify"
-                      className="w-full h-10 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500"
-                    />
-                  )}
-
-                  {activeTab === 'email' && (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={senderDomain}
-                        onChange={(e) => setSenderDomain(e.target.value)}
-                        placeholder="company-recruiter.org"
-                        className="w-full h-9 px-3 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500"
-                      />
-                      <textarea
-                        rows={3}
-                        value={emailText}
-                        onChange={(e) => setEmailText(e.target.value)}
-                        placeholder="Paste recruiter message body..."
-                        className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500 resize-none"
-                      />
-                    </div>
-                  )}
-
-                  {activeTab === 'offer' && (
-                    <textarea
-                      rows={4}
-                      value={offerText}
-                      onChange={(e) => setOfferText(e.target.value)}
-                      placeholder="Congratulations! You are shortlisted for web internship. Deposit Rs 1999 registration fee via UPI..."
-                      className="w-full p-2.5 rounded bg-zinc-900 border border-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-teal-500 resize-none"
-                    />
-                  )}
-
-                  <button
-                    onClick={handleQuickScan}
-                    disabled={isScanning}
-                    className="w-full h-10 rounded bg-teal-500 text-zinc-950 font-semibold text-sm hover:bg-teal-400 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isScanning ? (
-                      <>
-                        <RefreshCw className="size-4 animate-spin" />
-                        <span>Checking…</span>
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="size-4" />
-                        <span>Check for scams</span>
-                      </>
-                    )}
-                  </button>
-
-                  {scanError && (
-                    <div className="p-3 rounded bg-red-950/60 text-red-200 text-sm">
-                      {scanError}
-                    </div>
-                  )}
-
-                  {scanResult && (
-                    <div className={`p-4 rounded text-sm space-y-2 ${
-                      scanResult.status === 'safe'
-                        ? 'bg-teal-950/40 text-teal-200'
-                        : scanResult.status === 'warning'
-                        ? 'bg-amber-950/40 text-amber-200'
-                        : 'bg-red-950/40 text-red-200'
-                    }`}>
-                      <div className="flex items-center justify-between font-semibold text-sm">
-                        <span>{scanResult.headline}</span>
-                        {scanResult.confidence > 0 && (
-                          <span>{(scanResult.confidence * 100).toFixed(0)}%</span>
-                        )}
-                      </div>
-                      <ul /* taste-skill-ignore: inspector result list */ className="space-y-1 pt-1 opacity-90 border-t border-white/10 text-sm">
-                        {scanResult.details.map((d, i) => (
-                          <li key={i}>• {d}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-            </div>
-
+            <p className="mt-4 text-center text-base text-zinc-400">
+              Nothing you paste is saved.{' '}
+              <Link href="/install" className="group text-zinc-100 underline decoration-zinc-600 hover:text-teal-300">
+                Or get the extension
+              </Link>{' '}
+              and it checks Gmail, WhatsApp and LinkedIn for you.
+            </p>
           </div>
         </div>
       </section>
@@ -312,96 +266,6 @@ export default function HomePage() {
       <DetectionLayers />
 
       <InboxBeforeAfter />
-
-      {/* 3. Archival Architecture Showcase (4 Real Pictures from Open Collections) */}
-      <section className="py-28">
-        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-16">
-          <div className="space-y-3 max-w-2xl">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white taste-enter">
-              The trick is older than the inbox.
-            </h2>
-            <p className="text-base sm:text-lg text-zinc-300 leading-relaxed taste-enter-d1">
-              Pay first, get the job later: the advance-fee con dates back to the 1890s. Computers only made it faster, so one message now reaches thousands of students at once.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-
-            {/* Photographic Artifact 1 */}
-            <div className="space-y-3 taste-enter">
-              <div className="rounded overflow-hidden bg-zinc-900 aspect-[4/3] relative">
-                <Image
-                  src="/assets/archival/virginia-tech-data-center.jpg"
-                  alt="Academic computer server infrastructure"
-                  width={1200}
-                  height={900}
-                  className="w-full h-full object-cover grayscale contrast-125"
-                  priority={false}
-                />
-              </div>
-              <p className="text-base text-zinc-200">
-                A university data centre. Campus mail runs through rooms like this, scams included.
-              </p>
-              <Credit href="https://commons.wikimedia.org/wiki/File:Virginia_Tech_-_data_center.jpg" by="Christopher Bowns" licence="CC BY-SA 2.0" />
-            </div>
-
-            {/* Photographic Artifact 2 */}
-            <div className="space-y-3 taste-enter-d1">
-              <div className="rounded overflow-hidden bg-zinc-900 aspect-[4/3] relative">
-                <Image
-                  src="/assets/archival/mainframe-computer.jpg"
-                  alt="High throughput computational processing engine"
-                  width={1200}
-                  height={800}
-                  className="w-full h-full object-cover grayscale contrast-125"
-                  priority={false}
-                />
-              </div>
-              <p className="text-base text-zinc-200">
-                The first spam email went out in 1978, to a few hundred people on ARPANET.
-              </p>
-              <Credit href="https://commons.wikimedia.org/wiki/File:Mainframe_Computer.jpg" by="Pargon" licence="CC BY 2.0" />
-            </div>
-
-            {/* Photographic Artifact 3 */}
-            <div className="space-y-3 taste-enter-d2">
-              <div className="rounded overflow-hidden bg-zinc-900 aspect-[4/3] relative">
-                <Image
-                  src="/assets/archival/oracle-computer-at-oak-ridge-national-lab.jpg"
-                  alt="Early architectural computing laboratory equipment"
-                  width={1200}
-                  height={800}
-                  className="w-full h-full object-cover grayscale contrast-125"
-                  priority={false}
-                />
-              </div>
-              <p className="text-base text-zinc-200">
-                ORACLE at Oak Ridge, 1950s. Computers were built to calculate; the con artists came later.
-              </p>
-              <Credit href="https://commons.wikimedia.org/wiki/File:ORACLE_computer_at_Oak_Ridge_National_Lab.jpg" by="US Atomic Energy Commission" licence="public domain" />
-            </div>
-
-            {/* Photographic Artifact 4 */}
-            <div className="space-y-3 taste-enter-d3">
-              <div className="rounded overflow-hidden bg-zinc-900 aspect-[4/3] relative">
-                <Image
-                  src="/assets/archival/ge-645-mainframe-1968.png"
-                  alt="Historical system architecture diagram"
-                  width={1200}
-                  height={1500}
-                  className="w-full h-full object-cover grayscale contrast-125"
-                  priority={false}
-                />
-              </div>
-              <p className="text-base text-zinc-200">
-                A GE-645 in 1968, built for time-sharing: many users on one machine, each behind a password.
-              </p>
-              <Credit href="https://commons.wikimedia.org/wiki/File:GE-645-mainframe-1968.png" by="Dóeltenga" licence="CC BY-SA 4.0" />
-            </div>
-
-          </div>
-        </div>
-      </section>
 
       {/* 4. Threat Matrix: Real comparison table (Real tables keep lines) */}
       <section className="py-24 bg-[#121316]">
@@ -496,25 +360,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. Call to Action */}
-      <section className="py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white taste-enter">
-            Got a message that feels off?
-          </h2>
-          <p className="text-base text-zinc-300 max-w-xl mx-auto leading-relaxed taste-enter-d1">
-            Check it in the scanner before you reply, pay or click. Or install the extension and let it check messages as they arrive.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2 taste-enter-d2">
+      {/* Close: what to do next */}
+      <section className="py-28 sm:py-36">
+        <div className="max-w-[75rem] mx-auto px-4 sm:px-6 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-end">
+          <div className="space-y-5">
+            <h2 className="text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.02] taste-enter">
+              Got a message that feels off?
+            </h2>
+            <p className="text-lg text-zinc-300 max-w-xl leading-relaxed taste-enter-d1">
+              Check it before you reply, pay or click. Or install the extension and let it check messages as they arrive.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 lg:justify-end taste-enter-d2">
             <Link
               href="/scanner"
-              className="px-6 py-3 rounded bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white transition-colors"
+              className="px-6 py-3.5 rounded-lg bg-teal-400 text-zinc-950 font-semibold text-base hover:bg-teal-300 active:scale-[0.98] transition-[background-color,transform]"
             >
               Open the scanner
             </Link>
             <Link
               href="/install"
-              className="px-6 py-3 rounded bg-zinc-900 text-zinc-200 font-medium text-sm hover:bg-zinc-800 transition-colors"
+              className="px-6 py-3.5 rounded-lg bg-zinc-800 text-zinc-100 font-medium text-base hover:bg-zinc-700 active:scale-[0.98] transition-[background-color,transform]"
             >
               Get the extension
             </Link>
