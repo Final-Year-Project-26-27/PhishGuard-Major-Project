@@ -34,6 +34,13 @@ interface UnifiedScanResponse {
   }
 }
 
+// The backend's recommendation codes, in words a student can act on
+const RECOMMENDATION_TEXT: Record<string, string> = {
+  allow: 'Looks fine to open',
+  warn: 'Be careful: check the sender first',
+  block_or_step_up: 'Don’t click, reply or pay',
+}
+
 export default function ScannerPage() {
   const [url, setUrl] = useState('')
   const [email, setEmail] = useState('')
@@ -87,15 +94,19 @@ export default function ScannerPage() {
 
     const sender = scanMode === 'quick' ? email : emailFrom
     const senderDomain = sender.includes('@') ? sender.split('@')[1] : sender
-    const text = scanMode === 'quick' ? (url ? `Inspection target: ${url}` : email) : `${emailSubject}\n${emailBody}`
-    const targetUrl = url || (text.match(/https?:\/\/[^\s]+/)?.[0] ?? '')
+    // Quick mode has no message text; only real message text goes to the message model
+    const text = scanMode === 'quick' ? '' : `${emailSubject}\n${emailBody}`.trim()
+    // With no link and no text, the sender's own domain is the thing to check
+    // Trailing punctuation belongs to the sentence, not the link ("...at https://x.com/abc.")
+    const linkInText = (text.match(/https?:\/\/[^\s<>"')\]]+/)?.[0] ?? '').replace(/[.,;:!?]+$/, '')
+    const targetUrl = url || linkInText || (text ? '' : senderDomain)
 
     try {
       const res = await fetch(`${API_URL}/scan/unified/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email_text: text,
+          email_text: text || undefined,
           sender_domain: senderDomain || 'gmail.com',
           url: targetUrl || undefined,
           trusted_domains: ['nmamit.in', 'nitte.edu.in', 'google.com', 'microsoft.com'],
@@ -369,7 +380,7 @@ export default function ScannerPage() {
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
                     <span className="text-sm text-zinc-400 block">What to do</span>
                     <span className="text-sm font-bold text-zinc-200 px-2 py-0.5 rounded bg-[#15171a] inline-block">
-                      {scanResult.recommendation}
+                      {RECOMMENDATION_TEXT[scanResult.recommendation] ?? scanResult.recommendation}
                     </span>
                   </div>
 

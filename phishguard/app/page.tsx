@@ -12,6 +12,14 @@ import ScamStats from '@/components/ScamStats'
 import OurStory from '@/components/OurStory'
 import InboxBeforeAfter from '@/components/InboxBeforeAfter'
 
+// A scam verdict below this confidence is shown as a caution, not a red alert: real job-portal
+// alerts and welcome mails sometimes sound like phishing
+const UNSURE_BELOW = 0.7
+
+// 422 is the backend's size/validation limit, not an outage
+const scanFailure = (status: number) =>
+  status === 422 ? 'That’s too long to check. Paste just the message or link itself.' : 'The scanner is unavailable right now. Try again in a moment.'
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'url' | 'email' | 'offer'>('url')
   const [urlInput, setUrlInput] = useState('')
@@ -40,12 +48,25 @@ export default function HomePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput.trim() }),
         })
-        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
+        if (!res.ok) throw new Error(scanFailure(res.status))
         const data = await res.json()
         const isLegit = data.prediction === 'Legit'
+        // Forms, docs and file shares look the same whether real or fake, so the address alone can't decide
+        if (data.source === 'shared_host') {
+          setScanResult({
+            status: 'warning',
+            headline: 'Can’t tell from the link alone',
+            confidence: 0,
+            details: [
+              'Anyone can publish pages on this site (forms, docs, file shares).',
+              'Check who sent it, and never type a password or pay through it unless you trust the sender.',
+            ],
+          })
+          return
+        }
         setScanResult({
           status: isLegit ? 'safe' : 'danger',
-          headline: isLegit ? 'Verified clean link' : 'Phishing destination detected',
+          headline: isLegit ? 'Looks safe' : 'Likely a phishing link',
           confidence: data.confidence,
           details: [
             `Verdict: ${data.prediction}`,
@@ -63,12 +84,13 @@ export default function HomePage() {
             sender_domain: senderDomain.trim() || 'gmail.com',
           }),
         })
-        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
+        if (!res.ok) throw new Error(scanFailure(res.status))
         const data = await res.json()
         const isLegit = data.prediction === 'Legit'
+        const unsure = !isLegit && data.confidence < UNSURE_BELOW
         setScanResult({
-          status: isLegit ? 'safe' : 'danger',
-          headline: isLegit ? 'Legitimate communication' : 'Deceptive fee scam pattern detected',
+          status: isLegit ? 'safe' : unsure ? 'warning' : 'danger',
+          headline: isLegit ? 'Looks genuine' : unsure ? 'Could be a scam: check the sender first' : 'Likely a scam or phishing email',
           confidence: data.confidence,
           details: [
             `Verdict: ${data.prediction}`,
@@ -85,7 +107,7 @@ export default function HomePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: offerText.trim() }),
         })
-        if (!res.ok) throw new Error('The scanner is unavailable right now. Try again in a moment.')
+        if (!res.ok) throw new Error(scanFailure(res.status))
         const data = await res.json()
         if (!data.is_offer) {
           setScanResult({
@@ -96,9 +118,10 @@ export default function HomePage() {
           })
         } else {
           const isFake = data.prediction === 'Fake'
+          const unsure = isFake && data.confidence / 100 < UNSURE_BELOW
           setScanResult({
-            status: isFake ? 'danger' : 'safe',
-            headline: isFake ? 'High-risk recruitment scam' : 'Verified legitimate offer',
+            status: isFake ? (unsure ? 'warning' : 'danger') : 'safe',
+            headline: isFake ? (unsure ? 'Could be a scam: check the company first' : 'Likely a recruitment scam') : 'Looks like a genuine offer',
             confidence: data.confidence / 100,
             details: [
               `Verdict: ${data.prediction}`,

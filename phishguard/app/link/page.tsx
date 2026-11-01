@@ -153,6 +153,10 @@ export default function LinkScannerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: link.trim() }),
       })
+      if (res.status === 422) {
+        setError('That link is too long to check.')
+        return
+      }
       if (!res.ok) throw new Error(`Scan failed with status ${res.status}`)
 
       const data = await res.json()
@@ -160,7 +164,8 @@ export default function LinkScannerPage() {
       const apiResult: ScanResult = {
         prediction: isLegit ? 'Legit' : 'Fake',
         confidence: data.confidence,
-        threat_level: isLegit ? 'Low' : 'High',
+        // Forms, docs and file shares look the same whether real or fake, so the address alone can't decide
+        threat_level: data.source === 'shared_host' ? 'Unclear' : isLegit ? 'Low' : 'High',
       }
       setResult(apiResult)
       await saveToFirebase(link.trim(), apiResult)
@@ -317,15 +322,19 @@ export default function LinkScannerPage() {
                       Result
                     </span>
                     <div className="flex items-center gap-2.5">
-                      {result.prediction === 'Legit' ? (
+                      {result.threat_level === 'Unclear' ? (
+                        <AlertTriangle className="size-5 text-amber-400" />
+                      ) : result.prediction === 'Legit' ? (
                         <CheckCircle className="size-5 text-teal-400" />
                       ) : (
                         <AlertTriangle className="size-5 text-red-400" />
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
-                        result.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'
+                        result.threat_level === 'Unclear' ? 'text-amber-400' : result.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'
                       }`}>
-                        {result.prediction === 'Legit' ? 'Looks safe' : 'Likely a phishing link'}
+                        {result.threat_level === 'Unclear'
+                          ? 'Can’t tell from the link alone'
+                          : result.prediction === 'Legit' ? 'Looks safe' : 'Likely a phishing link'}
                       </span>
                     </div>
                   </div>
@@ -335,6 +344,8 @@ export default function LinkScannerPage() {
                     <span className={` text-sm font-bold px-2 py-0.5 rounded border ${
                       result.threat_level === 'Low'
                         ? 'border-teal-800/60 bg-teal-950/40 text-teal-300'
+                        : result.threat_level === 'Unclear'
+                        ? 'border-amber-800/60 bg-amber-950/40 text-amber-300'
                         : 'border-red-800/60 bg-red-950/40 text-red-300'
                     }`}>
                       {result.threat_level || 'Low'}
@@ -349,7 +360,7 @@ export default function LinkScannerPage() {
                       Confidence
                     </span>
                     <p className="text-xl font-bold text-zinc-100">
-                      {(result.confidence * 100).toFixed(1)}%
+                      {result.threat_level === 'Unclear' ? '—' : `${(result.confidence * 100).toFixed(1)}%`}
                     </p>
                   </div>
                   <div className="p-3 rounded bg-[#0f1012] space-y-1">
@@ -357,7 +368,7 @@ export default function LinkScannerPage() {
                       Verdict
                     </span>
                     <p className="text-xl font-bold text-zinc-100">
-                      {result.prediction}
+                      {result.threat_level === 'Unclear' ? 'Unclear' : result.prediction}
                     </p>
                   </div>
                 </div>
@@ -369,7 +380,9 @@ export default function LinkScannerPage() {
                     <span>What this means</span>
                   </div>
                   <p className="text-base text-zinc-400 leading-relaxed font-sans">
-                    {result.prediction === 'Legit'
+                    {result.threat_level === 'Unclear'
+                      ? 'This link is on a site where anyone can publish pages, such as Google Forms, Docs or a file share. Real and fake ones look the same from the address, so check who sent it, and never type a password or pay through it unless you trust the sender.'
+                      : result.prediction === 'Legit'
                       ? 'We found no fake subdomains, risky domain endings or other common phishing tricks in this link. Still be careful with sites you have never heard of.'
                       : 'This link looks like known phishing links, for example a fake login page, a brand name hidden in a subdomain, or a risky domain ending. Do not enter your password or pay anything on it.'}
                   </p>

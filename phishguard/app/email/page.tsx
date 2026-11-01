@@ -174,6 +174,10 @@ export default function EmailScannerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text_content: textContent, sender_domain: senderDomain }),
       })
+      if (res.status === 422) {
+        setError('That’s too long to check. Paste just the email itself.')
+        return
+      }
       if (!res.ok) throw new Error(`Scan failed with status ${res.status}`)
 
       const data = await res.json()
@@ -224,6 +228,9 @@ export default function EmailScannerPage() {
   if (!mounted) {
     return null
   }
+
+  // A low-confidence scam verdict is a caution, not a red alert: real job-portal alerts can sound like phishing
+  const unsure = result?.prediction === 'Fake' && result.confidence < 0.7
 
   return (
     <div className="relative min-h-dvh text-zinc-100 font-sans py-10 px-4 sm:px-6 lg:px-8">
@@ -349,12 +356,12 @@ export default function EmailScannerPage() {
                       {result.prediction === 'Legit' ? (
                         <CheckCircle className="size-5 text-teal-400" />
                       ) : (
-                        <AlertTriangle className="size-5 text-red-400" />
+                        <AlertTriangle className={`size-5 ${unsure ? 'text-amber-400' : 'text-red-400'}`} />
                       )}
                       <span className={`text-lg font-bold tracking-tight ${
-                        result.prediction === 'Legit' ? 'text-teal-400' : 'text-red-400'
+                        result.prediction === 'Legit' ? 'text-teal-400' : unsure ? 'text-amber-400' : 'text-red-400'
                       }`}>
-                        {result.prediction === 'Legit' ? 'Looks genuine' : 'Likely a scam'}
+                        {result.prediction === 'Legit' ? 'Looks genuine' : unsure ? 'Could be a scam' : 'Likely a scam'}
                       </span>
                     </div>
                   </div>
@@ -393,6 +400,8 @@ export default function EmailScannerPage() {
                   <p className="text-base text-zinc-400 leading-relaxed font-sans">
                     {result.prediction === 'Legit'
                       ? 'This reads like a normal company or college email. We found no fee demands or pressure to act fast.'
+                      : unsure
+                      ? 'Some of the wording is common in scams, but we are not sure. Check that it really comes from the company or your college, and never pay or share passwords or OTPs because of an email.'
                       : 'This looks like a scam. Fake internships often ask you to pay for a training kit, a background check or equipment before you get an offer letter. Real companies do not charge you to join.'}
                   </p>
                 </div>
