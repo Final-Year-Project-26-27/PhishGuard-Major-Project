@@ -8,6 +8,7 @@ const STEPS = [
   { at: 10.7, title: 'A paid “internship”', body: 'A Microsoft-branded training offer that hints at “mentor fees” is caught, and the email says why.' },
   { at: 25.1, title: 'A fake offer letter', body: 'An uploaded letter asking for a ₹2,499 laptop deposit by UPI scores 85 out of 100.' },
   { at: 33.7, title: 'A KYC threat', body: 'The message and its link are checked together: high risk, with the reasons listed.' },
+  { at: 46.2, title: 'Inside Gmail', body: 'A real pay-to-intern email in a student’s inbox. The extension warns as soon as it opens.' },
 ]
 
 export default function DemoVideo() {
@@ -38,11 +39,11 @@ export default function DemoVideo() {
       <div className="max-w-[75rem] mx-auto px-4 sm:px-6">
         <div className="max-w-2xl space-y-4">
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-[1.05] taste-enter">
-            Watch it catch four.
+            Watch it catch five.
           </h2>
           <p className="text-lg text-zinc-300 leading-relaxed taste-enter-d1">
-            A real run of the scanners on this site, recorded as it happened. Nothing is staged except the messages, which are
-            examples of scams students receive.
+            A real run of the scanners on this site and the browser extension, recorded as it happened. The first four messages
+            are examples; the last is a real scam email from a student’s inbox, with names hidden.
           </p>
         </div>
 
@@ -63,7 +64,7 @@ export default function DemoVideo() {
               preload="metadata"
               controls={reduced}
               onTimeUpdate={onTime}
-              aria-label="Screen recording: PhishGuard flags a fake bank link, a paid internship email, a fake offer letter and a KYC scam"
+              aria-label="Screen recording: PhishGuard flags a fake bank link, a paid internship email, a fake offer letter, a KYC scam, and a real scam email in Gmail"
             >
               <source src="/assets/demo/phishguard-demo.webm" type="video/webm" />
               <source src="/assets/demo/phishguard-demo.mp4" type="video/mp4" />

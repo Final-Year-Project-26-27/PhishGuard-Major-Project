@@ -238,12 +238,11 @@ async function analyzeEmailContent() {
   }
   console.log('🛡️ PhishGuard: Analyzing email...');
 
-  // Get email content - try multiple selectors
+  // Only the message itself: falling back to the whole page would scan the half-loaded view,
+  // mark the email as done, and skip the real body when it renders
   const emailBody = document.querySelector('.a3s.aiL') ||
-    document.querySelector('[data-message-id]') ||
     document.querySelector('.ii.gt') ||
-    document.querySelector('[role="listitem"]') ||
-    document.querySelector('[role="main"]');
+    document.querySelector('[data-message-id]');
 
   if (!emailBody) {
     console.log('🛡️ PhishGuard: No email body found');
@@ -497,7 +496,9 @@ function showPhishingWarning(analysis, senderEmail) {
     ? 'Real internships never charge fees. Don’t pay, fill its forms or share documents until your placement cell confirms it.'
     : 'Don’t pay, reply or open its links until you’ve checked the sender another way.';
   // The keyword count is already a reason; show the words themselves, minus single symbols like ₹
-  const words = (analysis.topKeywords || []).filter(k => k.length > 2).slice(0, 5);
+  // Shortest form of overlapping matches: "shortlisted", not also "been shortlisted"
+  const words = (analysis.topKeywords || []).filter(k => k.length > 2).sort((a, b) => a.length - b.length)
+    .reduce((kept, k) => (kept.some(w => k.includes(w)) ? kept : [...kept, k]), []).slice(0, 5);
   const reasons = analysis.reasons.filter(r => !/^Contains \d+ suspicious keyword/.test(r)).slice(0, 4);
   if (words.length) reasons.push(`Uses scam wording: ${words.join(', ')}`);
 
