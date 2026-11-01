@@ -444,7 +444,7 @@ async function analyzeEmailContent() {
 
   // Add scam pattern reasons
   if (analysis.matchedScamPatterns.length > 0) {
-    analysis.reasons.push(`Matches ${analysis.matchedScamPatterns.length} known scam patterns`);
+    analysis.reasons.push(`Matches ${analysis.matchedScamPatterns.length} known scam pattern${analysis.matchedScamPatterns.length > 1 ? 's' : ''}`);
   }
 
   // Collect top suspicious keywords found (up to 8 for display)
@@ -482,273 +482,90 @@ async function analyzeEmailContent() {
 function showPhishingWarning(analysis, senderEmail) {
   removeWarningBanner();
 
-  // ── Severity tiers ───────────────────────────────────────────────────
   let scamType = 'Suspicious Email';
-  let severityLabel = 'Caution';
-  let accentColor = '#f59e0b';   // amber
-  let barColor = 'linear-gradient(90deg, #f59e0b, #ef4444)';
-  let headerBg = 'linear-gradient(135deg, #1e1035 0%, #2d1a5e 100%)';
-  let bodyBg = '#110d22';
-  let borderCol = 'rgba(139,92,246,0.4)';
-
   if (analysis.reasons.some(r => r.includes('internship') || r.includes('ShikshaVertex') || r.includes('scam pattern'))) {
     scamType = 'Fake Internship Scam';
   } else if (analysis.reasons.some(r => r.includes('payment'))) {
     scamType = 'Payment Scam';
   }
 
-  if (analysis.riskScore >= 70) {
-    severityLabel = 'High Risk';
-    accentColor = '#f87171';
-    barColor = 'linear-gradient(90deg, #ef4444, #dc2626)';
-    headerBg = 'linear-gradient(135deg, #1a0a0a 0%, #3b0c0c 100%)';
-    bodyBg = '#130808';
-    borderCol = 'rgba(239,68,68,0.5)';
-  } else if (analysis.riskScore >= 50) {
-    severityLabel = 'High Risk';
-    accentColor = '#fb923c';
-    barColor = 'linear-gradient(90deg, #f97316, #ef4444)';
-    headerBg = 'linear-gradient(135deg, #1a0f00 0%, #431407 100%)';
-    bodyBg = '#130b04';
-    borderCol = 'rgba(249,115,22,0.45)';
-  }
-
-  const topReasons = analysis.reasons.slice(0, 4);
-  const topKeywords = (analysis.topKeywords || []).slice(0, 8);
+  const high = analysis.riskScore >= 50;
+  const headline = high
+    ? { 'Fake Internship Scam': 'Likely a fake internship scam', 'Payment Scam': 'Likely a payment scam' }[scamType] || 'Likely a scam email'
+    : 'This email could be a scam';
+  const advice = scamType === 'Fake Internship Scam'
+    ? 'Real internships never charge fees. Don’t pay, fill its forms or share documents until your placement cell confirms it.'
+    : 'Don’t pay, reply or open its links until you’ve checked the sender another way.';
+  // The keyword count is already a reason; show the words themselves, minus single symbols like ₹
+  const words = (analysis.topKeywords || []).filter(k => k.length > 2).slice(0, 5);
+  const reasons = analysis.reasons.filter(r => !/^Contains \d+ suspicious keyword/.test(r)).slice(0, 4);
+  if (words.length) reasons.push(`Uses scam wording: ${words.join(', ')}`);
 
   warningBanner = document.createElement('div');
   warningBanner.id = 'phishguard-warning';
+  warningBanner.setAttribute('role', 'alert');
+  warningBanner.dataset.level = high ? 'high' : 'caution';
   warningBanner.innerHTML = `
     <style>
       #phishguard-warning {
-        font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
-        margin: 12px 0 18px;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px ${borderCol};
-        animation: pgSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        --pg-bg: #fce8e6; --pg-ink: #3c0d0a; --pg-muted: #5f2b26; --pg-strong: #b3261e; --pg-line: rgba(179,38,30,.22);
+        font: 14px/1.5 'Google Sans', Roboto, 'Segoe UI', Arial, sans-serif;
+        margin: 4px 0 20px; padding: 16px 20px 14px; border-radius: 8px;
+        background: var(--pg-bg); color: var(--pg-ink);
+        animation: pgIn .25s ease-out;
       }
-      @keyframes pgSlideIn {
-        from { opacity: 0; transform: translateY(-16px) scale(0.98); }
-        to   { opacity: 1; transform: translateY(0)   scale(1); }
+      #phishguard-warning[data-level="caution"] { --pg-bg: #fef7e0; --pg-ink: #3d2a00; --pg-muted: #5c4400; --pg-strong: #8a5a00; --pg-line: rgba(138,90,0,.25); }
+      #phishguard-warning[data-theme="dark"] { --pg-bg: #3b1f1d; --pg-ink: #fbe3e0; --pg-muted: #e6b8b3; --pg-strong: #f4a19a; --pg-line: rgba(244,161,154,.25); }
+      #phishguard-warning[data-theme="dark"][data-level="caution"] { --pg-bg: #352b14; --pg-ink: #fbefd2; --pg-muted: #e3cf9e; --pg-strong: #fdd663; --pg-line: rgba(253,214,99,.25); }
+      @keyframes pgIn { from { opacity: 0; transform: translateY(-4px); } }
+      @media (prefers-reduced-motion: reduce) { #phishguard-warning { animation: none; } }
+      #phishguard-warning * { box-sizing: border-box; font: inherit; color: inherit; }
+      #phishguard-warning .pg-top { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pg-muted); }
+      #phishguard-warning .pg-top img { width: 18px; height: 18px; border-radius: 4px; }
+      #phishguard-warning .pg-score { margin-left: auto; font-variant-numeric: tabular-nums; }
+      #phishguard-warning .pg-score b { color: var(--pg-strong); font-weight: 700; }
+      #phishguard-warning .pg-x {
+        width: 28px; height: 28px; margin: -4px -8px -4px 4px; border: 0; border-radius: 50%;
+        background: none; cursor: pointer; font-size: 18px; line-height: 1; color: var(--pg-muted);
       }
-      #phishguard-warning .pg-header {
-        background: ${headerBg};
-        padding: 14px 18px 13px;
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        border-bottom: 1px solid ${borderCol};
+      #phishguard-warning .pg-x:hover { background: var(--pg-line); }
+      #phishguard-warning h2 { margin: 6px 0 2px; font-size: 18px; font-weight: 600; line-height: 1.3; color: var(--pg-strong); }
+      #phishguard-warning .pg-advice { margin: 0; color: var(--pg-ink); max-width: 70ch; }
+      #phishguard-warning ul { margin: 10px 0 0; padding: 10px 0 0 18px; border-top: 1px solid var(--pg-line); color: var(--pg-muted); }
+      #phishguard-warning li { margin: 2px 0; }
+      #phishguard-warning .pg-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: 12px; }
+      #phishguard-warning button { cursor: pointer; }
+      #phishguard-warning .pg-report {
+        border: 0; border-radius: 18px; padding: 7px 16px; font-weight: 600;
+        background: var(--pg-strong); color: var(--pg-bg);
       }
-      #phishguard-warning .pg-icon {
-        width: 40px; height: 40px;
-        background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(4px);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-        font-size: 20px;
-        border: 1px solid rgba(255,255,255,0.15);
-      }
-      #phishguard-warning .pg-title-group { flex: 1; min-width: 0; }
-      #phishguard-warning .pg-badge {
-        font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em;
-        text-transform: uppercase;
-        background: ${accentColor};
-        color: #0a0005;
-        padding: 2px 9px; border-radius: 20px;
-        display: inline-block; margin-bottom: 5px;
-      }
-      #phishguard-warning .pg-title {
-        font-size: 15px; font-weight: 700; color: #fff;
-        line-height: 1.25; white-space: nowrap;
-        overflow: hidden; text-overflow: ellipsis;
-      }
-      #phishguard-warning .pg-dismiss {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.18);
-        color: rgba(255,255,255,0.75);
-        padding: 5px 13px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 11.5px;
-        font-weight: 600;
-        transition: all 0.2s;
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
-      #phishguard-warning .pg-dismiss:hover {
-        background: rgba(255,255,255,0.18);
-        color: #fff;
-      }
-      #phishguard-warning .pg-body {
-        background: ${bodyBg};
-        padding: 14px 18px 16px;
-      }
-      /* Score row */
-      #phishguard-warning .pg-score-row {
-        display: flex; align-items: center; gap: 10px;
-        margin-bottom: 13px;
-      }
-      #phishguard-warning .pg-score-label {
-        font-size: 11px; color: #71717a; white-space: nowrap;
-        text-transform: uppercase; letter-spacing: 0.05em;
-      }
-      #phishguard-warning .pg-score-bar {
-        flex: 1; height: 5px; border-radius: 3px;
-        background: rgba(255,255,255,0.08);
-        overflow: hidden;
-      }
-      #phishguard-warning .pg-score-fill {
-        height: 100%; border-radius: 3px;
-        background: ${barColor};
-        width: ${analysis.riskScore}%;
-        transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
-      }
-      #phishguard-warning .pg-score-num {
-        font-size: 14px; font-weight: 700; color: ${accentColor};
-        white-space: nowrap; min-width: 36px; text-align: right;
-      }
-      /* Reasons */
-      #phishguard-warning .pg-reasons {
-        display: flex; flex-direction: column; gap: 4px;
-        margin-bottom: 11px;
-      }
-      #phishguard-warning .pg-reason {
-        font-size: 12px; color: #c4c4cc;
-        display: flex; align-items: flex-start; gap: 7px;
-        line-height: 1.45;
-      }
-      #phishguard-warning .pg-reason-dot {
-        width: 5px; height: 5px; border-radius: 50%;
-        background: ${accentColor};
-        flex-shrink: 0; margin-top: 5px;
-      }
-      /* Sender chip */
-      #phishguard-warning .pg-sender {
-        display: inline-flex; align-items: center; gap: 5px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 11px; color: #9ca3af;
-        margin-bottom: 11px;
-      }
-      /* Keyword chips */
-      #phishguard-warning .pg-keywords {
-        display: flex; flex-wrap: wrap; gap: 5px;
-        margin-bottom: 13px;
-      }
-      #phishguard-warning .pg-kw-label {
-        font-size: 10.5px; color: #6b7280;
-        text-transform: uppercase; letter-spacing: 0.05em;
-        width: 100%; margin-bottom: 2px;
-      }
-      #phishguard-warning .pg-kw {
-        font-size: 10.5px; font-weight: 600;
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(255,255,255,0.12);
-        color: ${accentColor};
-        padding: 2px 8px; border-radius: 5px;
-        white-space: nowrap;
-      }
-      /* Footer tip */
-      #phishguard-warning .pg-footer {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 10px;
-        padding: 10px 13px;
-        font-size: 11.5px;
-        color: #9ca3af;
-        line-height: 1.65;
-      }
-      #phishguard-warning .pg-footer strong { color: #fcd34d; }
-      #phishguard-warning .pg-actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 10px;
-      }
-      #phishguard-warning .pg-btn {
-        border: 0;
-        border-radius: 8px;
-        padding: 7px 12px;
-        font-size: 11.5px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-      #phishguard-warning .pg-btn.report {
-        background: rgba(239,68,68,0.25);
-        color: #fecaca;
-        border: 1px solid rgba(239,68,68,0.55);
-      }
-      #phishguard-warning .pg-btn.open {
-        background: rgba(45,212,191,0.2);
-        color: #99f6e4;
-        border: 1px solid rgba(45,212,191,0.45);
-      }
-      #phishguard-warning .pg-feedback {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-      #phishguard-warning .pg-mini-btn {
-        border: 1px solid rgba(255,255,255,0.2);
-        background: rgba(255,255,255,0.05);
-        color: #d4d4d8;
-        border-radius: 8px;
-        padding: 5px 10px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-      }
+      #phishguard-warning .pg-link { border: 0; background: none; padding: 4px 0; font-weight: 600; color: var(--pg-strong); }
+      #phishguard-warning .pg-link:hover, #phishguard-warning .pg-link:focus-visible { text-decoration: underline; }
+      #phishguard-warning .pg-feedback { margin-left: auto; font-size: 13px; color: var(--pg-muted); }
+      #phishguard-warning .pg-feedback .pg-link { font-size: 13px; margin-left: 8px; }
+      #phishguard-warning button:disabled { cursor: default; opacity: .7; text-decoration: none; }
+      #phishguard-warning button:focus-visible { outline: 2px solid var(--pg-strong); outline-offset: 2px; }
     </style>
 
-    <div class="pg-header">
-      <div class="pg-icon">🛡️</div>
-      <div class="pg-title-group">
-        <div class="pg-badge">${severityLabel}</div>
-        <div class="pg-title">PhishGuard · ${escapeHtml(scamType)}</div>
-      </div>
-      <button id="phishguard-dismiss-btn" class="pg-dismiss">✕ Dismiss</button>
+    <div class="pg-top">
+      <img src="${chrome.runtime.getURL('icon.png')}" alt="">
+      <span>PhishGuard</span>
+      <span class="pg-score">Scam score <b>${analysis.riskScore}</b>/100</span>
+      <button id="phishguard-dismiss-btn" class="pg-x" aria-label="Dismiss warning">×</button>
     </div>
-
-    <div class="pg-body">
-      <div class="pg-score-row">
-        <span class="pg-score-label">Risk Score</span>
-        <div class="pg-score-bar"><div class="pg-score-fill"></div></div>
-        <span class="pg-score-num">${analysis.riskScore}%</span>
-      </div>
-
-      <div class="pg-reasons">
-        ${topReasons.map(r => `<div class="pg-reason"><div class="pg-reason-dot"></div><span>${escapeHtml(r)}</span></div>`).join('')}
-      </div>
-
-      ${senderEmail ? `<div class="pg-sender">📧 <span>${escapeHtml(senderEmail)}</span></div>` : ''}
-
-      ${topKeywords.length > 0 ? `
-      <div class="pg-keywords">
-        <div class="pg-kw-label">Suspicious keywords detected</div>
-        ${topKeywords.map(k => `<span class="pg-kw">${escapeHtml(k)}</span>`).join('')}
-      </div>` : ''}
-
-      <div class="pg-actions">
-        <button id="phishguard-report-btn" class="pg-btn report">Report to PhishGuard</button>
-        <button id="phishguard-open-dashboard-btn" class="pg-btn open">Open Dashboard</button>
-      </div>
-
-      <div class="pg-feedback">
-        <button id="phishguard-feedback-right" class="pg-mini-btn">Looks Right</button>
-        <button id="phishguard-feedback-fp" class="pg-mini-btn">False Positive</button>
-      </div>
-
-      <div class="pg-footer">
-        <strong>⚠️ Stay Safe:</strong> Legitimate internships <strong>never charge fees</strong>.
-        Don't fill any Google Form link. Verify with your placement cell.
-        Real companies (IBM, Microsoft) <strong>never</strong> email from Gmail or random domains.
-      </div>
+    <h2>${headline}</h2>
+    <p class="pg-advice">${advice}</p>
+    ${reasons.length ? `<ul>${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
+    <div class="pg-actions">
+      <button id="phishguard-report-btn" class="pg-report">Report scam</button>
+      <button id="phishguard-open-dashboard-btn" class="pg-link">Open dashboard</button>
+      <span class="pg-feedback">Is this right?
+        <button id="phishguard-feedback-right" class="pg-link">Yes</button>
+        <button id="phishguard-feedback-fp" class="pg-link">No, it’s safe</button>
+      </span>
     </div>
   `;
+
 
   // Insert banner — try multiple Gmail containers
   const containerSelectors = [
@@ -776,6 +593,11 @@ function showPhishingWarning(analysis, senderEmail) {
     const mainArea = document.querySelector('[role="main"]');
     if (mainArea) mainArea.insertBefore(warningBanner, mainArea.firstChild);
   }
+  // Match Gmail's theme: use the first opaque background behind the banner
+  let bgEl = warningBanner.parentElement, bg = '';
+  while (bgEl && (!bg || bg === 'transparent' || bg.endsWith(', 0)'))) { bg = getComputedStyle(bgEl).backgroundColor; bgEl = bgEl.parentElement; }
+  const rgb = bg.endsWith(', 0)') ? [255, 255, 255] : (bg.match(/\d+/g) || [255, 255, 255]).map(Number);
+  if (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 < 128) warningBanner.dataset.theme = 'dark';
 
   const dismissBtn = document.getElementById('phishguard-dismiss-btn');
   if (dismissBtn) dismissBtn.addEventListener('click', removeWarningBanner);
@@ -949,29 +771,21 @@ function addScanButton() {
   const scanBtn = document.createElement('div');
   scanBtn.id = 'phishguard-scan-btn';
   scanBtn.innerHTML = `
-    <div style="
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      margin-left: 8px;
-      background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
-      color: white;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
-      transition: all 0.2s;
-      font-family: 'Google Sans', Roboto, sans-serif;
-    " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(8, 145, 178, 0.4)'"
-       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(8, 145, 178, 0.3)'">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <style>
+      #phishguard-scan-btn button {
+        display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 6px 14px;
+        border: 1px solid currentColor; border-radius: 18px; background: none; color: inherit; opacity: .85;
+        font: 500 13px 'Google Sans', Roboto, sans-serif; cursor: pointer;
+      }
+      #phishguard-scan-btn button:hover, #phishguard-scan-btn button:focus-visible { opacity: 1; background: rgba(127,127,127,.15); }
+    </style>
+    <button type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
         <path d="m9 12 2 2 4-4"></path>
       </svg>
       Scan with PhishGuard
-    </div>
+    </button>
   `;
 
   toolbar.appendChild(scanBtn);
