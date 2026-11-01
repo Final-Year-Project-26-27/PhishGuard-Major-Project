@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.routers.link_scan import classify_url
 from app.routers.offer_scan import classify_message
+from app.utils.message_features import get_red_flags
 from app.utils.url_features import normalize_url
 
 client = TestClient(app)
@@ -62,6 +63,29 @@ def test_message_model_fixes_the_old_misses():
     assert classify_message(LONG_POLITE_FEE_SCAM)[0] == "Fake"     # length used to make scams look legit
     assert classify_message(GENUINE_TCS)[0] == "Legit"
     assert classify_message(PLACEMENT_NOTICE)[0] == "Legit"
+
+
+def test_pay_to_intern_training_programs_are_flagged():
+    # The most common "internship" scam in student inboxes: the fee is only hinted at
+    text = (
+        "Congratulations! You have been shortlisted for the Online Internship Program powered by a global tech brand. "
+        "Complete your application at the form link to confirm your seat. You will receive a co-branded certificate, "
+        "an AICTE and NSDC approved traineeship certificate and lifetime job assistance. Use scholarship code TECH@30 "
+        "for a 30% concession. Note: mentor charges are applicable. Forward this to classmates who missed it."
+    )
+    assert classify_message(text)[0] == "Fake"
+    assert any("training, mentoring or certificates" in f for f in get_red_flags(text))
+
+
+def test_placement_cell_drive_with_a_google_form_is_legit():
+    text = (
+        "Dear students, kindly go through the campus drive details for the Analyst role. Eligible students register "
+        "in the Google Form https://forms.gle/abc123 by 15th October, 10.00 am. Stipend: Rs 20,000 per month. "
+        "Registration link closes at 10 am. Online test at college labs on 17th October, interviews on 24th October. "
+        "All Good Wishes, Head - Department of Training & Placement"
+    )
+    assert classify_message(text)[0] == "Legit"
+    assert get_red_flags(text) == []
 
 
 def test_doc_model_flags_a_fee_demanding_offer_letter():

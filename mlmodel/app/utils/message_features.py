@@ -8,10 +8,10 @@ import numpy as np
 
 # Payment demand: "pay fee/deposit", not "stipend Rs X"
 PAYMENT_DEMAND_PATTERNS = [
-    r'\bpay\b.*\b(fees?|deposits?|charges?|amount|registration|processing)\b',
-    r'\b(fees?|deposits?|charges?|registration|processing)\b.*\bpay\b',
+    r'\bpay\b.*\b(fees?|deposits?|charges?|amount|registration\s*(fees?|charges?|amount)|processing\s*(fees?|charges?))\b',
+    r'\b(fees?|deposits?|charges?|registration\s*(fees?|charges?)|processing\s*(fees?|charges?))\b.*\bpay\b',
     r'\b(fees?|deposits?|charges?)\s*[:=]?\s*(of\s*)?(rs|₹|inr)\.?\s*\d+',
-    r'(rs|₹|inr)\.?\s*\d+.{0,30}\b(fees?|deposits?|charges?|registration|processing)\b',
+    r'(rs|₹|inr)\.?\s*\d+.{0,30}\b(fees?|deposits?|charges?|registration\s*(fees?|charges?)|processing\s*(fees?|charges?))\b',
     r'\btransfer\s*(rs|₹|inr)\s*\d+',
     r'\bpay\s*(rs|₹|inr)\s*\d+',
     r'\bdeposit\s+\d+',           # e.g. "deposit 2000" without currency
@@ -38,7 +38,8 @@ URGENCY_PATTERNS = [
 ]
 
 SUSPICIOUS_LINK_PATTERNS = [
-    r'bit\.ly', r'forms\.gle', r'tinyurl', r'shorturl', r'cutt\.ly', r'rb\.gy', r'is\.gd',
+    # No forms.gle: placement cells register students through Google Forms as often as scammers do
+    r'bit\.ly', r'tinyurl', r'shorturl', r'cutt\.ly', r'rb\.gy', r'is\.gd',
     r'https?://[^\s]*\.(xyz|info|online|site|top|club|cc|shop|icu|cfd|buzz|live|vip)\b',
     r'https?://\d{1,3}(\.\d{1,3}){3}',
 ]
@@ -108,6 +109,16 @@ LEGIT_INDICATORS = [
     r'\bacademic\s*transcripts?\b',
 ]
 
+# Pay-to-intern "training programs": the fee is never stated, only hinted at
+PAID_PROGRAM_PATTERNS = [
+    r'\b(training|mentor|mentorship|placement\s*mentor|program|programme|resource|administrative|course|certification)\s*(fees?|charges?)\b',
+    r'\b(fees?|charges?)\s*(are\s*|is\s*)?(applicable|apply|may\s*apply)\b',
+    r'\b(scholarship|referral|coupon|discount)\s*code\b',
+    r'\bco-?branded\s*(training\s*|internship\s*)?certificate',
+    r'\bnominal\s*(\w+\s*)?(fee|charge)',
+    r'\b\d{2}\s*%\s*(scholarship|discount|concession)\b',
+]
+
 PATTERN_GROUPS = {
     "payment_demand": PAYMENT_DEMAND_PATTERNS,
     "urgency": URGENCY_PATTERNS,
@@ -117,6 +128,7 @@ PATTERN_GROUPS = {
     "credential": CREDENTIAL_PATTERNS,
     "pressure": PRESSURE_PATTERNS,
     "account_threat": ACCOUNT_THREAT_PATTERNS,
+    "paid_program": PAID_PROGRAM_PATTERNS,
     "legit": LEGIT_INDICATORS,
 }
 
@@ -129,6 +141,7 @@ RED_FLAG_TEXT = {
     "credential": "Asks for sensitive documents, bank details or OTP",
     "pressure": "Social pressure tactics detected",
     "account_threat": "Threatens your account or asks you to verify details",
+    "paid_program": "Charges for training, mentoring or certificates (real internships never do)",
 }
 
 

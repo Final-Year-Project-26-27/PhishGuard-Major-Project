@@ -34,16 +34,16 @@ for the final message-model score.
 
 ## Message model (`message_model.pkl`): `/scan/offer`, `/scan/email`, `/scan/unified`, WhatsApp bot
 
-- **Data:** 10,812 messages: real phishing emails (Nazario corpus 2023-2025), real legitimate email
-  (SpamAssassin), real SMS (UCI SMS Spam Collection), student internship/job offers, and 143 curated
-  modern Indian messages (fee offers, KYC, task jobs, courier and electricity scams; placement notices,
-  genuine offers, bank alerts, OTPs). Student and Indian sources are weighted up.
-- **Model:** word 1-2-gram TF-IDF plus 17 standardised scam-pattern features (fee demands, UPI handles,
-  urgency, chat-only contact, unrealistic promises, credential requests, account threats, legitimacy
-  markers, log length), logistic regression. Lengths are log-scaled and standardised, so a long, polite
+- **Data:** 10,828 messages: real phishing emails (Nazario corpus 2023-2025), real legitimate email
+  (SpamAssassin), real SMS (UCI SMS Spam Collection), student internship/job offers, and 159 curated
+  modern Indian messages (fee offers, pay-to-intern training programs, KYC, task jobs, courier and
+  electricity scams; placement-cell drive notices, genuine offers, bank alerts, OTPs). Student and Indian sources are weighted up.
+- **Model:** word 1-2-gram TF-IDF plus 18 standardised scam-pattern features (fee demands, UPI handles,
+  urgency, chat-only contact, unrealistic promises, credential requests, account threats, paid-training
+  hints such as "mentor fees applicable" or a scholarship code, legitimacy markers, log length), logistic regression. Lengths are log-scaled and standardised, so a long, polite
   scam no longer reads as legit (the old model's main bug).
-- **Held out (2,158 messages, by template family):** accuracy 98.5%, precision 95.5%, recall 96.0%,
-  false-positive rate 0.95%, ROC AUC 0.996.
+- **Held out (2,154 messages, by template family):** accuracy 98.1%, precision 96.6%, recall 92.9%,
+  false-positive rate 0.74%, ROC AUC 0.994.
 - **Challenge sets:** set 1, 97.8% (44/45); set 2, 97.5% (39/40: 19/20 scams caught, 20/20 genuine).
 - **Known limits:** an opening message with no fee, link or threat yet ("part-time job, shall I share
   details on Telegram?") can pass; a scam usually shows its hand in the next message. English only.
@@ -54,7 +54,7 @@ for the final message-model score.
   long message once it is text.
 - **Model:** word 1-3-gram TF-IDF plus standardised document indicators and the message model's
   scam patterns, logistic regression.
-- **Held out (2,317 texts):** accuracy 98.3%, precision 95.0%, recall 95.8%, ROC AUC 0.996.
+- **Held out (2,333 texts):** accuracy 97.9%, precision 94.0%, recall 94.8%, ROC AUC 0.996.
   `test_documents/`: 6/6. Challenge sets: 95.6% and 95.0%; a fee-demanding offer letter is caught.
 - **Known limits:** tuned for letters; very short chat-style texts are better checked as messages.
   No OCR, so image-only PDFs are rejected.
@@ -63,8 +63,24 @@ for the final message-model score.
 
 - **Data and model:** the message corpus, word TF-IDF and logistic regression on the raw body
   (`email/models/train_classifier.py`).
-- **Held out:** accuracy 98%, phish precision 94%, recall 96%. Challenge sets: 95.6% and 95.0%.
+- **Held out:** accuracy 99%, phish precision 95%, recall 94%. Challenge sets: 95.6% and 95.0%.
 - It adds at most 3 of the pipeline's 10 points; authentication, heuristics and VirusTotal add the rest.
+
+## Real inbox check
+
+The message, doc and Gmail models were also run on a student's real college inbox (read only; no mail
+text is stored in this repo). The scams there are mostly pay-to-intern "training programs": a
+"shortlisted" mail to a whole batch, a Google Form, Microsoft/IBM/AICTE names, and a fee that is only
+hinted at ("mentor fees applicable", a scholarship code). Genuine mail is placement-cell drive notices.
+
+- First batch (14 mails): 8/8 scams caught, but 3/6 placement notices flagged. Two causes were fixed:
+  "registration" alone counted as a fee demand, and this mail style was missing from training
+  (paraphrased examples, no real text, were added to `datasets/messages_curated.jsonl`).
+- Holdout batch (13 different mails, never used for training): message model 11/13 at first, both misses
+  being drives that register students through Google Forms. Google Forms links stopped counting as
+  suspicious (placement cells use them as much as scammers); after that, 13/13 for the message and doc
+  models. The Gmail L2 classifier was 13/13 throughout. That change was made after seeing the holdout,
+  so treat 13/13 as optimistic and 11/13 as the untouched score.
 
 ## Retraining
 
