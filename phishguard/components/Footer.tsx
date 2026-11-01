@@ -46,7 +46,7 @@ export default function Footer() {
       <div className="max-w-[75rem] mx-auto px-4 sm:px-6 space-y-12">
         <section aria-labelledby="contact-devs" className="space-y-5">
           <h2 id="contact-devs" className="text-lg font-semibold text-white">
-            Contact the developers
+            Contact the devs
           </h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
             {TEAM.map((dev) => (
@@ -67,8 +67,7 @@ export default function Footer() {
           </ul>
         </section>
 
-        <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-baseline text-sm sm:text-base">
-          <p className="text-zinc-400">Scam defense for students.</p>
+        <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-baseline text-sm sm:text-base">
           <nav className="flex flex-wrap gap-x-6 gap-y-1">
             {links.map((l) => (
               <Link key={l.href} href={l.href} className="text-zinc-100 hover:text-teal-300 transition-colors">

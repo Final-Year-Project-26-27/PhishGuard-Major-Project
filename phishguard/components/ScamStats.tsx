@@ -56,10 +56,7 @@ export default function ScamStats() {
           </dl>
         </div>
 
-        <div className="space-y-3">
-          <ScamGlobe />
-          <p className="text-sm text-zinc-400 text-center">Drag to spin. Lines run from our college to cities where students job-hunt.</p>
-        </div>
+        <ScamGlobe />
       </div>
     </section>
   )

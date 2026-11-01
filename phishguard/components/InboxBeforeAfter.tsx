@@ -61,7 +61,6 @@ export default function InboxBeforeAfter() {
                 </p>
               </div>
             </div>
-            <p className="text-sm text-teal-50">Example messages. Names and numbers are made up.</p>
           </div>
         </div>
       </div>

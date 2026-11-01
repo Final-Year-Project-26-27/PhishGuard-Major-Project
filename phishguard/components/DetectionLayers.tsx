@@ -37,12 +37,35 @@ function Flag({ on, children }: { on: boolean; children: React.ReactNode }) {
 }
 
 export default function DetectionLayers() {
-  // Without script, and on phones, the card shows every layer applied.
+  // Without script, and with reduced motion on phones, the card shows every layer applied.
   const [active, setActive] = useState(2)
   const steps = useRef<(HTMLLIElement | null)[]>([])
+  const card = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!window.matchMedia('(min-width: 1024px)').matches) return
+    if (!window.matchMedia('(min-width: 1024px)').matches) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !card.current) return
+      // Phones: the card isn't pinned, so play the layers in turn once it's on screen.
+      setActive(-1)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const step = (i: number) => {
+        setActive(i)
+        if (i < 2) timer = setTimeout(() => step(i + 1), 1800)
+      }
+      const io = new IntersectionObserver(
+        ([e]) => {
+          if (!e.isIntersecting) return
+          io.disconnect()
+          timer = setTimeout(() => step(0), 700)
+        },
+        { threshold: 0.4 }
+      )
+      io.observe(card.current)
+      return () => {
+        io.disconnect()
+        clearTimeout(timer)
+      }
+    }
     setActive(-1)
     const io = new IntersectionObserver(
       (entries) => {
@@ -74,7 +97,7 @@ export default function DetectionLayers() {
 
         <div className="mt-16 grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* The pinned message: a fragment of the real warning UI */}
-          <div className="lg:sticky lg:top-24" data-ui="layer-demo">
+          <div ref={card} className="lg:sticky lg:top-24" data-ui="layer-demo">
             <div className="rounded-lg bg-[#1b1d21] p-5 sm:p-6 space-y-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">

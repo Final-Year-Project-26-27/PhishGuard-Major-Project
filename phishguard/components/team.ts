@@ -1,4 +1,4 @@
-// Shown in this order in the footer's "Contact the developers".
+// Shown in this order in the footer's "Contact the devs".
 // Leave email or instagram as '' and that icon shows greyed out, not linked.
 export const TEAM = [
   {

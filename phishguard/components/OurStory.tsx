@@ -47,14 +47,14 @@ export default function OurStory() {
         <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-16 items-end">
           <figure className="space-y-3 order-2 lg:order-1 taste-enter-d1">
             <Image
-              src="/assets/campus/nmamit-university-karkala.jpg"
-              alt="The NMAMIT campus seen from above, with gardens and palm trees"
-              width={1000}
-              height={1333}
-              className="w-full aspect-[4/3] lg:aspect-[5/4] object-cover object-bottom rounded-lg"
+              src="/assets/campus/nmamit-campus-aerial.jpg"
+              alt="Aerial view of the NMAMIT campus: the Ramanujan Block, the main building and the gardens, with forest behind"
+              width={1600}
+              height={900}
+              className="w-full aspect-[16/9] object-cover rounded-lg"
             />
             <figcaption>
-              <Credit href="https://commons.wikimedia.org/wiki/File:NMAMIT_university_karkala.jpg" by="Aryabn46" />
+              <Credit href="https://commons.wikimedia.org/wiki/File:Ramanujan_Block_NMAMIT.jpg" by="Sathish.kabyadi" />
             </figcaption>
           </figure>
 

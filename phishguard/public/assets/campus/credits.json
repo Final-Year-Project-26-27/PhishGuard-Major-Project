@@ -24,27 +24,20 @@
     "saved": "2026-10-31T19:21:17.863Z"
   },
   {
-    "file": "assets/nmamit-university-karkala.jpg",
+    "file": "assets/nmamit-campus-aerial.jpg",
     "media": "image",
-    "ref": "commons:183577065",
-    "title": "NMAMIT university karkala",
-    "creator": "Aryabn46",
-    "creatorUrl": null,
-    "date": "2026-02-09",
+    "title": "Ramanujan Block NMAMIT",
+    "creator": "Sathish.kabyadi",
     "license": "CC BY-SA 4.0",
-    "licenseCode": "by-sa",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "creditRequired": true,
-    "page": "https://commons.wikimedia.org/wiki/File:NMAMIT_university_karkala.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Ramanujan_Block_NMAMIT.jpg",
     "via": "Wikimedia Commons",
-    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/NMAMIT_university_karkala.jpg/1920px-NMAMIT_university_karkala.jpg",
-    "width": 1920,
-    "height": 2560,
-    "bytes": 1287580,
-    "credit": "\"NMAMIT university karkala\" by Aryabn46, CC BY-SA 4.0, via Wikimedia Commons",
+    "width": 1600,
+    "height": 900,
+    "credit": "\"Ramanujan Block NMAMIT\" by Sathish.kabyadi, CC BY-SA 4.0, via Wikimedia Commons",
     "notes": [
-      "Share-alike: an altered version (recoloured, combined with other pictures) must be shared under the same licence."
-    ],
-    "saved": "2026-10-31T19:21:19.040Z"
+      "Resized from the 1920px Commons thumbnail."
+    ]
   }
 ]

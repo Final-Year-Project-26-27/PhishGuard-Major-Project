@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  Shield,
   RefreshCw,
 } from 'lucide-react'
 import { API_URL } from '@/lib/utils'
@@ -214,10 +213,7 @@ export default function HomePage() {
                     <span>Checking…</span>
                   </>
                 ) : (
-                  <>
-                    <Shield className="size-5" />
-                    <span>Check for scams</span>
-                  </>
+                  <span>Check for scams</span>
                 )}
               </button>
 
