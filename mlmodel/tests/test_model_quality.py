@@ -88,6 +88,19 @@ def test_placement_cell_drive_with_a_google_form_is_legit():
     assert get_red_flags(text) == []
 
 
+def test_job_portal_alert_is_never_a_red_alert():
+    # Real portal alerts say "verify your account" and "no experience required", like phishing does;
+    # the site shows a scam verdict under 70% as a caution, so this must be legit or below that line
+    text = (
+        "Internships for students of your college. Companies are actively hiring! Verify your account to start "
+        "applying. Content Writing - Redleaf Media - Remote - 3 months - Rs 6,000 /month - Internship. Sales - "
+        "Corwin Retail - Pune - 6 months - Rs 10,000 - 12,000 /month - Internship. Actively hiring - Support "
+        "Associate - Helix BPO - Noida - Rs 2,40,000 /year - No experience required - Job. Verify and apply now."
+    )
+    prediction, confidence = classify_message(text)
+    assert prediction == "Legit" or confidence < 0.7
+
+
 def test_doc_model_flags_a_fee_demanding_offer_letter():
     letter = (
         "OFFER LETTER\n\nDate: 28 October 2026\n\nDear Candidate,\n\nWe are pleased to offer you the position of "

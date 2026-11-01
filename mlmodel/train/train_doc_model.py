@@ -22,7 +22,7 @@ from app.utils.message_features import message_matrix
 from train.metrics import binary_report, challenge_reports, save_metrics
 
 SAMPLES = Path("../test_documents")
-SOURCE_WEIGHT = {"curated": 6.0, "offer_corpus": 6.0, "offer_generated": 2.0, "documents": 2.0}
+SOURCE_WEIGHT = {"curated": 6.0, "inbox": 6.0, "offer_corpus": 6.0, "offer_generated": 2.0, "documents": 2.0}
 
 
 def load_documents() -> pd.DataFrame:

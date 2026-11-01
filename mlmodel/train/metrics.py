@@ -27,7 +27,7 @@ def binary_report(y_true, p_legit, threshold: float = 0.5) -> dict:
     }
 
 
-def challenge_reports(model) -> dict:
+def challenge_reports(model, threshold: float = 0.5) -> dict:
     """Score a message pipeline on every hand-written challenge set (never trained on), printing misses."""
     import pandas as pd
 
@@ -35,10 +35,10 @@ def challenge_reports(model) -> dict:
     for path in sorted(Path("tests/fixtures").glob("challenge_messages*.jsonl")):
         df = pd.read_json(path, lines=True)
         p = model.predict_proba(df["text"])[:, 1]
-        reports[path.stem] = binary_report(df["label"], p)
+        reports[path.stem] = binary_report(df["label"], p, threshold)
         print(f"{path.stem} (never trained on): {reports[path.stem]}")
         for text, y, q in zip(df["text"], df["label"], p):
-            if (q >= 0.5) != bool(y):
+            if (q >= threshold) != bool(y):
                 print("  MISS:", text[:90])
     return reports
 

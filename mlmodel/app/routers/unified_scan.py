@@ -24,6 +24,7 @@ except Exception:
 
 from app.routers.link_scan import classify_url
 from app.routers.offer_scan import classify_message
+from app.utils.message_features import get_red_flags
 
 router = APIRouter()
 
@@ -33,12 +34,6 @@ SENSITIVE_PATTERNS = {
     "identity": re.compile(r"\b(aadhaar|pan\s*card|passport|ssn|social\s*security)\b", re.IGNORECASE),
     "personal_email": re.compile(r"[\w.+%-]+@[\w.-]+\.[a-zA-Z]{2,}"),
     "phone": re.compile(r"\b(?:\+?\d{1,3}[\s-]?)?(?:\d[\s-]?){10,12}\b"),
-}
-
-EMAIL_SIGNAL_RULES = {
-    "urgency": ["urgent", "immediately", "act now", "final notice", "deadline", "expires"],
-    "credential_request": ["verify account", "confirm password", "share otp", "reset password"],
-    "payment_pressure": ["pay now", "processing fee", "wire transfer", "refund claim"],
 }
 
 
@@ -114,18 +109,11 @@ def _link_model_score(url: str) -> tuple[int, str, float]:
 
 
 def _email_rule_signals(email_text: str) -> list[str]:
-    text = (email_text or "").lower()
-    findings: list[str] = []
-
-    for category, words in EMAIL_SIGNAL_RULES.items():
-        hits = [word for word in words if word in text]
-        if hits:
-            findings.append(f"{category.replace('_', ' ')}: {', '.join(hits[:3])}")
-
-    link_count = len(re.findall(r"http[s]?://\S+", text))
+    # Same red flags the email and offer scans show, so every page explains a verdict the same way
+    findings = get_red_flags(email_text or "")
+    link_count = len(re.findall(r"http[s]?://\S+", email_text or ""))
     if link_count > 0:
-        findings.append(f"contains {link_count} embedded link(s)")
-
+        findings.append(f"Contains {link_count} link{'s' if link_count > 1 else ''}")
     return findings
 
 
@@ -137,9 +125,9 @@ def _trusted_domain_adjustment(domain: str, trusted_domains: list[str]) -> tuple
     normalized_trusted = [_normalize_domain(d) for d in trusted_domains if d]
 
     if any(_is_domain_or_subdomain(normalized_domain, td) for td in normalized_trusted if td):
-        return -18, "sender matches trusted domain baseline"
+        return -18, "Sent from a domain you trust"
 
-    return 6, "sender is outside trusted-domain baseline"
+    return 6, "Sent from outside your trusted domains"
 
 
 def _is_domain_or_subdomain(domain: str, trusted: str) -> bool:
@@ -335,7 +323,7 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
 
         domain = _normalize_domain(payload.url)
         if any(token in domain for token in ["login", "verify", "secure", "update"]):
-            reasons.append("url uses social-engineering style domain tokens")
+            reasons.append("The link's address uses words like login, verify or secure")
 
     if not raw_scores:
         return {
@@ -343,7 +331,7 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
             "risk_score": 0,
             "risk_level": "LOW",
             "recommendation": "allow",
-            "explanations": ["No valid scan input provided."],
+            "explanations": ["Nothing to check: add the message text or a link."],
             "signals": {
                 "email": email_prediction,
                 "link": link_prediction,
@@ -364,7 +352,7 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
     if level == "HIGH":
         recommendation = "block_or_step_up"
 
-    explanations = reasons[:6] if reasons else ["Model confidence-based risk scoring applied."]
+    explanations = reasons[:6] if reasons else ["No scam signals found in the message or link."]
 
     return {
         "event_id": event_id,
@@ -437,7 +425,7 @@ def url_intel_scan(payload: UrlIntelRequest):
     domain = _safe_domain_from_url(url)
     trusted_domains = [_normalize_domain(d) for d in payload.trusted_domains if d]
     trusted_adjustment = -20 if domain and any(_is_domain_or_subdomain(domain, d) for d in trusted_domains if d) else 0
-    trusted_reason = "trusted-domain baseline match" if trusted_adjustment < 0 else None
+    trusted_reason = "Site is on your trusted list" if trusted_adjustment < 0 else None
 
     final_score = int(round(model_score * 0.55 + scrape_score * 0.45 + trusted_adjustment))
     final_score = max(0, min(100, final_score))

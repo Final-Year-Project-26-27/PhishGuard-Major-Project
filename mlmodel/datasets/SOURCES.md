@@ -29,12 +29,14 @@ shorteners, platforms where anyone can get a subdomain, sites with 3+ phish on t
 ## `messages.csv` (message model, doc model, Gmail L2 classifier)
 
 Built by `python -m train.build_message_dataset <raw_dir>`. Columns: `text`, `label` (1 legit, 0 scam),
-`source`, `group` (template family; used to split train/test).
+`source`, `group` (template family; used to split train/test), `date` (inbox mails only; used for the
+time-based test).
 
 | Source | Where from | Class |
 | --- | --- | --- |
 | `offer_corpus` | `offer_messages.csv`, `offer_messages_extra.csv`: student internship/job offers | both |
 | `offer_generated` | `offer_messages_generated.csv`, from `generate_dataset.py` templates (grouped by template) | both |
+| `inbox` | `inbox_real.jsonl`: 131 real bulk mails from a student's college inbox (2023-2026), read with the owner's permission; addresses, phone numbers, URL paths, names and USNs removed | both |
 | `curated` | `messages_curated.jsonl`: modern Indian scams (fee offers, KYC, task jobs, courier, scholarship) and genuine placement notices, offers, bank alerts, OTPs | both |
 | `nazario` | Nazario phishing corpus 2023-2025, `monkey.org/~jose/phishing/` (CC BY 4.0) | phishing |
 | `spamassassin` | SpamAssassin public corpus, easy_ham, easy_ham_2, hard_ham | legit |

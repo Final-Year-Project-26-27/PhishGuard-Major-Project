@@ -7,6 +7,7 @@ Run from mlmodel/:  python -m train.build_message_dataset <raw_dir>
 Sources (see datasets/SOURCES.md):
   datasets/offer_messages*.csv        student internship/job offers, real and fake (this repo)
   datasets/messages_curated.jsonl     modern Indian scams and genuine notices, OTPs, offers (this repo)
+  datasets/inbox_real.jsonl           real, redacted mails from a student's college inbox, 2023-2026 (this repo)
   <raw_dir>/nazario-20*.mbox          real phishing emails, Nazario phishing corpus 2023-2025 (CC BY 4.0)
   <raw_dir>/easy_ham*, hard_ham       real legitimate emails, SpamAssassin public corpus
   <raw_dir>/SMSSpamCollection         real SMS ham/spam, UCI SMS Spam Collection (CC BY 4.0)
@@ -53,6 +54,10 @@ def load_offers() -> pd.DataFrame:
     frames.append(gen.assign(source="offer_generated"))
     curated = pd.read_json("datasets/messages_curated.jsonl", lines=True)
     frames.append(curated.assign(source="curated"))
+    # Real, redacted bulk mail from a student's college inbox; one sender's mails of one kind stay together
+    inbox = pd.read_json("datasets/inbox_real.jsonl", lines=True, dtype={"date": str})
+    inbox["group"] = "inbox:" + inbox["sender_domain"] + ":" + inbox["category"]
+    frames.append(inbox[["text", "label", "group", "date"]].assign(source="inbox"))
     return pd.concat(frames, ignore_index=True)
 
 
@@ -128,7 +133,7 @@ def main(raw_dir: str) -> None:
     conflicts = df.groupby("text")["label"].nunique()
     df = df[~df["text"].isin(conflicts[conflicts > 1].index)].drop_duplicates("text").reset_index(drop=True)
     df["group"] = df["group"].fillna(df["source"] + ":" + df.index.astype(str))
-    df[["text", "label", "source", "group"]].to_csv("datasets/messages.csv", index=False)
+    df[["text", "label", "source", "group", "date"]].to_csv("datasets/messages.csv", index=False)
     print(df.groupby(["source", "label"]).size().to_string())
     print(f"{len(df)} messages, {df.group.nunique()} groups")
 

@@ -108,7 +108,8 @@ def trusted_domains(raw: Path, phish_urls: list[str]) -> dict:
     risky_hosts = {h for reg, hosts in sub_hosts.items() if reg not in banned for h, n in hosts.items() if n >= 3}
     return {
         "domains": sorted(top_set - banned),
-        "untrusted_hosts": sorted(risky_hosts),
+        # Shorteners hide where a link really goes, so the API answers them like any shared host
+        "untrusted_hosts": sorted(risky_hosts | SHORTENERS),
         "note": f"Tranco top {TRUSTED_TOP_N} registrable domains minus sites and hosts seen serving phishing",
     }
 

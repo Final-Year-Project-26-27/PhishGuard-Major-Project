@@ -22,7 +22,7 @@ HERE = Path(__file__).resolve().parent
 DATASETS = HERE.parent.parent / "mlmodel" / "datasets"
 # Same weighting as the ML backend's message model: the student-scam and modern Indian sources are
 # small next to the public corpora, so they're weighted up to count
-SOURCE_WEIGHT = {"curated": 6.0, "offer_corpus": 6.0, "offer_generated": 2.0}
+SOURCE_WEIGHT = {"curated": 6.0, "inbox": 6.0, "offer_corpus": 6.0, "offer_generated": 2.0}
 
 
 def load_corpus() -> pd.DataFrame:

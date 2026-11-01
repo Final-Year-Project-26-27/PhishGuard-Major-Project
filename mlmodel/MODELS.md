@@ -34,16 +34,25 @@ for the final message-model score.
 
 ## Message model (`message_model.pkl`): `/scan/offer`, `/scan/email`, `/scan/unified`, WhatsApp bot
 
-- **Data:** 10,828 messages: real phishing emails (Nazario corpus 2023-2025), real legitimate email
-  (SpamAssassin), real SMS (UCI SMS Spam Collection), student internship/job offers, and 159 curated
-  modern Indian messages (fee offers, pay-to-intern training programs, KYC, task jobs, courier and
-  electricity scams; placement-cell drive notices, genuine offers, bank alerts, OTPs). Student and Indian sources are weighted up.
+- **Data:** 10,973 messages: real phishing emails (Nazario corpus 2023-2025), real legitimate email
+  (SpamAssassin), real SMS (UCI SMS Spam Collection), 131 real redacted mails from a student's college
+  inbox (2023-2026: pay-to-intern scams, placement-cell drives, college notices, job-portal alerts),
+  student internship/job offers, and 173 curated modern Indian messages (fee offers, KYC, task jobs,
+  courier and electricity scams; genuine offers, job alerts, bank alerts, OTPs). Student, inbox and
+  Indian sources are weighted up.
 - **Model:** word 1-2-gram TF-IDF plus 18 standardised scam-pattern features (fee demands, UPI handles,
   urgency, chat-only contact, unrealistic promises, credential requests, account threats, paid-training
   hints such as "mentor fees applicable" or a scholarship code, legitimacy markers, log length), logistic regression. Lengths are log-scaled and standardised, so a long, polite
   scam no longer reads as legit (the old model's main bug).
-- **Held out (2,154 messages, by template family):** accuracy 98.1%, precision 96.6%, recall 92.9%,
-  false-positive rate 0.74%, ROC AUC 0.994.
+- **Decision threshold:** chosen on validation data at training time (Youden's J) and stored in the
+  pipeline; it came out at 0.5. The website shows a scam verdict under 70% confidence as a caution
+  (amber), not a red alert.
+- **Held out (2,160 messages, by template family):** accuracy 98.1%, precision 96.1%, recall 93.5%,
+  false-positive rate 0.85%, ROC AUC 0.996.
+- **Real inbox mail from 2026, trained only on 2023-2025 data (61 mails):** 23/23 scams caught,
+  31/38 genuine mails passed (accuracy 88.5%, ROC AUC 0.991). The 7 false alarms are job-portal alerts
+  and product welcome mails whose wording ("verify your account", "no experience required") sounds like
+  phishing; none were placement-cell or college notices.
 - **Challenge sets:** set 1, 97.8% (44/45); set 2, 97.5% (39/40: 19/20 scams caught, 20/20 genuine).
 - **Known limits:** an opening message with no fee, link or threat yet ("part-time job, shall I share
   details on Telegram?") can pass; a scam usually shows its hand in the next message. English only.
@@ -54,8 +63,8 @@ for the final message-model score.
   long message once it is text.
 - **Model:** word 1-3-gram TF-IDF plus standardised document indicators and the message model's
   scam patterns, logistic regression.
-- **Held out (2,333 texts):** accuracy 97.9%, precision 94.0%, recall 94.8%, ROC AUC 0.996.
-  `test_documents/`: 6/6. Challenge sets: 95.6% and 95.0%; a fee-demanding offer letter is caught.
+- **Held out (2,332 texts):** accuracy 98.2%, precision 95.1%, recall 95.3%, ROC AUC 0.995.
+  `test_documents/`: 6/6. Challenge sets: 100% and 95.0%; a fee-demanding offer letter is caught.
 - **Known limits:** tuned for letters; very short chat-style texts are better checked as messages.
   No OCR, so image-only PDFs are rejected.
 
@@ -64,12 +73,20 @@ for the final message-model score.
 - **Data and model:** the message corpus, word TF-IDF and logistic regression on the raw body
   (`email/models/train_classifier.py`).
 - **Held out:** accuracy 99%, phish precision 95%, recall 94%. Challenge sets: 95.6% and 95.0%.
+  Real inbox mail from 2026 (trained on 2023-2025 only): 22/23 scams caught, 35/38 genuine passed (93.4%).
 - It adds at most 3 of the pipeline's 10 points; authentication, heuristics and VirusTotal add the rest.
 
 ## Real inbox check
 
-The message, doc and Gmail models were also run on a student's real college inbox (read only; no mail
-text is stored in this repo). The scams there are mostly pay-to-intern "training programs": a
+The models were checked against two real college inboxes (read only).
+
+**Inbox 2** (`datasets/inbox_real.jsonl`, 131 mails, 2023-2026): bulk mail only (placement-cell and
+college circulars, job-portal alerts, vendor spam), with email addresses, phone numbers, URL paths,
+student names and USNs removed. Before it was added, the message model caught 54/54 scams but passed
+only 47/77 genuine mails (Internshala alerts, fee and scholarship circulars, hackathon notices read as
+scams). It is now part of training, and the 2026 mails are the time-based test reported above.
+
+**Inbox 1** (no mail text stored in this repo). The scams there are mostly pay-to-intern "training programs": a
 "shortlisted" mail to a whole batch, a Google Form, Microsoft/IBM/AICTE names, and a fee that is only
 hinted at ("mentor fees applicable", a scholarship code). Genuine mail is placement-cell drive notices.
 
@@ -80,7 +97,8 @@ hinted at ("mentor fees applicable", a scholarship code). Genuine mail is placem
   being drives that register students through Google Forms. Google Forms links stopped counting as
   suspicious (placement cells use them as much as scammers); after that, 13/13 for the message and doc
   models. The Gmail L2 classifier was 13/13 throughout. That change was made after seeing the holdout,
-  so treat 13/13 as optimistic and 11/13 as the untouched score.
+  so treat 13/13 as optimistic and 11/13 as the untouched score. The final models (after inbox 2 was
+  added) score 14/14 and 13/13 on these two batches.
 
 ## Retraining
 

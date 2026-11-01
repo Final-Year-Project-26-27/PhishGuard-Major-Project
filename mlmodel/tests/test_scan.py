@@ -85,6 +85,14 @@ def test_link_scan_trusts_popular_sites_but_not_their_user_content_hosts():
     assert not is_well_known("https://dropbox.com/s/abc/invoice.html")      # file-sharing: anyone can host a page
 
 
+def test_short_links_and_shared_hosts_get_a_weak_verdict():
+    from app.routers.link_scan import classify_url
+
+    for url in ("https://forms.gle/AbCdEf123", "https://bit.ly/x1y2z3", "https://docs.google.com/forms/d/e/x/viewform"):
+        _, confidence, source = classify_url(url)
+        assert source == "shared_host" and confidence <= 0.6, url
+
+
 def test_link_trust_cannot_be_borrowed_with_url_tricks():
     from app.routers.link_scan import is_well_known
     from app.utils.url_features import split_url

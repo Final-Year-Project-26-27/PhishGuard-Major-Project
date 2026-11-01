@@ -18,11 +18,16 @@ message_model = joblib.load("app/models/message_model.pkl")
 
 
 def classify_message(text: str) -> tuple[str, float]:
-    """("Fake" | "Legit", probability of that label, 0-1)"""
+    """("Fake" | "Legit", confidence 0-1)"""
     # A long message is read as its start and its end; the less legit of the two wins
     p_legit = float(message_model.predict_proba(windows(text))[:, 1].min())
-    prediction, confidence = ("Legit", p_legit) if p_legit >= 0.5 else ("Fake", 1 - p_legit)
-    return prediction, min(confidence, 0.99)  # never claim certainty
+    # Cut-off tuned on validation data at training time (train/train_message_model.py)
+    threshold = getattr(message_model, "threshold_", 0.5)
+    is_legit = p_legit >= threshold
+    # Confidence = how far past the cut-off the score is, on a 0.5-1 scale, so a tuned cut-off still
+    # reads naturally ("Fake, 50%" means right at the line)
+    margin = (p_legit - threshold) / (1 - threshold) if is_legit else (threshold - p_legit) / threshold
+    return ("Legit" if is_legit else "Fake"), min(0.5 + margin / 2, 0.99)  # never claim certainty
 
 
 class OfferRequest(BaseModel):
