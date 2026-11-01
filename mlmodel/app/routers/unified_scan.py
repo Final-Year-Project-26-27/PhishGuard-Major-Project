@@ -11,8 +11,6 @@ import uuid
 import ipaddress
 import socket
 
-import joblib
-import pandas as pd
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
@@ -24,14 +22,10 @@ try:
 except Exception:
     BeautifulSoup = None
 
-from app.utils.preprocess import clean_email_text, preprocess_url
+from app.routers.link_scan import classify_url
+from app.routers.offer_scan import classify_message
 
 router = APIRouter()
-
-_email_model = joblib.load("app/models/email_model.pkl")
-_email_vectorizer = joblib.load("app/models/email_vectorizer.pkl")
-_link_model = joblib.load(os.path.join("app", "models", "link_model.pkl"))
-_link_vectorizer = joblib.load(os.path.join("app", "models", "link_vectorizer.pkl"))
 
 SENSITIVE_PATTERNS = {
     "password": re.compile(r"\b(password|passcode|otp|pin)\b", re.IGNORECASE),
@@ -108,25 +102,14 @@ def _normalize_domain(domain_or_url: str) -> str:
     return candidate.replace("www.", "")
 
 
-def _email_model_score(email_text: str, sender_domain: str) -> tuple[int, str, float]:
-    cleaned = {
-        "cleaned_text": clean_email_text(email_text),
-        "cleaned_domain": _normalize_domain(sender_domain),
-    }
-    features = _email_vectorizer.transform(pd.DataFrame([cleaned]))
-    probabilities = _email_model.predict_proba(features)[0]
-    prediction_raw = _email_model.predict(features)[0]
-    prediction = "Legit" if prediction_raw == 1 else "Fake"
-    confidence = float(max(probabilities))
+def _email_model_score(email_text: str) -> tuple[int, str, float]:
+    # The sender domain is not a model input: it's easy to fake, so it only feeds the trusted-domain adjustment
+    prediction, confidence = classify_message(email_text)
     return _to_score_from_prediction(prediction, confidence), prediction, confidence
 
 
 def _link_model_score(url: str) -> tuple[int, str, float]:
-    vec = _link_vectorizer.transform([preprocess_url(url or "")])
-    probabilities = _link_model.predict_proba(vec)[0]
-    prediction_raw = _link_model.predict(vec)[0]
-    prediction = "Legit" if prediction_raw == 1 else "Phishing"
-    confidence = float(max(probabilities))
+    prediction, confidence, _ = classify_url(url or "")
     return _to_score_from_prediction(prediction, confidence), prediction, confidence
 
 
@@ -332,7 +315,7 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
     link_prediction = None
 
     if payload.email_text and len(payload.email_text.strip()) >= 10:
-        email_score, prediction, confidence = _email_model_score(payload.email_text, payload.sender_domain or "")
+        email_score, prediction, confidence = _email_model_score(payload.email_text)
         email_prediction = {
             "prediction": prediction,
             "confidence": round(confidence, 3),

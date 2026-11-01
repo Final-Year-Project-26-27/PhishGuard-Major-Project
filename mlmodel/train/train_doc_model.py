@@ -1,172 +1,104 @@
-import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
-from sklearn.pipeline import Pipeline
+"""
+Train the document model: TF-IDF (1-3 grams) plus standardised phishing-indicator features, into
+logistic regression. Saves one pipeline, app/models/doc_model.pkl (label 1 = legit).
+
+Run from mlmodel/:  python -m train.train_doc_model
+Data: datasets/documents.csv (short document snippets) plus datasets/messages.csv (full emails,
+offers and letters), since an uploaded PDF or DOCX reads like a long message once it is text.
+Checked on test_documents/ and tests/fixtures/challenge_messages*.jsonl, which are never trained on.
+"""
+from pathlib import Path
+
 import joblib
-import os
-import re
-import json
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-# Run from mlmodel/ as a module (python -m train.train_doc_model) so `app` is importable
-from app.utils.doc_features import extract_phishing_features
-from app.utils.preprocess import preprocess_text as clean_text
+from app.utils.doc_features import doc_matrix, doc_texts
+from app.utils.message_features import message_matrix
+from train.metrics import binary_report, challenge_reports, save_metrics
 
-# Phishing indicators for feature extraction
-PHISHING_INDICATORS = {
-    'urgency_words': [
-        'urgent', 'immediately', 'act now', 'limited time', 'expires', 'deadline',
-        'final notice', 'last chance', 'hurry', 'quick', 'asap', 'right away',
-        'within 24 hours', 'today only', 'dont delay', 'time sensitive'
-    ],
-    'money_words': [
-        'pay', 'payment', 'fee', 'charge', 'rupees', 'rs', '₹', 'dollar', '$',
-        'prize', 'won', 'lottery', 'winner', 'jackpot', 'cash', 'money', 'free',
-        'loan', 'credit', 'refund', 'compensation', 'reward', 'bonus'
-    ],
-    'credential_words': [
-        'password', 'login', 'verify', 'confirm', 'account', 'credential',
-        'ssn', 'social security', 'aadhaar', 'pan card', 'bank account',
-        'credit card', 'debit card', 'cvv', 'otp', 'pin', 'identity'
-    ],
-    'threat_words': [
-        'suspended', 'blocked', 'terminated', 'closed', 'locked', 'disabled',
-        'legal action', 'arrest', 'penalty', 'fine', 'court', 'police',
-        'unauthorized', 'compromised', 'hacked', 'infected', 'virus', 'malware'
-    ],
-    'suspicious_domains': [
-        '.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.work', '.click',
-        '.link', '.info', '.biz', '.co', '.io', '-verify', '-secure', '-login',
-        'fakeinternship', 'scamjobs', 'quickjobs', 'verify-later', 'fraudsite'
-    ],
-    'action_words': [
-        'click here', 'click below', 'click link', 'download', 'install',
-        'open attachment', 'fill form', 'submit', 'send', 'share', 'provide',
-        'enter details', 'update information', 'confirm identity'
-    ]
-}
+SAMPLES = Path("../test_documents")
+SOURCE_WEIGHT = {"curated": 6.0, "offer_corpus": 6.0, "offer_generated": 2.0, "documents": 2.0}
 
-# Read the file and handle mixed CSV/TSV format
-data_rows = []
-with open("datasets/documents.csv", 'r', encoding='utf-8') as f:
-    lines = f.readlines()
-    
-for i, line in enumerate(lines):
-    line = line.strip()
-    if not line or line.startswith('text_content'):  # Skip header rows
-        continue
-    
-    # Try to parse as CSV (comma-separated, possibly quoted)
-    if line.startswith('"'):
-        # Quoted CSV format: "text content",label
-        try:
-            last_quote = line.rfind('"')
-            text = line[1:last_quote]  # Get text between quotes
-            label_part = line[last_quote+1:].strip().lstrip(',')
-            label = int(label_part)
-            data_rows.append({'text_content': text, 'label': label})
-        except:
-            pass
-    elif '\t' in line:
-        # Tab-separated format: text content<TAB>label
-        parts = line.rsplit('\t', 1)
-        if len(parts) == 2:
-            try:
-                text = parts[0].strip()
-                label = int(parts[1].strip())
-                data_rows.append({'text_content': text, 'label': label})
-            except:
-                pass
 
-df = pd.DataFrame(data_rows)
-df.dropna(inplace=True)
+def load_documents() -> pd.DataFrame:
+    """documents.csv mixes quoted-CSV and tab-separated lines; read both."""
+    rows = []
+    for line in Path("datasets/documents.csv").read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("text_content"):
+            continue
+        if line.startswith('"'):
+            text, _, label = line[1:].rpartition('"')
+            label = label.strip().lstrip(",")
+        elif "\t" in line:
+            text, label = line.rsplit("\t", 1)
+        else:
+            continue
+        if label.strip() in ("0", "1"):
+            rows.append((text.strip(), int(label)))
+    df = pd.DataFrame(rows, columns=["text", "label"]).drop_duplicates("text")
+    return df.assign(source="documents", group=lambda d: "documents:" + d.index.astype(str))
 
-print(f"Loaded {len(df)} documents")
-print(f"Label distribution:\n{df['label'].value_counts()}")
 
-# Clean text and extract features
-df["cleaned"] = df["text_content"].apply(clean_text)
+def build() -> Pipeline:
+    features = FeatureUnion([
+        ("words", Pipeline([
+            ("clean", FunctionTransformer(doc_texts)),
+            ("tfidf", TfidfVectorizer(ngram_range=(1, 3), min_df=2, max_features=60000, sublinear_tf=True)),
+        ])),
+        ("indicators", Pipeline([("extract", FunctionTransformer(doc_matrix)), ("scale", StandardScaler())])),
+        # The message model's scam patterns (fee demands, UPI handles, account threats) catch fee letters
+        ("scam_patterns", Pipeline([("extract", FunctionTransformer(message_matrix)), ("scale", StandardScaler())])),
+    ])
+    return Pipeline([("features", features), ("clf", LogisticRegression(C=4.0, max_iter=3000, class_weight="balanced"))])
 
-# Extract additional features
-print("Extracting phishing features...")
-feature_dicts = df["text_content"].apply(lambda t: extract_phishing_features(t, PHISHING_INDICATORS))
-feature_df = pd.DataFrame(feature_dicts.tolist())
 
-X_text = df["cleaned"]
-y = df["label"]
+def fit(df: pd.DataFrame) -> Pipeline:
+    weights = df["source"].map(SOURCE_WEIGHT).fillna(1.0).to_numpy()
+    return build().fit(df["text"], df["label"], clf__sample_weight=weights)
 
-# TF-IDF with n-grams for better phrase detection
-print("Creating TF-IDF features...")
-vectorizer = TfidfVectorizer(
-    max_features=5000,
-    ngram_range=(1, 3),  # Include unigrams, bigrams, and trigrams
-    min_df=2,
-    max_df=0.95,
-    sublinear_tf=True
-)
-X_tfidf = vectorizer.fit_transform(X_text)
 
-# Combine TF-IDF with extracted features
-X_combined = np.hstack([X_tfidf.toarray(), feature_df.values])
+def main() -> None:
+    messages = pd.read_csv("datasets/messages.csv", keep_default_na=False)
+    df = pd.concat([load_documents(), messages], ignore_index=True)
+    conflicts = df.groupby("text")["label"].nunique()
+    df = df[~df["text"].isin(conflicts[conflicts > 1].index)].drop_duplicates("text")
+    print(f"{len(df)} texts ({(df.source == 'documents').sum()} document snippets)")
 
-print(f"Total features: {X_combined.shape[1]} (TF-IDF: {X_tfidf.shape[1]}, Custom: {feature_df.shape[1]})")
+    split = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    a, b = next(split.split(df, df["label"], groups=df["group"]))
+    train, test = df.iloc[a], df.iloc[b]
+    model = fit(train)
+    report = binary_report(test["label"], model.predict_proba(test["text"])[:, 1])
+    by_source = {s: binary_report(g["label"], model.predict_proba(g["text"])[:, 1])["accuracy"]
+                 for s, g in test.groupby("source")}
+    print(f"Held-out (n={len(test)}): {report}")
+    print(f"Accuracy by source: {by_source}")
 
-X_train, X_test, y_train, y_test = train_test_split(X_combined, y, test_size=0.2, random_state=42, stratify=y)
+    final = fit(df)
+    samples = sorted(SAMPLES.glob("*.txt"))
+    sample_texts = [p.read_text(encoding="utf-8", errors="ignore") for p in samples]
+    sample_labels = [int(p.name.startswith("LEGITIMATE")) for p in samples]
+    sample_report = binary_report(sample_labels, final.predict_proba(sample_texts)[:, 1])
+    print(f"test_documents/: {sample_report}")
+    challenge = challenge_reports(final)
 
-# Train multiple models and select best
-print("\nTraining models...")
+    joblib.dump(final, "app/models/doc_model.pkl", compress=3)
+    save_metrics("doc", {
+        "data": {"texts": len(df), "document_snippets": int((df.source == "documents").sum())},
+        "split": "group split, 20% held out",
+        "held_out": report,
+        "held_out_accuracy_by_source": by_source,
+        "test_documents": sample_report,
+        "challenge_sets": challenge,
+    })
+    print("Saved app/models/doc_model.pkl")
 
-models = {
-    'RandomForest': RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42, class_weight='balanced'),
-    'GradientBoosting': GradientBoostingClassifier(n_estimators=100, max_depth=5, random_state=42),
-    'LogisticRegression': LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42)
-}
 
-best_model = None
-best_accuracy = 0
-best_model_name = ""
-
-for name, model in models.items():
-    print(f"\nTraining {name}...")
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"{name} Accuracy: {accuracy:.4f}")
-    print(classification_report(y_test, y_pred, target_names=['Fake/Phishing', 'Legitimate']))
-    
-    if accuracy > best_accuracy:
-        best_accuracy = accuracy
-        best_model = model
-        best_model_name = name
-
-print(f"\n{'='*50}")
-print(f"Best Model: {best_model_name} with accuracy: {best_accuracy:.4f}")
-print(f"{'='*50}")
-
-# Cross-validation for robust evaluation
-cv_scores = cross_val_score(best_model, X_combined, y, cv=5)
-print(f"Cross-validation scores: {cv_scores}")
-print(f"Mean CV Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
-
-# Save models and metadata
-os.makedirs("app/models", exist_ok=True)
-joblib.dump(best_model, "app/models/doc_model.pkl")
-joblib.dump(vectorizer, "app/models/doc_vectorizer.pkl")
-
-# Save feature names and phishing indicators
-metadata = {
-    'model_name': best_model_name,
-    'accuracy': best_accuracy,
-    'feature_names': list(feature_df.columns),
-    'phishing_indicators': PHISHING_INDICATORS
-}
-with open("app/models/doc_metadata.json", 'w') as f:
-    json.dump(metadata, f, indent=2)
-
-print("\nModels saved successfully!")
-print("- app/models/doc_model.pkl")
-print("- app/models/doc_vectorizer.pkl")
-print("- app/models/doc_metadata.json")
+if __name__ == "__main__":
+    main()

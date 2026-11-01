@@ -16,3 +16,15 @@ def test_nlp_leaves_ordinary_mail_alone():
         "Hi team, the project review meeting is moved to Thursday 3pm in room 204. Please bring your slides."
     )
     assert label == "ham" and score == 0
+
+
+def test_nlp_on_the_backend_challenge_sets():
+    # Hand-written messages that are never trained on (shared with the ML backend's tests)
+    import json
+    from pathlib import Path
+
+    fixtures = Path(__file__).resolve().parents[2] / "mlmodel" / "tests" / "fixtures"
+    for path in sorted(fixtures.glob("challenge_messages*.jsonl")):
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        correct = sum((l2_nlp.classify_email(r["text"])[0] == "ham") == bool(r["label"]) for r in rows)
+        assert correct / len(rows) >= 0.9, f"{path.name}: {correct}/{len(rows)}"

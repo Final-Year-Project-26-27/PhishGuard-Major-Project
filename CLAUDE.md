@@ -30,12 +30,15 @@ cd mlmodel
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Retrain (writes .pkl into app/models/) — only if datasets/ changes. Run as modules,
-# `python train/x.py` fails with "No module named 'app'"
-python -m train.train_email_model
+# Rebuild the datasets from the public sources in datasets/SOURCES.md (downloaded into <raw_dir>)
+python -m train.build_link_dataset <raw_dir>      # datasets/links.csv + app/models/trusted_domains.json
+python -m train.build_message_dataset <raw_dir>   # datasets/messages.csv
+
+# Retrain (writes .pkl and model_metrics.json into app/models/). Run as modules,
+# `python train/x.py` fails with "No module named 'app'". train_doc_model reads messages.csv too.
 python -m train.train_link_model
+python -m train.train_message_model
 python -m train.train_doc_model
-python -m train.train_offer_model
 
 # Tests (need: pip install pytest httpx2)
 python -m pytest tests
@@ -53,7 +56,7 @@ uvicorn main:app --reload --port 8080
 ngrok http 8080             # expose the webhook, update the Pub/Sub push subscription
 python -m pytest tests      # security tests; need pytest + httpx2, no Gmail access
 ```
-The Pub/Sub push endpoint must include the secret: `{PUBLIC_BASE_URL}/webhook/gmail?token={PUBSUB_VERIFICATION_TOKEN}`. The dashboard needs `VITE_DASHBOARD_TOKEN` equal to `DASHBOARD_TOKEN`. Both fail closed when the token is unset. The L2 NLP model (`email/models/vectorizer.pkl`, `classifier.pkl`) is committed; rebuild it with `python models/train_classifier.py`, which trains on `../mlmodel/datasets/emails.csv` plus the offer-scam CSVs. `scikit-learn` is pinned to 1.8.0 here too, to match those pickles.
+The Pub/Sub push endpoint must include the secret: `{PUBLIC_BASE_URL}/webhook/gmail?token={PUBSUB_VERIFICATION_TOKEN}`. The dashboard needs `VITE_DASHBOARD_TOKEN` equal to `DASHBOARD_TOKEN`. Both fail closed when the token is unset. The L2 NLP model (`email/models/vectorizer.pkl`, `classifier.pkl`) is committed; rebuild it with `python models/train_classifier.py`, which trains on `../mlmodel/datasets/messages.csv` (the same corpus as the message model). `scikit-learn` is pinned to 1.8.0 here too, to match those pickles.
 
 `email/frontend/`: `npm install`, `npm run dev` (vite), `npm run build`, `npm run lint`. Set `VITE_API_BASE` (default `http://127.0.0.1:8080`) and `VITE_DASHBOARD_TOKEN`. The dashboard never talks to Supabase directly; all reads and admin actions go through `src/api.ts` to the backend.
 
@@ -70,11 +73,13 @@ Refuses to start without `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `PUBLIC_W
 ### `mlmodel/` — ML backend
 `app/main.py` registers five routers under `/scan/*`. Each loads its model(s) from `app/models/*.pkl` **at import time** using relative paths, so uvicorn must start from inside `mlmodel/`. Every route returns `confidence` on a 0-1 scale, except `/scan/offer`, which returns a 0-100 percentage for the WhatsApp bot.
 
-- **Link scan** (`/scan/link`): URL → `preprocess_url` → TF-IDF → `GradientBoostingClassifier`. `preprocess_url` lives once in `app/utils/preprocess.py`, used by training, `link_scan` and `unified_scan`.
-- **Offer scan** (`/scan/offer`): fake internship/job-offer detection over 18 hand-engineered features plus TF-IDF; gates on `_is_offer_related()` first. Its pattern lists must equal those in `train/train_offer_model.py` (a test checks this; retrain after changing them).
-- **Email scan** (`/scan/email`): a thin wrapper that runs the **offer** model and helpers imported from `offer_scan.py`, because the generic `email_model.pkl` misses the fee/internship scams this project targets. `sender_domain` is accepted but unused.
-- **Unified scan** (`/scan/unified`): max of the email (`email_model.pkl`) and link model scores, then a trusted-domain adjustment (exact-or-subdomain match). Email text is cleaned with `clean_email_text`, which must equal `clean_text` in `train/train_email_model.py` (tested). `/scan/unified/url-intel` resolves the host once, refuses non-public IPs, then connects to that pinned IP (hostname kept for TLS) without following redirects. `/scan/unified/feedback` appends to `FEEDBACK_LOG` (default `app/models/unified_feedback_log.jsonl`, gitignored; container disks reset on deploy).
-- **Doc scan** (`/scan/doc`): PDF/DOCX/TXT → `app/utils/doc_parser.py` → TF-IDF **plus** a hand-engineered feature vector → model. The keyword lists are defined in `train/train_doc_model.py` and written to `app/models/doc_metadata.json` (required, no fallback); the feature code lives once in `app/utils/doc_features.py`. Model features use substring counts (as trained); the user-facing `indicators`/`warnings` use whole-word and hostname matching. Uploads are capped at 5 MB, and `predict_doc` is a plain `def` so parsing runs in the threadpool. Risk cut-offs are 75 (HIGH) / 45 (MEDIUM). There is no OCR, so image-only PDFs are rejected.
+Each model is one pickled scikit-learn `Pipeline` (features + classifier, label 1 = legit) whose feature code lives once in `app/utils/`, imported by both the trainer and the router, so training and serving can't drift. Held-out scores are written to `app/models/model_metrics.json` and summarised in `mlmodel/MODELS.md`; splits are by site (links) or template family (messages), never random rows. `datasets/SOURCES.md` lists every data source. `tests/test_model_quality.py` checks the models on the hand-written challenge sets in `tests/fixtures/` (never train on those) and on cases the old models got wrong.
+
+- **Link scan** (`/scan/link`): `classify_url()` in `link_scan.py`. A site in `app/models/trusted_domains.json` (Tranco top 10k minus shorteners, open-subdomain platforms and hosts seen serving phish) returns Legit with `source: "well_known_site"`; otherwise `link_model.pkl` (char 2-6-grams of the normalised URL + scaled lexical features from `app/utils/url_features.py`, logistic regression). `normalize_url` drops scheme, `www`, query and fragment, matching what the extension sends. On shared hosts (docs.google.com, sites.google.com) confidence is capped at 0.6, since the URL can't tell a phish form from a college one.
+- **Offer scan** (`/scan/offer`): `message_model.pkl` (word TF-IDF + standardised scam-pattern counts from `app/utils/message_features.py`, logistic regression); gates on `is_offer_related()` first. `classify_message()` here is shared with email and unified scan.
+- **Email scan** (`/scan/email`): runs `classify_message()`. `sender_domain` is accepted but unused (it's spoofable).
+- **Unified scan** (`/scan/unified`): max of the message-model and link-model scores, then a trusted-domain adjustment (exact-or-subdomain match). `/scan/unified/url-intel` resolves the host once, refuses non-public IPs, then connects to that pinned IP (hostname kept for TLS) without following redirects. `/scan/unified/feedback` appends to `FEEDBACK_LOG` (default `app/models/unified_feedback_log.jsonl`, gitignored; container disks reset on deploy).
+- **Doc scan** (`/scan/doc`): PDF/DOCX/TXT → `app/utils/doc_parser.py` → `doc_model.pkl` (TF-IDF 1-3-grams **plus** standardised document indicators and the message model's scam patterns, logistic regression; trained on `documents.csv` and `messages.csv`). The keyword lists and feature code live once in `app/utils/doc_features.py`. Model features use substring counts (as trained); the user-facing `indicators`/`warnings` use whole-word and hostname matching. Uploads are capped at 5 MB, and `predict_doc` is a plain `def` so parsing runs in the threadpool. Risk cut-offs are 75 (HIGH) / 45 (MEDIUM). There is no OCR, so image-only PDFs are rejected.
 
 ### Frontend/backend coupling
 `app/{email,link,doc}/page.tsx` call the backend via `API_URL` from `lib/utils.ts` (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`; inlined at build time because of the static export). Call routes with their trailing slash (`/scan/email/`) — without it FastAPI answers with a 307. On a failed request the pages show an error and save nothing to history; never add a client-side "mock" verdict.

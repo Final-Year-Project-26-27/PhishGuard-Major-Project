@@ -3,8 +3,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.routers import unified_scan
-from app.utils.preprocess import clean_email_text
-from train.train_email_model import clean_text as train_clean_text
 
 client = TestClient(app)
 
@@ -19,11 +17,6 @@ def test_email_confidence_is_0_to_1():
         assert 0 <= body["confidence"] <= 1
 
 
-def test_email_serving_cleaner_matches_training():
-    for text in ("Don't miss: e-mail http://x.co/a NOW!!", SCAM, LEGIT, "₹500 fee @ 9am"):
-        assert clean_email_text(text) == train_clean_text(text)
-
-
 def test_trusted_domain_needs_exact_or_subdomain_match():
     assert unified_scan._is_domain_or_subdomain("mail.google.com", "google.com")
     assert not unified_scan._is_domain_or_subdomain("evilgoogle.com", "google.com")
@@ -34,6 +27,12 @@ def test_unified_score_keeps_the_most_dangerous_signal(monkeypatch):
     monkeypatch.setattr(unified_scan, "_link_model_score", lambda *_: (12, "Legit", 0.78))
     body = client.post("/scan/unified/", json={"email_text": SCAM, "url": "https://example.com"}).json()
     assert body["risk_score"] >= 95 - 18 and body["risk_level"] == "HIGH"
+
+
+def test_unified_ignores_a_spoofable_sender_domain():
+    # A fee scam sent from gmail.com used to pass because the old email model trusted the domain
+    body = client.post("/scan/unified/", json={"email_text": SCAM, "sender_domain": "gmail.com"}).json()
+    assert body["signals"]["email"]["prediction"] == "Fake" and body["risk_level"] == "HIGH"
 
 
 def test_url_intel_never_fetches_internal_addresses():
@@ -60,15 +59,26 @@ def test_doc_scan_has_no_substring_false_positives():
     assert "rs" not in body["indicators"]["money"]
 
 
-def test_offer_patterns_match_training():
-    import train.train_offer_model as train_offer
-    from app.routers import offer_scan
-
-    for name in ("PAYMENT_DEMAND_PATTERNS", "URGENCY_PATTERNS", "SUSPICIOUS_LINK_PATTERNS", "WHATSAPP_ONLY_PATTERNS",
-                 "TOO_GOOD_PATTERNS", "CREDENTIAL_PATTERNS", "PRESSURE_PATTERNS", "LEGIT_INDICATORS"):
-        assert getattr(train_offer, name) == getattr(offer_scan, name), name
-
-
 def test_email_scan_flags_fee_scam():
     body = client.post("/scan/email/", json={"text_content": SCAM, "sender_domain": "gmail.com"}).json()
     assert body["prediction"] == "Fake" and body["red_flag_words"]
+
+
+def test_offer_scan_skips_messages_that_are_not_offers():
+    body = client.post("/scan/offer/", json={"message": "Are we still meeting for lunch at 1?"}).json()
+    assert body == {"is_offer": False, "prediction": "N/A", "confidence": 0.0, "red_flags": []}
+
+
+def test_offer_scan_reports_a_percentage():
+    body = client.post("/scan/offer/", json={"message": SCAM}).json()
+    assert body["prediction"] == "Fake" and 50 < body["confidence"] <= 99
+
+
+def test_link_scan_trusts_popular_sites_but_not_their_user_content_hosts():
+    from app.routers.link_scan import is_well_known
+
+    assert is_well_known("https://github.com/login")
+    assert is_well_known("en.wikipedia.org/wiki/Phishing")
+    assert not is_well_known("https://sites.google.com/view/anything")      # anyone can publish here
+    assert not is_well_known("https://evil-login.godaddysites.com")
+    assert not is_well_known("https://github.com.evil-login.xyz/")          # the real domain is evil-login.xyz

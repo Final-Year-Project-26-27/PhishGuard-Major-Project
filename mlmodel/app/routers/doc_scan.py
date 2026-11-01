@@ -4,26 +4,16 @@ from fastapi.responses import JSONResponse
 import os
 import joblib
 import tempfile
-import json
 import re
-import numpy as np
 from urllib.parse import urlparse
 
 from app.utils.doc_parser import extract_text_from_pdf, extract_text_from_docx
-from app.utils.preprocess import preprocess_text
-from app.utils.doc_features import extract_phishing_features
+from app.utils.doc_features import PHISHING_INDICATORS
 
 router = APIRouter()
 
-# Load models
+# One pipeline: TF-IDF + indicator features + logistic regression (train/train_doc_model.py)
 model = joblib.load("app/models/doc_model.pkl")
-vectorizer = joblib.load("app/models/doc_vectorizer.pkl")
-
-# Load metadata with phishing indicators (written by train/train_doc_model.py)
-with open("app/models/doc_metadata.json", 'r') as f:
-    metadata = json.load(f)
-PHISHING_INDICATORS = metadata.get('phishing_indicators', {})
-FEATURE_NAMES = metadata.get('feature_names', [])
 
 
 def _has_term(term, text_lower):
@@ -131,28 +121,9 @@ def predict_doc(file: UploadFile = File(...)):
         if not extracted_text or len(extracted_text.strip()) < 10:
             raise HTTPException(status_code=400, detail="Could not extract sufficient text from document")
 
-        # Preprocess for model
-        cleaned = preprocess_text(extracted_text)
-        
-        # Get TF-IDF features
-        vec = vectorizer.transform([cleaned])
-        
-        # Extract additional features
-        features = extract_phishing_features(extracted_text, PHISHING_INDICATORS)
-        feature_values = np.array([[features.get(name, 0) for name in FEATURE_NAMES]]) if FEATURE_NAMES else np.array([[]])
-        
-        # Combine features (if we have additional features)
-        if feature_values.shape[1] > 0:
-            combined = np.hstack([vec.toarray(), feature_values])
-        else:
-            combined = vec.toarray()
-        
-        # Get prediction
-        prob = model.predict_proba(combined)[0]
-        label = model.predict(combined)[0]
-        confidence = float(max(prob))
-        
-        is_phishing = label == 0
+        p_legit = float(model.predict_proba([extracted_text])[0][1])
+        is_phishing = p_legit < 0.5
+        confidence = min(1 - p_legit if is_phishing else p_legit, 0.99)  # never claim certainty
         
         # Find specific indicators
         indicators = find_suspicious_indicators(extracted_text)

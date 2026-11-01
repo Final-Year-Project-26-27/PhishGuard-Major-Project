@@ -1,0 +1,185 @@
+{
+  "message": {
+    "data": {
+      "messages": 10812,
+      "scam": 2003,
+      "by_source": {
+        "curated": 143,
+        "nazario": 1186,
+        "offer_corpus": 117,
+        "offer_generated": 100,
+        "sms": 5160,
+        "spamassassin": 4106
+      }
+    },
+    "C": 8.0,
+    "split": "group split (template families kept together), 20% held out",
+    "held_out": {
+      "n": 2158,
+      "accuracy": 0.9852,
+      "precision_phish": 0.9548,
+      "recall_phish": 0.9599,
+      "f1_phish": 0.9573,
+      "false_positive_rate": 0.0095,
+      "roc_auc": 0.9963,
+      "confusion": {
+        "legit_ok": 1767,
+        "legit_flagged": 17,
+        "phish_missed": 15,
+        "phish_caught": 359
+      }
+    },
+    "held_out_accuracy_by_source": {
+      "curated": 0.9032,
+      "nazario": 0.9702,
+      "offer_corpus": 1.0,
+      "offer_generated": 1.0,
+      "sms": 0.9865,
+      "spamassassin": 0.9903
+    },
+    "challenge_sets": {
+      "challenge_messages": {
+        "n": 45,
+        "accuracy": 0.9778,
+        "precision_phish": 0.9583,
+        "recall_phish": 1.0,
+        "f1_phish": 0.9787,
+        "false_positive_rate": 0.0455,
+        "roc_auc": 0.996,
+        "confusion": {
+          "legit_ok": 21,
+          "legit_flagged": 1,
+          "phish_missed": 0,
+          "phish_caught": 23
+        }
+      },
+      "challenge_messages_2": {
+        "n": 40,
+        "accuracy": 0.975,
+        "precision_phish": 1.0,
+        "recall_phish": 0.95,
+        "f1_phish": 0.9744,
+        "false_positive_rate": 0.0,
+        "roc_auc": 0.9975,
+        "confusion": {
+          "legit_ok": 20,
+          "legit_flagged": 0,
+          "phish_missed": 1,
+          "phish_caught": 19
+        }
+      }
+    }
+  },
+  "doc": {
+    "data": {
+      "texts": 11604,
+      "document_snippets": 792
+    },
+    "split": "group split, 20% held out",
+    "held_out": {
+      "n": 2317,
+      "accuracy": 0.9827,
+      "precision_phish": 0.9495,
+      "recall_phish": 0.9583,
+      "f1_phish": 0.9539,
+      "false_positive_rate": 0.0117,
+      "roc_auc": 0.9963,
+      "confusion": {
+        "legit_ok": 1863,
+        "legit_flagged": 22,
+        "phish_missed": 18,
+        "phish_caught": 414
+      }
+    },
+    "held_out_accuracy_by_source": {
+      "curated": 0.8286,
+      "documents": 0.9936,
+      "nazario": 0.9796,
+      "offer_corpus": 0.931,
+      "offer_generated": 0.7857,
+      "sms": 0.9881,
+      "spamassassin": 0.9867
+    },
+    "test_documents": {
+      "n": 6,
+      "accuracy": 1.0,
+      "precision_phish": 1.0,
+      "recall_phish": 1.0,
+      "f1_phish": 1.0,
+      "false_positive_rate": 0.0,
+      "roc_auc": 1.0,
+      "confusion": {
+        "legit_ok": 3,
+        "legit_flagged": 0,
+        "phish_missed": 0,
+        "phish_caught": 3
+      }
+    },
+    "challenge_sets": {
+      "challenge_messages": {
+        "n": 45,
+        "accuracy": 0.9556,
+        "precision_phish": 0.92,
+        "recall_phish": 1.0,
+        "f1_phish": 0.9583,
+        "false_positive_rate": 0.0909,
+        "roc_auc": 0.998,
+        "confusion": {
+          "legit_ok": 20,
+          "legit_flagged": 2,
+          "phish_missed": 0,
+          "phish_caught": 23
+        }
+      },
+      "challenge_messages_2": {
+        "n": 40,
+        "accuracy": 0.95,
+        "precision_phish": 1.0,
+        "recall_phish": 0.9,
+        "f1_phish": 0.9474,
+        "false_positive_rate": 0.0,
+        "roc_auc": 0.995,
+        "confusion": {
+          "legit_ok": 20,
+          "legit_flagged": 0,
+          "phish_missed": 2,
+          "phish_caught": 18
+        }
+      }
+    }
+  },
+  "link": {
+    "data": {
+      "urls": 140596,
+      "sites": 103111,
+      "phish": 70298
+    },
+    "C": 4.0,
+    "split": "group by registrable domain, 20% of sites held out",
+    "held_out": {
+      "n": 28088,
+      "accuracy": 0.8848,
+      "precision_phish": 0.9029,
+      "recall_phish": 0.8578,
+      "f1_phish": 0.8798,
+      "false_positive_rate": 0.0891,
+      "roc_auc": 0.9518,
+      "confusion": {
+        "legit_ok": 13018,
+        "legit_flagged": 1273,
+        "phish_missed": 1962,
+        "phish_caught": 11835
+      }
+    },
+    "held_out_accuracy_by_source": {
+      "openphish": 0.8462,
+      "phishing_database": 0.947,
+      "phishtank": 0.9498,
+      "phiusiil": 0.7897,
+      "sitemaps": 0.9179,
+      "tranco": 0.8456,
+      "tranco_subdomain": 0.982,
+      "tranco_top": 0.92
+    }
+  }
+}
