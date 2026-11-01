@@ -97,6 +97,17 @@ def test_link_trust_cannot_be_borrowed_with_url_tricks():
     assert split_url("https://git\thub.com/\n")[0] == "github.com"
 
 
+def test_padding_cannot_hide_a_scam_at_the_end():
+    padding = "Our company values teamwork, learning and growth. We are glad to welcome new interns. " * 80
+    tail = " To confirm your internship, pay the Rs 2,499 registration fee by UPI to hr.desk@ybl within 24 hours."
+    body = client.post("/scan/email/", json={"text_content": padding + tail}).json()
+    assert len(padding) > 5000 and body["prediction"] == "Fake" and body["red_flag_words"]
+    offer = client.post("/scan/offer/", json={"message": padding + tail}).json()
+    assert offer["is_offer"] and offer["prediction"] == "Fake"
+    doc = client.post("/scan/doc/", files={"file": ("offer.txt", (padding + tail).encode(), "text/plain")}).json()
+    assert doc["prediction"] == "Phishing/Fake"
+
+
 def test_huge_inputs_are_fast_or_rejected():
     import time
 

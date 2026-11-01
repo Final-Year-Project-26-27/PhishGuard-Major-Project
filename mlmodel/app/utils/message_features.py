@@ -136,6 +136,13 @@ RED_FLAG_TEXT = {
 MAX_CHARS = 5000
 
 
+def windows(text: str) -> list[str]:
+    """The parts of a message to check: all of it, or the start and the end when it is long, so
+    padding a scam with harmless text can't push the fee demand out of view. Callers take the worst."""
+    text = str(text)
+    return [text] if len(text) <= MAX_CHARS else [text[:MAX_CHARS], text[-MAX_CHARS:]]
+
+
 def count_matches(text: str, patterns: list[str]) -> int:
     t = text[:MAX_CHARS].lower()
     return sum(1 for p in patterns if re.search(p, t))
@@ -162,9 +169,10 @@ def extract_features(text: str) -> list[float]:
 
 
 def get_red_flags(text: str) -> list[str]:
+    parts = windows(text)
     flags = [RED_FLAG_TEXT[g] for g, patterns in PATTERN_GROUPS.items()
-             if g in RED_FLAG_TEXT and count_matches(text, patterns) >= 1]
-    if not re.search(r'\b\w+@\w+\.\w+', text) and len(text) > 150 and has_fee_demand(text):
+             if g in RED_FLAG_TEXT and any(count_matches(p, patterns) >= 1 for p in parts)]
+    if not re.search(r'\b\w+@\w+\.\w+', text) and len(text) > 150 and any(has_fee_demand(p) for p in parts):
         flags.append("No official email address provided")
     return flags
 
@@ -199,7 +207,7 @@ OFFER_TOPIC_KEYWORDS = [
 
 def is_offer_related(text: str) -> bool:
     """True if the message is about a job or internship offer (the WhatsApp bot only answers those)."""
-    return count_matches(text, OFFER_TOPIC_KEYWORDS) >= 1
+    return any(count_matches(p, OFFER_TOPIC_KEYWORDS) >= 1 for p in windows(text))
 
 
 # Module-level so the pickled pipeline can find them (FunctionTransformer stores a reference)

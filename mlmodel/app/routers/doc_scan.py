@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from app.utils.doc_parser import extract_text_from_pdf, extract_text_from_docx
 from app.utils.doc_features import PHISHING_INDICATORS
+from app.utils.message_features import windows
 
 router = APIRouter()
 
@@ -121,7 +122,9 @@ def predict_doc(file: UploadFile = File(...)):
         if not extracted_text or len(extracted_text.strip()) < 10:
             raise HTTPException(status_code=400, detail="Could not extract sufficient text from document")
 
-        p_legit = float(model.predict_proba([extracted_text])[0][1])
+        # The whole text, plus its last part on its own for a long document, so a fee demand at the
+        # end of a padded letter isn't missed; the less legit verdict wins
+        p_legit = float(model.predict_proba([extracted_text] + windows(extracted_text)[1:])[:, 1].min())
         is_phishing = p_legit < 0.5
         confidence = min(1 - p_legit if is_phishing else p_legit, 0.99)  # never claim certainty
         

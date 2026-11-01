@@ -9,7 +9,7 @@ import joblib
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.utils.message_features import get_red_flags, is_offer_related
+from app.utils.message_features import get_red_flags, is_offer_related, windows
 
 router = APIRouter()
 
@@ -19,7 +19,8 @@ message_model = joblib.load("app/models/message_model.pkl")
 
 def classify_message(text: str) -> tuple[str, float]:
     """("Fake" | "Legit", probability of that label, 0-1)"""
-    p_legit = float(message_model.predict_proba([text])[0][1])
+    # A long message is read as its start and its end; the less legit of the two wins
+    p_legit = float(message_model.predict_proba(windows(text))[:, 1].min())
     prediction, confidence = ("Legit", p_legit) if p_legit >= 0.5 else ("Fake", 1 - p_legit)
     return prediction, min(confidence, 0.99)  # never claim certainty
 
