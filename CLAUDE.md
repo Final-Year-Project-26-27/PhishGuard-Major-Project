@@ -84,6 +84,8 @@ Each model is one pickled scikit-learn `Pipeline` (features + classifier, label 
 ### Frontend/backend coupling
 `app/{email,link,doc}/page.tsx` call the backend via `API_URL` from `lib/utils.ts` (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`; inlined at build time because of the static export). Call routes with their trailing slash (`/scan/email/`) — without it FastAPI answers with a 307. On a failed request the pages show an error and save nothing to history; never add a client-side "mock" verdict.
 
+The landing page's demo (`components/DemoVideo.tsx`) plays `public/assets/demo/phishguard-demo.{webm,mp4}`, a real recording of the scanners made by `scripts/record-demo.mjs`; re-record it when the scanner pages change, and keep the scene times in `DemoVideo.tsx` in step with the recording.
+
 Layout: `app/layout.tsx` gives `/` the top bar (`components/Navbar.tsx`) and every other route the left sidebar (`components/Sidebar.tsx`); both read their links from `components/navigation.ts` and share `AccountMenu.tsx` for sign-in. User-facing copy names no frameworks, models or ports. The logo is `public/logo.png`; favicon, PWA icons and `extension-build/icon.png` are made from it.
 
 ### Chrome extension (`phishguard/extension-build/`)

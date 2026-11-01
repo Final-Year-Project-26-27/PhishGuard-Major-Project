@@ -11,6 +11,7 @@ import ScamMarquee from '@/components/ScamMarquee'
 import ScamStats from '@/components/ScamStats'
 import OurStory from '@/components/OurStory'
 import InboxBeforeAfter from '@/components/InboxBeforeAfter'
+import DemoVideo from '@/components/DemoVideo'
 
 // A scam verdict below this confidence is shown as a caution, not a red alert: real job-portal
 // alerts and welcome mails sometimes sound like phishing
@@ -279,6 +280,8 @@ export default function HomePage() {
       <ScamMarquee />
 
       <ScamStats />
+
+      <DemoVideo />
 
       <OurStory />
 

@@ -97,7 +97,7 @@ export default function DetectionLayers() {
 
         <div className="mt-16 grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* The pinned message: a fragment of the real warning UI */}
-          <div ref={card} className="lg:sticky lg:top-24" data-ui="layer-demo">
+          <div ref={card} className="min-w-0 lg:sticky lg:top-24" data-ui="layer-demo">
             <div className="rounded-lg bg-[#1b1d21] p-5 sm:p-6 space-y-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">

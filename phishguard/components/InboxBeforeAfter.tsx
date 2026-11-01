@@ -30,7 +30,7 @@ export default function InboxBeforeAfter() {
           <div data-ui="inbox-before" className="rounded-lg bg-[#15171a] p-6 sm:p-8">
             <p className="text-lg font-semibold text-white">Without PhishGuard</p>
             <p className="text-base text-zinc-400">Every message looks like an opportunity.</p>
-            <div className="relative mt-6 h-[380px] sm:h-[420px]">
+            <div className="relative mt-6 h-[380px] sm:h-[420px] overflow-hidden">
               {PILE.map((m, i) => (
                 <div
                   key={m.text}
