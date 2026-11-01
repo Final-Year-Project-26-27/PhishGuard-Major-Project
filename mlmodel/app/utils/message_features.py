@@ -132,8 +132,12 @@ RED_FLAG_TEXT = {
 }
 
 
+# Training texts are at most 3,000 characters; capping input keeps the ".*" patterns fast on huge pastes
+MAX_CHARS = 5000
+
+
 def count_matches(text: str, patterns: list[str]) -> int:
-    t = text.lower()
+    t = text[:MAX_CHARS].lower()
     return sum(1 for p in patterns if re.search(p, t))
 
 
@@ -142,7 +146,7 @@ def has_fee_demand(text: str) -> bool:
 
 
 def extract_features(text: str) -> list[float]:
-    text = str(text)
+    text = str(text)[:MAX_CHARS]
     counts = [count_matches(text, patterns) for patterns in PATTERN_GROUPS.values()]
     return counts + [
         int(counts[0] >= 1),
@@ -166,7 +170,7 @@ def get_red_flags(text: str) -> list[str]:
 
 
 def clean_text(text: str) -> str:
-    text = str(text).lower()
+    text = str(text)[:MAX_CHARS].lower()
     text = re.sub(r"http\S+", " URL ", text)
     text = re.sub(r"\+91[\s-]?\d{10}", " PHONE ", text)
     text = re.sub(r"\b\w+@\w+\.\w+\b", " EMAIL ", text)

@@ -28,7 +28,9 @@ LURE_WORDS = [
 
 def split_url(url: str) -> tuple[str, str, str]:
     """(host without www, path without query/fragment, original lowercased url)"""
-    raw = str(url or "").strip().lower()
+    # Read the URL the way a browser does: it drops tabs/newlines and treats "\" as "/", so
+    # "evil.com\@github.com" opens evil.com and must not parse as github.com here
+    raw = re.sub(r"[\t\r\n]", "", str(url or "")).strip().lower().replace("\\", "/")
     candidate = raw if "://" in raw else "http://" + raw
     try:
         parts = urlsplit(candidate)

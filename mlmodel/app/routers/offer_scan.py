@@ -7,7 +7,7 @@ from typing import List
 
 import joblib
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.utils.message_features import get_red_flags, is_offer_related
 
@@ -25,7 +25,7 @@ def classify_message(text: str) -> tuple[str, float]:
 
 
 class OfferRequest(BaseModel):
-    message: str
+    message: str = Field(max_length=50000)
 
 class OfferResponse(BaseModel):
     is_offer: bool

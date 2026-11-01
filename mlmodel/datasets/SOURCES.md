@@ -23,7 +23,8 @@ nothing; at most 50 URLs per site; phish on the 1,000 biggest platforms (Google 
 redirects) is left out because its URL looks exactly like the platform's own pages.
 
 `app/models/trusted_domains.json` comes from the same run: the Tranco top 10,000 sites, minus link
-shorteners, platforms where anyone can get a subdomain, and any host seen serving phishing 3+ times.
+shorteners, platforms where anyone can get a subdomain, sites with 3+ phish on their own address
+(open-redirect links like `google.com/url?q=` don't count), and any subdomain seen serving phishing 3+ times.
 
 ## `messages.csv` (message model, doc model, Gmail L2 classifier)
 

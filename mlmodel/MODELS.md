@@ -24,8 +24,9 @@ for the final message-model score.
 - **Held out, unseen sites (28,088 URLs):** accuracy 88.5%, precision 90.3%, recall 85.8%, ROC AUC 0.95.
   Today's PhishTank phish caught: 95.0%. Real site pages passed: 91.8%; genuine subdomains: 98.2%.
 - **Before the model:** the Tranco top 10,000 sites are answered directly, minus link shorteners,
-  platforms where anyone gets a subdomain (godaddysites, weebly) and hosts seen serving phish 3+ times
-  (docs.google.com, sites.google.com). On those shared hosts the verdict's confidence is capped at 0.6.
+  platforms where anyone can publish (godaddysites, weebly, dropbox, notion, jotform) and hosts seen
+  serving phish 3+ times (docs.google.com, sites.google.com). On those shared hosts the verdict's
+  confidence is capped at 0.6. URLs with `user@host` or a backslash in them never get this shortcut.
 - **Known limits:** a bare domain of a small, unknown site is the hardest case (79% on PhiUSIIL), because
   the URL alone says little; the extension's url-intel adds the live page check (password forms,
   external form targets) on top. A phish page on a big shared platform looks identical to a real one by

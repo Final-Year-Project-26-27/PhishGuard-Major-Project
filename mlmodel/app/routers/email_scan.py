@@ -2,7 +2,7 @@
 from typing import List
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Email scan runs the message model, trained on real phishing and legitimate emails as well as
 # the fee and internship scams this project targets.
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 class EmailRequest(BaseModel):
-    text_content: str
+    text_content: str = Field(max_length=50000)
     sender_domain: str = ""
 
 class EmailPrediction(BaseModel):

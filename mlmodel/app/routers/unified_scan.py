@@ -43,15 +43,15 @@ EMAIL_SIGNAL_RULES = {
 
 
 class UnifiedRiskRequest(BaseModel):
-    email_text: Optional[str] = None
+    email_text: Optional[str] = Field(default=None, max_length=50000)
     sender_domain: Optional[str] = None
-    url: Optional[str] = None
+    url: Optional[str] = Field(default=None, max_length=4096)
     platform: Optional[str] = None
     trusted_domains: List[str] = Field(default_factory=list)
 
 
 class ComposeGuardRequest(BaseModel):
-    draft_text: str
+    draft_text: str = Field(max_length=50000)
     recipients: List[str] = Field(default_factory=list)
     trusted_domains: List[str] = Field(default_factory=list)
 
@@ -70,7 +70,7 @@ FEEDBACK_LOG = Path(os.getenv("FEEDBACK_LOG", "app/models/unified_feedback_log.j
 
 
 class UrlIntelRequest(BaseModel):
-    url: str
+    url: str = Field(max_length=4096)
     trusted_domains: List[str] = Field(default_factory=list)
 
 

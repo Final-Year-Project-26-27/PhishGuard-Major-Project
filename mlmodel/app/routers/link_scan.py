@@ -3,7 +3,7 @@ import json
 
 import joblib
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.utils.url_features import registrable_domain, split_url
 
@@ -25,7 +25,11 @@ def _on_shared_host(host: str) -> bool:
 
 
 def is_well_known(url: str) -> bool:
-    host = split_url(url)[0]
+    host, _, raw = split_url(url)
+    # user:pass@host is a classic way to dress a phish link up as a known site; always ask the model
+    authority = raw.split("://", 1)[-1].split("/", 1)[0]
+    if "@" in authority:
+        return False
     return not _on_shared_host(host) and registrable_domain(host) in TRUSTED_DOMAINS
 
 
@@ -44,7 +48,7 @@ def classify_url(url: str) -> tuple[str, float, str]:
 
 
 class LinkRequest(BaseModel):
-    url: str
+    url: str = Field(max_length=4096)
 
 class LinkResponse(BaseModel):
     prediction: str

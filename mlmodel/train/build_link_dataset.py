@@ -76,10 +76,11 @@ def load_legit(raw: Path) -> pd.DataFrame:
 def trusted_domains(raw: Path, phish_urls: list[str]) -> dict:
     """Tranco's top sites, minus what phishing has been hosted on:
     - a platform where anyone gets a subdomain (anything.godaddysites.com: phish on many different
-      subdomains) or a shortener (bit.ly/x: phish on the site's own address again and again) is out entirely;
-    - otherwise only the subdomains that served phish are (sites.google.com, but not mail.google.com).
-    A handful of phish on a big site's own address is open-redirect abuse (google.com/url?q=...), which
-    the URL model can't judge either way, so it doesn't cost the site its trust."""
+      subdomains), a shortener, or a site with 3+ phish on its own address (bit.ly/x, a hacked site)
+      is out entirely;
+    - otherwise only the subdomains that served phish 3+ times are (sites.google.com, not mail.google.com).
+    Open-redirect abuse on a big site's own address (google.com/url?q=...) doesn't count: the
+    redirect points elsewhere, and the site itself is fine."""
     top_set = set(_top_domains(raw, TRUSTED_TOP_N))
     apex_hits: dict[str, int] = {}
     sub_hosts: dict[str, dict[str, int]] = {}
@@ -89,11 +90,12 @@ def trusted_domains(raw: Path, phish_urls: list[str]) -> dict:
         if reg not in top_set:
             continue
         if host == reg:
-            # bit.ly/AbC12 (one short code) counts; google.com/url?q=... and google.com/amp/s/... are
-            # redirect abuse and don't
-            if re.fullmatch(r"/[A-Za-z0-9_-]{3,16}/?", urlsplit(url if "://" in url else "http://" + url).path or ""):
-                if "?" not in url:
-                    apex_hits[reg] = apex_hits.get(reg, 0) + 1
+            # google.com/url?q=..., google.com/amp/s/..., linkedin.com/redir?... are open-redirect abuse
+            # and don't count; any other phish on the site's own address (bit.ly/AbC12, a hacked
+            # page) does
+            path = urlsplit(url if "://" in url else "http://" + url).path or ""
+            if "?" not in url and not re.match(r"(?i)/+(amp|url|redir|redirect|r|out|away|link)\b", path):
+                apex_hits[reg] = apex_hits.get(reg, 0) + 1
         else:
             hosts = sub_hosts.setdefault(reg, {})
             hosts[host] = hosts.get(host, 0) + 1
@@ -101,7 +103,7 @@ def trusted_domains(raw: Path, phish_urls: list[str]) -> dict:
     def first_labels(reg: str) -> set[str]:
         return {h[: -len(reg) - 1].rsplit(".", 1)[-1] for h in sub_hosts.get(reg, ())}
 
-    banned = {reg for reg in top_set if apex_hits.get(reg, 0) >= 10 or len(first_labels(reg)) >= 25} | SHORTENERS
+    banned = {reg for reg in top_set if apex_hits.get(reg, 0) >= 3 or len(first_labels(reg)) >= 25} | SHORTENERS
     # One stray report doesn't cost a service host (meet.google.com) its trust; three do
     risky_hosts = {h for reg, hosts in sub_hosts.items() if reg not in banned for h, n in hosts.items() if n >= 3}
     return {

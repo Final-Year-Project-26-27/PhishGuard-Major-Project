@@ -82,3 +82,26 @@ def test_link_scan_trusts_popular_sites_but_not_their_user_content_hosts():
     assert not is_well_known("https://sites.google.com/view/anything")      # anyone can publish here
     assert not is_well_known("https://evil-login.godaddysites.com")
     assert not is_well_known("https://github.com.evil-login.xyz/")          # the real domain is evil-login.xyz
+    assert not is_well_known("https://dropbox.com/s/abc/invoice.html")      # file-sharing: anyone can host a page
+
+
+def test_link_trust_cannot_be_borrowed_with_url_tricks():
+    from app.routers.link_scan import is_well_known
+    from app.utils.url_features import split_url
+
+    # Browsers open evil.com for both of these; neither may borrow github.com's trust
+    assert split_url("http://evil.com\\@github.com/")[0] == "evil.com"
+    assert not is_well_known("http://evil.com\\@github.com/")
+    assert not is_well_known("https://github.com@evil-login.xyz/")
+    assert not is_well_known("https://user:pass@github.com/")
+    assert split_url("https://git\thub.com/\n")[0] == "github.com"
+
+
+def test_huge_inputs_are_fast_or_rejected():
+    import time
+
+    start = time.perf_counter()
+    body = client.post("/scan/email/", json={"text_content": "pay " * 12000}).json()
+    assert body["prediction"] in {"Legit", "Fake"} and time.perf_counter() - start < 5
+    assert client.post("/scan/email/", json={"text_content": "x" * 50001}).status_code == 422
+    assert client.post("/scan/link/", json={"url": "a" * 4097}).status_code == 422
