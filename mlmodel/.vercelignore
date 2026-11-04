@@ -1,0 +1,8 @@
+venv/
+datasets/
+train/
+tests/
+**/__pycache__/
+*.pyc
+Dockerfile
+render.yaml

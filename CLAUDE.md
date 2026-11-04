@@ -28,7 +28,7 @@ No frontend tests — verify with `npm run build` and by using the page in a bro
 ```bash
 cd mlmodel
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime (requirements.txt) + pandas and pytest for training and tests
 
 # Rebuild the datasets from the public sources in datasets/SOURCES.md (downloaded into <raw_dir>)
 python -m train.build_link_dataset <raw_dir>      # datasets/links.csv + app/models/trusted_domains.json
@@ -117,7 +117,7 @@ The orchestrator never raises (failures return CLEAN) so `/webhook/gmail` always
 `phishguard/lib/firebase.ts` has the Firebase web config committed — normal for Firebase (the key isn't a secret; access is controlled by `firestore.rules`). The rules cover `users/{uid}/{scans,email_scans,settings}`, `reports` (create-as-self, no edits), `questions`, and the four public-read, admin-write blocklists; the admin is a hardcoded UID (also in `app/admin-chat/page.tsx`). Deploy rule changes with `firebase deploy --only firestore:rules`. See `phishguard/FIREBASE_SETUP.md`.
 
 ### Deployment
-- Backend: `mlmodel/Dockerfile` (multi-stage, non-root) + `mlmodel/render.yaml`, targeting Render. `/health` reports which `.pkl` models loaded.
+- Backend: Vercel project with root `mlmodel/`: `api/index.py` serves `app.main:app` as one Python function (`vercel.json` rewrites every path to it; `.vercelignore` drops datasets, training and tests). It sets `FEEDBACK_LOG` and the tldextract cache to `/tmp`, the only writable path. `requirements.txt` is runtime-only, so keep training-only packages in `requirements-dev.txt`. `mlmodel/Dockerfile` + `render.yaml` remain for Render. `/health` reports which `.pkl` models loaded.
 - Frontend: static export (`npm run build` → `out/`) on Firebase Hosting (`firebase.json`). Set `NEXT_PUBLIC_API_URL` at build time.
 - CORS is `allow_origins=["*"]` in both `mlmodel/app/main.py` and `email/main.py`; restrict before production.
 
