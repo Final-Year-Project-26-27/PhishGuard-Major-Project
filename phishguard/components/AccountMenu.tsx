@@ -22,8 +22,16 @@ export default function AccountMenu({ up = false, full = false }: { up?: boolean
       await signInWithPopup(auth, googleProvider)
       toast.success('Signed in.')
     } catch (error) {
+      const code = (error as { code?: string }).code
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return
       console.error('Login failed:', error)
-      toast.error('Sign-in failed. Please try again.')
+      toast.error(
+        code === 'auth/popup-blocked'
+          ? 'Allow pop-ups for this site, then sign in again.'
+          : code === 'auth/unauthorized-domain'
+            ? "Sign-in isn't available on this address yet."
+            : 'Sign-in failed. Please try again.'
+      )
     } finally {
       setIsLoading(false)
     }

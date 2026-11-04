@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { db } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
 import { openExternal } from '../../lib/utils'
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import {
@@ -57,6 +57,9 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [loading, setLoading] = useState(true)
+  // Reports are readable only when signed in (firestore.rules); null until auth has answered
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   // CSV Export Function
   const exportToCSV = () => {
@@ -101,7 +104,17 @@ export default function DashboardPage() {
     }
   }
 
+  useEffect(() => auth.onAuthStateChanged((u) => setSignedIn(!!u)), [])
+
   useEffect(() => {
+    if (signedIn === null) return
+    if (!signedIn) {
+      setReports([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    setLoadFailed(false)
     const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -112,11 +125,12 @@ export default function DashboardPage() {
       setLoading(false)
     }, (err) => {
       console.error('Firestore reports fetch error:', err)
+      setLoadFailed(true)
       setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [signedIn])
 
   const analytics = useMemo(() => {
     const totalReports = reports.length
@@ -407,7 +421,11 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="p-12 text-center text-zinc-400 text-sm">
-                No reports match your search.
+                {!signedIn
+                  ? 'Sign in to see the reports students have sent in.'
+                  : loadFailed
+                    ? "Couldn't load the reports. Try again in a moment."
+                    : 'No reports match your search.'}
               </div>
             )}
           </div>

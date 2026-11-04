@@ -1,11 +1,10 @@
 {
-  "name": "Phishguard",
-  "short_name": "NextPWA",
+  "name": "PhishGuard",
+  "short_name": "PhishGuard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0070f3",
-  "orientation": "portrait",
+  "background_color": "#0c0d0e",
+  "theme_color": "#0c0d0e",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -17,5 +16,6 @@
       "type": "image/png",
       "sizes": "512x512"
     }
-  ]
+  ],
+  "description": "Check links, emails and job offers for the scams students fall for."
 }

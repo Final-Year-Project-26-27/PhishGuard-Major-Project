@@ -310,7 +310,11 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
             "risk_score": email_score,
         }
         raw_scores.append(email_score)
-        reasons.extend(_email_rule_signals(payload.email_text))
+        rule_signals = _email_rule_signals(payload.email_text)
+        # The model can flag a message no rule matches; say so instead of showing no reason
+        if email_score >= 50 and not any(s for s in rule_signals if not s.startswith("Contains ")):
+            reasons.append("The message reads like known scam messages")
+        reasons.extend(rule_signals)
 
     if payload.url:
         link_score, prediction, confidence = _link_model_score(payload.url)
@@ -320,6 +324,8 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
             "risk_score": link_score,
         }
         raw_scores.append(link_score)
+        if link_score >= 50:
+            reasons.append("The link looks like known phishing links")
 
         domain = _normalize_domain(payload.url)
         if any(token in domain for token in ["login", "verify", "secure", "update"]):
@@ -352,7 +358,12 @@ def unified_risk_scan(payload: UnifiedRiskRequest):
     if level == "HIGH":
         recommendation = "block_or_step_up"
 
-    explanations = reasons[:6] if reasons else ["No scam signals found in the message or link."]
+    if reasons:
+        explanations = reasons[:6]
+    elif level == "LOW":
+        explanations = ["No scam signals found in the message or link."]
+    else:
+        explanations = ["Matches patterns seen in scam messages and links"]
 
     return {
         "event_id": event_id,

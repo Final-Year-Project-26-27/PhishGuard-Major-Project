@@ -29,6 +29,17 @@ def test_unified_score_keeps_the_most_dangerous_signal(monkeypatch):
     assert body["risk_score"] >= 95 - 18 and body["risk_level"] == "HIGH"
 
 
+def test_unified_explains_a_link_only_verdict(monkeypatch):
+    # A phishing link with no message used to come back HIGH risk with "No scam signals found"
+    monkeypatch.setattr(unified_scan, "_link_model_score", lambda *_: (99, "Phishing", 0.99))
+    body = client.post("/scan/unified/", json={"url": "https://paytm-refund-kyc.xyz/claim"}).json()
+    assert body["risk_level"] == "HIGH"
+    assert body["explanations"] == ["The link looks like known phishing links"]
+    monkeypatch.undo()
+    safe =client.post("/scan/unified/", json={"url": "https://www.linkedin.com/jobs/"}).json()
+    assert safe["risk_level"] == "LOW" and "No scam signals" in safe["explanations"][0]
+
+
 def test_unified_ignores_a_spoofable_sender_domain():
     # A fee scam sent from gmail.com used to pass because the old email model trusted the domain
     body = client.post("/scan/unified/", json={"email_text": SCAM, "sender_domain": "gmail.com"}).json()

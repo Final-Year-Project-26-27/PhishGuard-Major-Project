@@ -107,7 +107,7 @@ export default function ScannerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email_text: text || undefined,
-          sender_domain: senderDomain || 'gmail.com',
+          sender_domain: senderDomain || undefined,
           url: targetUrl || undefined,
           trusted_domains: ['nmamit.in', 'nitte.edu.in', 'google.com', 'microsoft.com'],
         }),
