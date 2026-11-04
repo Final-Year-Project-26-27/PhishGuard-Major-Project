@@ -1,5 +1,5 @@
 // PhishGuard dashboard URL. Change it here when the site is deployed.
-const SITE_URL = 'http://localhost:3000';
+const SITE_URL = 'https://phishguard-students.vercel.app';
 
 // PhishGuard Popup Script
 document.addEventListener('DOMContentLoaded', async function() {

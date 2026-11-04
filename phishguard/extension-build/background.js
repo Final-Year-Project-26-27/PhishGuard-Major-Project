@@ -53,7 +53,7 @@ async function getModelApiBaseUrl() {
     return stored.phishguardModelApiBaseUrl;
   }
 
-  return 'http://localhost:8000';
+  return 'https://phishguard-api.vercel.app';
 }
 
 async function scanUnifiedRisk(payload) {

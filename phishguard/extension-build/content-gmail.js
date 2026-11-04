@@ -1,5 +1,5 @@
 // PhishGuard dashboard URL. Change it here when the site is deployed.
-const SITE_URL = 'http://localhost:3000';
+const SITE_URL = 'https://phishguard-students.vercel.app';
 
 // PhishGuard Gmail Content Script v3.0
 // Detects phishing emails directly in Gmail — only when an email is open
