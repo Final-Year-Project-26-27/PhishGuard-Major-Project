@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const isHome = pathname === '/';
   // The layout is a client component, so the head tags are written here; the static export renders one per route
   const page = NAV_GROUPS.flatMap((g) => g.items).find((i) => pathname?.replace(/\/$/, '') === i.href);
-  const title = page ? `${page.label} · PhishGuard` : 'PhishGuard: Is this offer real?';
+  const title = page ? `${page.label} · PhishGuard` : 'PhishGuard';
 
   useEffect(() => {
     if (pathname) {
