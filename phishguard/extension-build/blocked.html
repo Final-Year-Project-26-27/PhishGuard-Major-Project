@@ -3,38 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PhishGuard Blocked a Risky Link</title>
+    <title>Blocked by PhishGuard</title>
     <link rel="stylesheet" href="blocked.css" />
   </head>
   <body>
+    <header class="bar">
+      <img src="icon.png" alt="" />
+      <span>PhishGuard blocked this page</span>
+      <span class="score">Risk <strong id="riskScore">0</strong>/100 · <span id="riskLevel">HIGH</span></span>
+    </header>
+
     <main class="wrap">
-      <section class="card">
-        <p class="badge">PhishGuard Shield</p>
-        <h1>This link was blocked for your safety</h1>
-        <p class="subtitle" id="summaryText">We detected a high phishing risk signal.</p>
+      <h1>This link looks like a scam</h1>
+      <p class="summary" id="summaryText">It matches patterns seen on phishing and scam sites.</p>
 
-        <div class="score-row">
-          <span>Risk Score</span>
-          <strong id="riskScore">0%</strong>
-        </div>
-        <div class="score-track">
-          <div class="score-fill" id="scoreFill"></div>
-        </div>
+      <p class="label">The link</p>
+      <code id="blockedUrl" class="url">-</code>
 
-        <div class="meta">
-          <p><span>Risk Level:</span> <strong id="riskLevel">HIGH</strong></p>
-          <p><span>URL:</span> <code id="blockedUrl">-</code></p>
-        </div>
+      <p class="label">Why it was blocked</p>
+      <ul id="reasonList" class="reasons"></ul>
 
-        <h2>Why this was blocked</h2>
-        <ul id="reasonList" class="reason-list"></ul>
+      <div class="actions">
+        <button type="button" id="goBackBtn" class="primary">Go back to safety</button>
+        <button type="button" id="proceedBtn" class="danger">Open it anyway</button>
+      </div>
 
-        <div class="actions">
-          <button id="goBackBtn" class="btn neutral">Go Back</button>
-          <button id="reportBtn" class="btn outline">Report as Correct Block</button>
-          <button id="proceedBtn" class="btn danger">Proceed Anyway</button>
-        </div>
-      </section>
+      <p class="feedback">Is this a scam? <button type="button" id="reportBtn">Yes, keep blocking it</button></p>
     </main>
 
     <script src="blocked.js"></script>

@@ -17,22 +17,20 @@
   const riskLevelEl = document.getElementById('riskLevel');
   const blockedUrlEl = document.getElementById('blockedUrl');
   const reasonListEl = document.getElementById('reasonList');
-  const scoreFillEl = document.getElementById('scoreFill');
   const summaryTextEl = document.getElementById('summaryText');
 
-  if (riskScoreEl) riskScoreEl.textContent = `${score}%`;
+  if (riskScoreEl) riskScoreEl.textContent = String(score);
   if (riskLevelEl) riskLevelEl.textContent = level;
   if (blockedUrlEl) blockedUrlEl.textContent = blockedUrl || '-';
-  if (scoreFillEl) scoreFillEl.style.width = `${score}%`;
   if (summaryTextEl) {
     summaryTextEl.textContent =
       score >= 85
-        ? 'Critical signals matched known phishing behavior.'
-        : 'Multiple suspicious indicators were detected on this destination.';
+        ? 'It closely matches known phishing and scam sites. Don’t enter a password, OTP or payment details here.'
+        : 'It shows several signs of a phishing or scam site. Don’t enter a password, OTP or payment details here.';
   }
 
   if (reasonListEl) {
-    const lines = reasons.length > 0 ? reasons : ['High-risk phishing indicators were detected by model + page analysis.'];
+    const lines = reasons.length > 0 ? reasons : ['The address and the page match patterns seen on scam sites.'];
     lines.forEach((line) => {
       const li = document.createElement('li');
       li.textContent = String(line);
@@ -55,7 +53,7 @@
         verdict: 'blocked_link_confirmed',
         is_helpful: true,
       });
-      reportBtn.textContent = 'Thanks for feedback';
+      reportBtn.textContent = 'Thanks';
       reportBtn.setAttribute('disabled', 'true');
     });
   }

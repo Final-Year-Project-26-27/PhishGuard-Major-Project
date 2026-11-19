@@ -202,23 +202,21 @@ async function analyzeWithGemini(messageText) {
   }
 }
 
-function handleReport(messageText, analysis) {
-  chrome.runtime.sendMessage({
-    action: "reportScamMessage",
-    platform: PHISHGUARD_PLATFORM,
-    messageText,
-    analysis,
-    pageUrl: window.location.href,
-    createdAt: new Date().toISOString(),
-  });
-}
-
 function injectWarningUI(messageNode, analysis, messageText) {
   const bubble = resolveBubbleContainer(messageNode);
   if (!bubble || bubble.querySelector(".phishguard-warning")) {
     return;
   }
-  renderChatWarning(bubble, analysis, () => handleReport(messageText, analysis));
+  const high = Number(analysis.riskScore || 0) >= 50;
+  bubble.appendChild(renderPhishguardWarning({
+    compact: true,
+    score: analysis.riskScore,
+    high,
+    headline: phishguardHeadline(analysis.scamType, high),
+    advice: analysis.explanation || 'It matches patterns common in scam messages. Don’t pay, reply or open its links.',
+    onReport: () => phishguardOpenReport({ platform: 'WhatsApp', text: messageText, scamType: analysis.scamType }),
+  }));
+  if (phishguardIsDark(bubble)) bubble.lastChild.dataset.theme = 'dark';
 }
 
 async function processMessageNode(node) {

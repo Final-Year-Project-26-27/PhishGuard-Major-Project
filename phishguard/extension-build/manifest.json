@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PhishGuard",
-  "version": "1.0.12",
-  "description": "Comprehensive protection against phishing websites and scam emails with AI-powered detection",
+  "version": "1.0.13",
+  "description": "Warns you about scam messages in Gmail, WhatsApp Web and LinkedIn, and checks links before they open.",
   "action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
@@ -48,6 +48,7 @@
         "https://mail.google.com/*"
       ],
       "js": [
+        "warning-ui.js",
         "content-gmail.js"
       ],
       "run_at": "document_end",
@@ -58,7 +59,7 @@
         "https://web.whatsapp.com/*"
       ],
       "js": [
-        "chat-warning.js",
+        "warning-ui.js",
         "content-whatsapp.js"
       ],
       "run_at": "document_idle"
@@ -70,7 +71,7 @@
         "https://*.linkedin.com/messaging/*"
       ],
       "js": [
-        "chat-warning.js",
+        "warning-ui.js",
         "content-linkedin.js"
       ],
       "run_at": "document_idle"
@@ -91,7 +92,9 @@
         "blocked.html",
         "blocked.css",
         "blocked.js",
-        "icon.png"
+        "icon.png",
+        "archivo-400.woff2",
+        "archivo-700.woff2"
       ],
       "matches": [
         "http://*/*",

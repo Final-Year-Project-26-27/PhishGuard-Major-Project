@@ -254,10 +254,14 @@ async function fetchPhishingData() {
       patterns: phishingPatterns.length
     });
 
+    // The popup shows whether the blocklist actually loaded (a 403 returns JSON without documents)
+    await chrome.storage.local.set({ blocklistUpdatedAt: Date.now(), blocklistOk: linksRes.ok });
+
     // Update declarative net request rules
     await updateBlockRules();
   } catch (error) {
     console.error('Error fetching phishing data:', error);
+    await chrome.storage.local.set({ blocklistUpdatedAt: Date.now(), blocklistOk: false });
   }
 }
 
@@ -588,73 +592,6 @@ Message: ${messageText}`;
   }
 }
 
-async function storeScamReport(reportPayload) {
-  try {
-    const existing = await chrome.storage.local.get(['scamReports']);
-    const reports = Array.isArray(existing.scamReports) ? existing.scamReports : [];
-    reports.unshift(reportPayload);
-    await chrome.storage.local.set({
-      scamReports: reports.slice(0, 250),
-    });
-    console.log('Stored scam report:', reportPayload);
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to store scam report:', error);
-    return { success: false };
-  }
-}
-
-function dataUrlToProofFilePayload(dataUrl, fileName = 'gmail-screenshot.png') {
-  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
-    return null;
-  }
-
-  const commaIndex = dataUrl.indexOf(',');
-  if (commaIndex === -1) {
-    return null;
-  }
-
-  const meta = dataUrl.slice(0, commaIndex);
-  const base64Data = dataUrl.slice(commaIndex + 1);
-  const mimeMatch = /data:([^;]+);base64/i.exec(meta);
-  const mimeType = mimeMatch?.[1] || 'image/png';
-
-  // Approximate base64 decoded size in bytes
-  const sizeBytes = Math.floor((base64Data.length * 3) / 4);
-  if (sizeBytes <= 0) {
-    return null;
-  }
-
-  return {
-    fileName,
-    mimeType,
-    sizeBytes,
-    base64Data,
-  };
-}
-
-async function captureScreenshotProof(senderTab) {
-  if (!senderTab || typeof senderTab.windowId !== 'number') {
-    return null;
-  }
-
-  try {
-    // Try PNG first for quality, then JPEG fallback if payload too large.
-    const pngDataUrl = await chrome.tabs.captureVisibleTab(senderTab.windowId, { format: 'png' });
-    const pngPayload = dataUrlToProofFilePayload(pngDataUrl);
-    if (pngPayload && pngPayload.sizeBytes <= 7.5 * 1024 * 1024) {
-      return pngPayload;
-    }
-
-    const jpegDataUrl = await chrome.tabs.captureVisibleTab(senderTab.windowId, { format: 'jpeg', quality: 65 });
-    const jpegPayload = dataUrlToProofFilePayload(jpegDataUrl, 'gmail-screenshot.jpg');
-    return jpegPayload;
-  } catch (error) {
-    console.warn('Screenshot capture failed:', error);
-    return null;
-  }
-}
-
 // Hostname of a blocklist entry, which may be stored as a full URL or a bare domain
 function blocklistHost(entry) {
   const value = String(entry || '').trim().toLowerCase();
@@ -749,6 +686,22 @@ function checkPhishingPatterns(content) {
 
 // Message handler for popup and content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getStatus') {
+    (async () => {
+      const base = await getModelApiBaseUrl();
+      let scannerOnline = false;
+      try {
+        const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(5000) });
+        scannerOnline = res.ok;
+      } catch {
+        scannerOnline = false;
+      }
+      const { blocklistUpdatedAt = null, blocklistOk = null } = await chrome.storage.local.get(['blocklistUpdatedAt', 'blocklistOk']);
+      sendResponse({ scannerOnline, blocklistUpdatedAt, blocklistOk, blockedCount: phishingLinks.length });
+    })();
+    return true;
+  }
+
   if (request.action === 'checkLink') {
     const isBlocked = isUrlBlocked(request.url);
     analyzeLinkWithGemini(request.url).then(analysis => {
@@ -794,18 +747,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  if (request.action === 'getStatus') {
-    chrome.storage.local.get(['blockedCount', 'scannedCount'], function(data) {
-      sendResponse({
-        active: true,
-        blockedCount: data.blockedCount || 0,
-        scannedCount: data.scannedCount || 0,
-        rulesLoaded: phishingLinks.length + phishingEmails.length
-      });
-    });
-    return true;
-  }
-
   if (request.action === 'analyzeChatMessage') {
     analyzeChatMessageWithGemini(request.messageText, request.platform || 'unknown').then((analysis) => {
       sendResponse(analysis);
@@ -841,34 +782,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  if (request.action === 'reportScamMessage') {
-    (async () => {
-      const screenshotProof = request.includeScreenshot
-        ? await captureScreenshotProof(sender?.tab)
-        : null;
-
-      const reportPayload = {
-        platform: request.platform || 'unknown',
-        messageText: request.messageText || '',
-        analysis: request.analysis || null,
-        pageUrl: request.pageUrl || '',
-        createdAt: request.createdAt || new Date().toISOString(),
-        sourceTabId: sender?.tab?.id ?? null,
-        proofFile: screenshotProof || undefined,
-      };
-
-      // Reports are kept in the extension's local storage (v1 has no report API for the extension)
-      const localResult = await storeScamReport(reportPayload);
-      const saved = Boolean(localResult?.success);
-      sendResponse({
-        success: saved,
-        local: localResult,
-        screenshotAttached: Boolean(screenshotProof),
-        screenshotUploaded: saved && Boolean(screenshotProof),
-      });
-    })();
-    return true;
-  }
 });
 
 // Initial data fetch

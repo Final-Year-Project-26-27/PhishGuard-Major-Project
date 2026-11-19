@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { db, auth } from '../../lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import {
@@ -19,6 +19,20 @@ export default function ReportPage() {
   const [proofUrl, setProofUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [fromExtension, setFromExtension] = useState(false)
+
+  // The extension's "Report scam" opens this page filled in (?url=&type=&details=); the student checks it and sends it
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const details = params.get('details')
+    if (!details) return
+    const link = params.get('url') ?? ''
+    if (isValidUrl(link)) setUrl(link)
+    const type = params.get('type') ?? ''
+    if (['fake-job', 'phishing', 'financial', 'malware', 'other'].includes(type)) setScamType(type)
+    setDescription(details.slice(0, 2000))
+    setFromExtension(true)
+  }, [])
 
   const isValidEmail = (val: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
@@ -128,6 +142,13 @@ export default function ReportPage() {
               Shared with students
             </span>
           </div>
+
+          {fromExtension && (
+            <p className="rounded bg-amber-950/40 p-3 text-sm text-amber-100 leading-relaxed">
+              Filled in from the PhishGuard extension. Reports are shown to other students, so remove your name,
+              phone number or anything personal before you send it.
+            </p>
+          )}
 
           <div className="space-y-4">
 

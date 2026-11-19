@@ -120,11 +120,6 @@ let bypassComposeGuardOnce = false;
 // Matches the domain itself or a real subdomain. 'fakenmamit.in' is not 'nmamit.in'.
 const isDomainOrSubdomain = (domain, d) => domain === d || domain.endsWith('.' + d);
 
-// The sender, reasons and keywords come from the email itself, so escape them before they go into innerHTML
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 function sendRuntimeMessage(message) {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(message, (response) => {
@@ -502,71 +497,31 @@ function showPhishingWarning(analysis, senderEmail) {
   const reasons = analysis.reasons.filter(r => !/^Contains \d+ suspicious keyword/.test(r)).slice(0, 4);
   if (words.length) reasons.push(`Uses scam wording: ${words.join(', ')}`);
 
-  warningBanner = document.createElement('div');
+  warningBanner = renderPhishguardWarning({
+    score: analysis.riskScore,
+    high,
+    headline,
+    advice,
+    reasons,
+    onDismiss: removeWarningBanner,
+    onReport: () => {
+      const emailData = extractEmailData();
+      const text = [
+        `Sender: ${senderEmail || emailData.sender || 'unknown'}`,
+        `Subject: ${emailData.subject || 'unknown'}`,
+        '',
+        emailData.body || '',
+      ].join('\n');
+      phishguardOpenReport({ platform: 'Gmail', text, scamType });
+    },
+    onFeedback: (correct) => submitRiskFeedback({
+      event_id: analysis.unifiedEventId || null,
+      platform: 'gmail',
+      verdict: correct ? 'correct_alert' : 'false_positive',
+      is_helpful: correct,
+    }),
+  });
   warningBanner.id = 'phishguard-warning';
-  warningBanner.setAttribute('role', 'alert');
-  warningBanner.dataset.level = high ? 'high' : 'caution';
-  warningBanner.innerHTML = `
-    <style>
-      #phishguard-warning {
-        --pg-bg: #fce8e6; --pg-ink: #3c0d0a; --pg-muted: #5f2b26; --pg-strong: #b3261e; --pg-line: rgba(179,38,30,.22);
-        font: 14px/1.5 'Google Sans', Roboto, 'Segoe UI', Arial, sans-serif;
-        margin: 4px 0 20px; padding: 16px 20px 14px; border-radius: 8px;
-        background: var(--pg-bg); color: var(--pg-ink);
-        animation: pgIn .25s ease-out;
-      }
-      #phishguard-warning[data-level="caution"] { --pg-bg: #fef7e0; --pg-ink: #3d2a00; --pg-muted: #5c4400; --pg-strong: #8a5a00; --pg-line: rgba(138,90,0,.25); }
-      #phishguard-warning[data-theme="dark"] { --pg-bg: #3b1f1d; --pg-ink: #fbe3e0; --pg-muted: #e6b8b3; --pg-strong: #f4a19a; --pg-line: rgba(244,161,154,.25); }
-      #phishguard-warning[data-theme="dark"][data-level="caution"] { --pg-bg: #352b14; --pg-ink: #fbefd2; --pg-muted: #e3cf9e; --pg-strong: #fdd663; --pg-line: rgba(253,214,99,.25); }
-      @keyframes pgIn { from { opacity: 0; transform: translateY(-4px); } }
-      @media (prefers-reduced-motion: reduce) { #phishguard-warning { animation: none; } }
-      #phishguard-warning * { box-sizing: border-box; font: inherit; color: inherit; }
-      #phishguard-warning .pg-top { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pg-muted); }
-      #phishguard-warning .pg-top img { width: 18px; height: 18px; border-radius: 4px; }
-      #phishguard-warning .pg-score { margin-left: auto; font-variant-numeric: tabular-nums; }
-      #phishguard-warning .pg-score b { color: var(--pg-strong); font-weight: 700; }
-      #phishguard-warning .pg-x {
-        width: 28px; height: 28px; margin: -4px -8px -4px 4px; border: 0; border-radius: 50%;
-        background: none; cursor: pointer; font-size: 18px; line-height: 1; color: var(--pg-muted);
-      }
-      #phishguard-warning .pg-x:hover { background: var(--pg-line); }
-      #phishguard-warning h2 { margin: 6px 0 2px; font-size: 18px; font-weight: 600; line-height: 1.3; color: var(--pg-strong); }
-      #phishguard-warning .pg-advice { margin: 0; color: var(--pg-ink); max-width: 70ch; }
-      #phishguard-warning ul { margin: 10px 0 0; padding: 10px 0 0 18px; border-top: 1px solid var(--pg-line); color: var(--pg-muted); }
-      #phishguard-warning li { margin: 2px 0; }
-      #phishguard-warning .pg-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: 12px; }
-      #phishguard-warning button { cursor: pointer; }
-      #phishguard-warning .pg-report {
-        border: 0; border-radius: 18px; padding: 7px 16px; font-weight: 600;
-        background: var(--pg-strong); color: var(--pg-bg);
-      }
-      #phishguard-warning .pg-link { border: 0; background: none; padding: 4px 0; font-weight: 600; color: var(--pg-strong); }
-      #phishguard-warning .pg-link:hover, #phishguard-warning .pg-link:focus-visible { text-decoration: underline; }
-      #phishguard-warning .pg-feedback { margin-left: auto; font-size: 13px; color: var(--pg-muted); }
-      #phishguard-warning .pg-feedback .pg-link { font-size: 13px; margin-left: 8px; }
-      #phishguard-warning button:disabled { cursor: default; opacity: .7; text-decoration: none; }
-      #phishguard-warning button:focus-visible { outline: 2px solid var(--pg-strong); outline-offset: 2px; }
-    </style>
-
-    <div class="pg-top">
-      <img src="${chrome.runtime.getURL('icon.png')}" alt="">
-      <span>PhishGuard</span>
-      <span class="pg-score">Scam score <b>${analysis.riskScore}</b>/100</span>
-      <button id="phishguard-dismiss-btn" class="pg-x" aria-label="Dismiss warning">×</button>
-    </div>
-    <h2>${headline}</h2>
-    <p class="pg-advice">${advice}</p>
-    ${reasons.length ? `<ul>${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
-    <div class="pg-actions">
-      <button id="phishguard-report-btn" class="pg-report">Report scam</button>
-      <button id="phishguard-open-dashboard-btn" class="pg-link">Open dashboard</button>
-      <span class="pg-feedback">Is this right?
-        <button id="phishguard-feedback-right" class="pg-link">Yes</button>
-        <button id="phishguard-feedback-fp" class="pg-link">No, it’s safe</button>
-      </span>
-    </div>
-  `;
-
 
   // Insert banner — try multiple Gmail containers
   const containerSelectors = [
@@ -594,94 +549,7 @@ function showPhishingWarning(analysis, senderEmail) {
     const mainArea = document.querySelector('[role="main"]');
     if (mainArea) mainArea.insertBefore(warningBanner, mainArea.firstChild);
   }
-  // Match Gmail's theme: use the first opaque background behind the banner
-  let bgEl = warningBanner.parentElement, bg = '';
-  while (bgEl && (!bg || bg === 'transparent' || bg.endsWith(', 0)'))) { bg = getComputedStyle(bgEl).backgroundColor; bgEl = bgEl.parentElement; }
-  const rgb = bg.endsWith(', 0)') ? [255, 255, 255] : (bg.match(/\d+/g) || [255, 255, 255]).map(Number);
-  if (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 < 128) warningBanner.dataset.theme = 'dark';
-
-  const dismissBtn = document.getElementById('phishguard-dismiss-btn');
-  if (dismissBtn) dismissBtn.addEventListener('click', removeWarningBanner);
-  const reportBtn = document.getElementById('phishguard-report-btn');
-  if (reportBtn) {
-    reportBtn.addEventListener('click', () => {
-      const emailData = extractEmailData();
-      const reportText = [
-        `Sender: ${senderEmail || emailData.sender || "unknown"}`,
-        `Subject: ${emailData.subject || "unknown"}`,
-        "",
-        (emailData.body || "").slice(0, 5000),
-      ].join("\n");
-      chrome.runtime.sendMessage({
-        action: "reportScamMessage",
-        platform: "gmail",
-        messageText: reportText,
-        includeScreenshot: true,
-        analysis: {
-          isScam: true,
-          riskScore: analysis.riskScore,
-          scamType,
-          explanation: analysis.reasons.join(" | ").slice(0, 800),
-        },
-        pageUrl: window.location.href,
-        createdAt: new Date().toISOString(),
-      }, (response) => {
-        const uploaded = Boolean(response?.screenshotUploaded);
-        const backendOk = Boolean(response?.success);
-        if (backendOk && uploaded) {
-          reportBtn.textContent = "Reported with Screenshot";
-          reportBtn.disabled = true;
-          reportBtn.style.opacity = "0.75";
-          return;
-        }
-
-        if (backendOk && !uploaded) {
-          reportBtn.textContent = "Reported (No Screenshot)";
-          reportBtn.disabled = true;
-          reportBtn.style.opacity = "0.75";
-          return;
-        }
-
-        reportBtn.textContent = "Report Failed - Retry";
-        reportBtn.disabled = false;
-        reportBtn.style.opacity = "1";
-      });
-    });
-  }
-  const openDashBtn = document.getElementById('phishguard-open-dashboard-btn');
-  if (openDashBtn) {
-    openDashBtn.addEventListener('click', () => {
-      window.open(`${SITE_URL}/dashboard`, '_blank');
-    });
-  }
-
-  const feedbackRightBtn = document.getElementById('phishguard-feedback-right');
-  if (feedbackRightBtn) {
-    feedbackRightBtn.addEventListener('click', async () => {
-      await submitRiskFeedback({
-        event_id: analysis.unifiedEventId || null,
-        platform: 'gmail',
-        verdict: 'correct_alert',
-        is_helpful: true,
-      });
-      feedbackRightBtn.textContent = 'Thanks';
-      feedbackRightBtn.disabled = true;
-    });
-  }
-
-  const feedbackFpBtn = document.getElementById('phishguard-feedback-fp');
-  if (feedbackFpBtn) {
-    feedbackFpBtn.addEventListener('click', async () => {
-      await submitRiskFeedback({
-        event_id: analysis.unifiedEventId || null,
-        platform: 'gmail',
-        verdict: 'false_positive',
-        is_helpful: false,
-      });
-      feedbackFpBtn.textContent = 'Submitted';
-      feedbackFpBtn.disabled = true;
-    });
-  }
+  if (phishguardIsDark(warningBanner.parentElement)) warningBanner.dataset.theme = 'dark';
 
   console.log('🛡️ PhishGuard: Phishing email detected!', analysis);
 }
@@ -774,20 +642,16 @@ function addScanButton() {
   scanBtn.innerHTML = `
     <style>
       #phishguard-scan-btn button {
-        display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 6px 14px;
-        border: 1px solid currentColor; border-radius: 18px; background: none; color: inherit; opacity: .85;
-        font: 500 13px 'Google Sans', Roboto, sans-serif; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 4px 10px;
+        border: 2px solid currentColor; border-radius: 0; background: none; color: inherit;
+        font: 600 13px 'Google Sans', Roboto, sans-serif; cursor: pointer;
       }
-      #phishguard-scan-btn button:hover, #phishguard-scan-btn button:focus-visible { opacity: 1; background: rgba(127,127,127,.15); }
+      #phishguard-scan-btn img { width: 16px; height: 16px; }
+      #phishguard-scan-btn button:hover, #phishguard-scan-btn button:focus-visible { background: rgba(127,127,127,.2); }
     </style>
-    <button type="button">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-        <path d="m9 12 2 2 4-4"></path>
-      </svg>
-      Scan with PhishGuard
-    </button>
+    <button type="button"><img alt="">Scan with PhishGuard</button>
   `;
+  scanBtn.querySelector('img').src = chrome.runtime.getURL('icon.png');
 
   toolbar.appendChild(scanBtn);
 
