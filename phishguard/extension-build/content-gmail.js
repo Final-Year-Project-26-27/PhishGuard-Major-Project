@@ -235,9 +235,7 @@ async function analyzeEmailContent() {
 
   // Only the message itself: falling back to the whole page would scan the half-loaded view,
   // mark the email as done, and skip the real body when it renders
-  const emailBody = document.querySelector('.a3s.aiL') ||
-    document.querySelector('.ii.gt') ||
-    document.querySelector('[data-message-id]');
+  const emailBody = openMessage().body;
 
   if (!emailBody) {
     console.log('🛡️ PhishGuard: No email body found');
@@ -265,7 +263,7 @@ async function analyzeEmailContent() {
 
   // The open email's header lives inside elements like .ha, .hP parent, .nH
   // Try scoped querySelectorAll inside the email thread container first
-  const emailThread = document.querySelector('.ha') ||
+  const emailThread = openMessage().container ||
     document.querySelector('.adn.ads') ||
     document.querySelector('[data-message-id]');
 
@@ -507,12 +505,12 @@ function showPhishingWarning(analysis, senderEmail) {
     onReport: () => {
       const emailData = extractEmailData();
       const text = [
-        `Sender: ${senderEmail || emailData.sender || 'unknown'}`,
+        `Sender: ${emailData.sender || senderEmail || 'unknown'}`,
         `Subject: ${emailData.subject || 'unknown'}`,
         '',
         emailData.body || '',
       ].join('\n');
-      phishguardOpenReport({ platform: 'Gmail', text, scamType });
+      phishguardOpenReport({ platform: 'Gmail', text, scamType, link: emailData.link });
     },
     onFeedback: (correct) => submitRiskFeedback({
       event_id: analysis.unifiedEventId || null,
@@ -677,22 +675,30 @@ function scanWithPhishGuard() {
   console.log('🛡️ PhishGuard: Opening scanner with email data');
 }
 
+// The message open on screen: Gmail keeps earlier messages hidden in the page, so take the visible body
+// and its own message container, not the first match in the document
+function openMessage() {
+  // .a3s.aiL is the body itself; .ii.gt wraps it and also holds the inserted warning, so it's only a fallback
+  const visible = (sel) => [...document.querySelectorAll(sel)].find((el) => el.offsetParent);
+  const body = visible('.a3s.aiL') || visible('.ii.gt') || null;
+  const container = body?.closest('.adn, [role="listitem"]') || null;
+  return { body, container };
+}
+
 function extractEmailData() {
   const data = {
     sender: '',
     subject: '',
-    body: ''
+    body: '',
+    link: ''
   };
 
-  // Get sender
-  const senderSelectors = ['span[email]', '.gD[email]', '.go[email]', '.g2'];
-  for (const selector of senderSelectors) {
-    const el = document.querySelector(selector);
-    if (el) {
-      data.sender = el.getAttribute('email') || el.innerText || '';
-      if (data.sender.includes('@')) break;
-    }
-  }
+  const { body: openBody, container } = openMessage();
+  const senderEl = container?.querySelector('.gD[email], span[email]');
+  data.sender = senderEl?.getAttribute('email') || '';
+  // First real link in the message, including button links whose address isn't in the text
+  const anchor = [...(openBody?.querySelectorAll('a[href^="http"]') || [])][0];
+  data.link = anchor?.href || '';
 
   // Get subject
   const subjectEl = document.querySelector('h2.hP') ||
@@ -702,13 +708,7 @@ function extractEmailData() {
     data.subject = subjectEl.innerText || '';
   }
 
-  // Get body
-  const bodyEl = document.querySelector('.a3s.aiL') ||
-    document.querySelector('.ii.gt') ||
-    document.querySelector('[data-message-id]');
-  if (bodyEl) {
-    data.body = bodyEl.innerText || '';
-  }
+  data.body = openBody?.innerText || '';
 
   return data;
 }

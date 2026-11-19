@@ -68,9 +68,10 @@ function phishguardHeadline(scamType, high) {
 
 // Opens the site's report form filled in from the message; the student checks it and sends it while signed in,
 // so the report reaches Firestore under the normal rules (no extension login or write access needed)
-function phishguardOpenReport({ platform, text, scamType }) {
+function phishguardOpenReport({ platform, text, scamType, link: messageLink }) {
   const body = String(text || '');
-  const link = (body.match(/https?:\/\/[^\s<>"')\]]+/)?.[0] || '').replace(/[.,;:!?]+$/, '');
+  // A link the caller found in the message (e.g. behind a button) wins over one in the text
+  const link = messageLink || (body.match(/https?:\/\/[^\s<>"')\]]+/)?.[0] || '').replace(/[.,;:!?]+$/, '');
   const params = new URLSearchParams({
     url: link,
     type: phishguardScamCategory(scamType),
@@ -133,7 +134,7 @@ function renderPhishguardWarning({ score, high, headline, advice, reasons = [], 
   if (advice) body.append(el('p', 'pg-advice', advice));
   if (reasons.length) {
     const list = el('ul', 'pg-reasons');
-    reasons.forEach((r) => list.append(el('li', '', r)));
+    for (const r of reasons) list.append(el('li', '', r));
     body.append(list);
   }
 
